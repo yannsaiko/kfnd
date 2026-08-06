@@ -83,7 +83,7 @@
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
             <div style="font-size: 40px; margin-bottom: 15px;">⚡️🤖</div>
             <h2 style="color: #facc15; font-size: 22px; margin-bottom: 10px;">Groq AIが30問を作成中...</h2>
-            <p style="color: #94a3b8; font-size: 14px;" id="loading-desc">難易度とボス配置を計算してオリジナル問題を作成しています。</p>
+            <p style="color: #94a3b8; font-size: 14px;" id="loading-desc">難易度とボス配置を計算してオリジナル問題を作成しています。（数秒かかります）</p>
         </div>
 
         <!-- 3. ゲームプレイ画面 -->
@@ -291,65 +291,6 @@
             } catch(e) {}
         }
 
-        // フォールバック用内蔵データ生成（各コース30問・5問ごとのボス構成）
-        function generateFallbackList(mode) {
-            const rawData = {
-                "小学生": [
-                    ["川","かわ"],["山","やま"],["木","き"],["車","くるま"],["花","はな"],
-                    ["学校","がっこう"],["友達","ともだち"],["勉強","べんきょう"],["太陽","たいよう"],["漢字","かんじ"],
-                    ["練習","れんしゅう"],["算数","さんすう"],["文章","ぶんしょう"],["記録","きろく"],["制度","せいど"],
-                    ["憲法","けんぽう"],["概要","がいよう"],["策略","さくりゃく"],["操縦","そうじゅう"],["蒸発","じょうはつ"],
-                    ["臓器","ぞうき"],["裁縫","さいほう"],["砂糖","さとう"],["暮色","ぼしょく"],["展望","てんぼう"],
-                    ["模範","もはん"],["熟練","じゅくれん"],["膨張","ぼうちょう"],["遺産","いさん"],["厳格","げんかく"]
-                ],
-                "中学生": [
-                    ["笑顔","えがお"],["挨拶","あいさつ"],["故郷","ふるさと"],["感謝","かんしゃ"],["努力","どりょく"],
-                    ["複雑","ふくざつ"],["矛盾","むじゅん"],["謙遜","けんそん"],["把握","はあく"],["隔離","かくり"],
-                    ["妥協","だきょう"],["抽象","ちゅうしょう"],["貢献","こうけん"],["維持","いじ"],["摩擦","まさつ"],
-                    ["隠蔽","いんぺい"],["犠牲","ぎせい"],["遭遇","そうぐう"],["慎重","しんちょう"],["洗練","せんれん"],
-                    ["崩壊","ほうかい"],["覚悟","かくご"],["迅速","じんそく"],["顕著","けんちょ"],["糾弾","きゅうだん"],
-                    ["矛盾","むじゅん"],["概念","がいねん"],["緻密","ちみつ"],["名誉","めいよ"],["憂鬱","ゆううつ"]
-                ],
-                "高校生": [
-                    ["明瞭","めいりょう"],["端的","たんてき"],["顕著","けんちょ"],["洗練","せんれん"],["躊躇","ちゅうちょ"],
-                    ["隠蔽","いんぺい"],["網羅","もうら"],["凌駕","りょうが"],["脆弱","ぜいじゃく"],["俯瞰","ふかん"],
-                    ["恣意","しい"],["概念","がいねん"],["洞察","どうさつ"],["乖離","かいり"],["煩雑","はんざつ"],
-                    ["乖離","かいり"],["変革","へんかく"],["脆弱","ぜいじゃく"],["変貌","へんぼう"],["薔薇","ばら"],
-                    ["捏造","ねつぞう"],["脆弱","ぜいじゃく"],["糾弾","きゅうだん"],["真摯","しんし"],["破綻","はたん"],
-                    ["真面目","まじめ"],["躊躇","ちゅうちょ"],["矛盾","むじゅん"],["真摯","しんし"],["杞憂","きゆう"]
-                ],
-                "一般常識": [
-                    ["醤油","しょうゆ"],["流石","さすが"],["土産","みやげ"],["紅葉","もみじ"],["胡椒","こしょう"],
-                    ["咀嚼","そしゃく"],["貼付","ちょうふ"],["挨拶","あいさつ"],["相殺","そうさい"],["贔屓","ひいき"],
-                    ["破綻","はたん"],["代替","だいたい"],["殺陣","たて"],["重複","ちょうふく"],["脆弱","ぜいじゃく"],
-                    ["出納","すいとう"],["暫く","しばらく"],["穿つ","うがつ"],["汎用","はんよう"],["薬玉","くすだま"],
-                    ["祝詞","のりと"],["情緒","じょうちょ"],["直参","じきさん"],["老舗","しにせ"],["団扇","うちわ"],
-                    ["雪駄","せった"],["蚊帳","かや"],["欠伸","あくび"],["歪曲","わいきょく"],["海老","えび"]
-                ],
-                "漢字王": [
-                    ["暫く","しばらく"],["穿つ","うがつ"],["心許ない","こころもとない"],["喧噪","けんそう"],["魑魅魍魎","ちみもうりょう"],
-                    ["百日紅","さるすべり"],["蒲公英","たんぽぽ"],["紫陽花","あじさい"],["杜鵑","ほととぎす"],["向日葵","ひまわり"],
-                    ["蟋蟀","こおろぎ"],["海星","ひとで"],["水母","くらげ"],["土竜","もぐら"],["蝙蝠","こうもり"],
-                    ["蜥蜴","とかげ"],["蜻蛉","とんぼ"],["蟷螂","かまきり"],["鳳仙花","ほうせんか"],["翡翠","ひすい"],
-                    ["琥珀","こはく"],["瑪瑙","めのう"],["珊瑚","さんご"],["玳瑁","たいまい"],["瑠璃","るり"],
-                    ["饕餮","とうてつ"],["麒麟","きりん"],["鳳凰","ほうおう"],["獏","ばく"],["慇懃無礼","いんぎんぶれい"]
-                ]
-            };
-
-            const selected = rawData[mode] || rawData["小学生"];
-            return selected.map((item, index) => {
-                const isBoss = (index + 1) % 5 === 0;
-                return {
-                    id: index + 1,
-                    kanji: item[0],
-                    reading: item[1],
-                    category: isBoss ? `${mode}【BOSS】` : mode,
-                    meaning: `【STAGE ${index + 1}】${mode}コースの漢字問題です。`,
-                    isBoss: isBoss
-                };
-            });
-        }
-
         let currentList = [];
         let currentIndex = 0;
         let lives = 3;
@@ -366,16 +307,16 @@
             
             const inputField = document.getElementById("user-input");
             
-            // PCキーボード入力・方向キー操作の処理
+            // Enterキーでの送信制御（日本語変換中 isComposing の誤発火を防止）
             inputField.addEventListener("keydown", (e) => {
                 if (e.key === "Enter") {
+                    if (e.isComposing) return; // 変換確定のみの場合は送信しない
                     e.preventDefault();
                     submitAnswer();
                 }
-                // 左右矢印キー(ArrowLeft, ArrowRight)やBackspace等のキー操作はそのまま標準動作（カーソル移動等）を許可
             });
 
-            // ゲーム中に画面上のどこかを押しても入力欄にフォーカスを誘導
+            // ゲーム画面でキーを押した際にフォーカスを当てる
             window.addEventListener("keydown", (e) => {
                 const gameScreen = document.getElementById("screen-game");
                 const activeEl = document.activeElement;
@@ -408,87 +349,89 @@
             }
         }
 
-        // Groq APIで30問を全自動生成
+        // Groq APIでの問題生成
         async function startGame(mode) {
             initAudio();
             playSound('click');
-            startBGM();
             activeMode = mode;
             currentIndex = 0;
             lives = 3;
-            
+
+            apiKey = document.getElementById("api-key-input").value.trim();
+
+            if (!apiKey) {
+                alert("⚠️ Groq APIキーが設定されていません。\n右上の「⚙️ 設定」からAPIキーを入力してください。");
+                openSettings();
+                return;
+            }
+
             document.getElementById("screen-title").classList.add("hidden");
             document.getElementById("screen-gameover").classList.add("hidden");
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.remove("hidden");
+            startBGM();
 
-            apiKey = document.getElementById("api-key-input").value.trim();
-
-            if (apiKey) {
-                try {
-                    let prompt = `あなたは漢字バトルゲームの出題専門AIです。
+            try {
+                let prompt = `あなたは漢字バトルゲームの出題専門AIです。
 ユーザーが選択した「${mode}」コース用の全30問の漢字クイズを出題してください。
 
-【コースごとの基準難易度】
-1. 小学生コース：難易度★☆☆☆☆（小学校1〜6年で習う漢字のみ）
-2. 中学生コース：難易度★★☆☆☆（中学校で習う常用漢字・語彙）
-3. 高校生コース：難易度★★★☆☆（高校レベルの常用漢字・一般難読語）
-4. 一般常識コース：難易度★★★★☆（社会人向け常識漢字・難読地名・慣用句等）
-5. 漢字王コース：難易度★★★★★（最難関・漢検1級レベル・超難読漢字）
+【コースごとの難易度基準】
+- 小学生: 小学校で習う漢字
+- 中学生: 中学レベル
+- 高校生: 高校レベル・一般難読語
+- 一般常識: 社会人常識・難読地名・慣用句等
+- 漢字王: 漢検1級・超難読漢字
 
-【30問の構成と難易度曲線】
-- 1問目〜30問目にかけて、コース内の限界の範囲で段階的に難易度を上げてください。
-- 5問ごと（5問目, 10問目, 15問目, 20問目, 25問目, 30問目）はBOSS問題とし、"isBoss": true、"category": "${mode}【BOSS】" としてください。
-- 特に最後の30問目はコース内最大の難易度（FINAL BOSS）にしてください。
+【ルール】
+- 1〜30問にかけて難易度を上げてください。
+- 5問ごと（5, 10, 15, 20, 25, 30問目）はBOSSとし、"isBoss": true、"category": "${mode}【BOSS】"としてください。
 
-【出力仕様】
-JSON配列（要素数30）のみを出力してください。マークダウンや解説文は含めないでください。
-readingは全角ひらがなのみ。
+【重要：出力形式】
+以下のJSONオブジェクト構造のみを出力してください。
+{
+  "questions": [
+    {"id":1, "kanji":"川", "reading":"かわ", "category":"${mode}", "meaning":"水が流れる川のこと。", "isBoss":false},
+    ... 30問目まで
+  ]
+}`;
 
-[
-  {"id":1, "kanji":"...", "reading":"...", "category":"${mode}", "meaning":"...", "isBoss":false},
-  ...
-  {"id":30, "kanji":"...", "reading":"...", "category":"${mode}【BOSS】", "meaning":"...", "isBoss":true}
-]`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.6,
+                        max_tokens: 4096,
+                        response_format: { type: "json_object" }
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
 
-                    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                        body: JSON.stringify({
-                            model: "llama-3.3-70b-versatile",
-                            messages: [{ role: "user", content: prompt }],
-                            temperature: 0.7
-                        }),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        let jsonText = data.choices[0].message.content.trim();
-                        
-                        const jsonMatch = jsonText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-                        if (jsonMatch) {
-                            jsonText = jsonMatch[0];
-                        }
-                        
-                        currentList = JSON.parse(jsonText);
-                        if (currentList.length > 0) {
-                            initGameScreen();
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    console.log("AI生成失敗またはタイムアウト、内蔵データを使用します:", e);
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(`APIエラー (${res.status}): ${errData.error?.message || "通信失敗"}`);
                 }
-            }
 
-            // API未設定・エラー時はフォールバックデータを使用
-            currentList = generateFallbackList(mode);
-            initGameScreen();
+                const data = await res.json();
+                const jsonContent = JSON.parse(data.choices[0].message.content);
+                
+                if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
+                    currentList = jsonContent.questions;
+                    initGameScreen();
+                    return;
+                } else {
+                    throw new Error("取得したデータ形式が不正です。");
+                }
+            } catch (e) {
+                console.error("AI生成エラー:", e);
+                alert(`❌ 問題の作成に失敗しました。\n\n詳細: ${e.message}\n\nAPIキーや通信環境を確認のうえ再試行してください。`);
+                goToTitle();
+            }
         }
 
         function initGameScreen() {
@@ -534,7 +477,7 @@ readingは全角ひらがなのみ。
             }
             const q = currentList[currentIndex];
             document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
-            document.getElementById("category-text").innerText = `【${q.category}】`;
+            document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
             document.getElementById("kanji-display").innerText = q.kanji;
             document.getElementById("user-input").value = "";
             document.getElementById("ai-message").innerText = `AI「第${currentIndex + 1}問！制限時間30秒！」`;
@@ -617,29 +560,40 @@ readingは全角ひらがなのみ。
             input.focus();
         }
 
-        function toHiragana(str) {
-            return str.replace(/[\u30a1-\u30f6]/g, function(match) {
-                var chr = match.charCodeAt(0) - 0x60;
-                return String.fromCharCode(chr);
+        // 文字列の正規化（ひらがな化・空白除去・Unicode正規化）
+        function normalizeText(str) {
+            if (!str) return "";
+            let text = str.normalize('NFKC');
+            text = text.replace(/\s+/g, ''); // スペース除去
+            text = text.replace(/[\u30a1-\u30f6]/g, function(match) { // カタカナをひらがなに変換
+                return String.fromCharCode(match.charCodeAt(0) - 0x60);
             });
+            return text.trim();
         }
 
         function submitAnswer() {
             initAudio();
-            const rawVal = document.getElementById("user-input").value.trim();
+            const inputField = document.getElementById("user-input");
             
-            // 未入力（空送信）の判定：ペナルティなしでメッセージのみ出力
-            if (!rawVal) {
+            // スマホキーボードの未確定文字を強制的に確定させる
+            inputField.blur();
+
+            const rawVal = inputField.value;
+            const normalizedInput = normalizeText(rawVal);
+            
+            // 未入力（空送信）の判定
+            if (!normalizedInput) {
                 document.getElementById("ai-message").innerText = "AI「文字が入力されていません！解答を入力してください」";
                 playSound('click');
+                inputField.focus();
                 return;
             }
 
             playSound('click');
-            const val = toHiragana(rawVal);
             const q = currentList[currentIndex];
+            const normalizedAnswer = normalizeText(q.reading);
             
-            if (val === toHiragana(q.reading.trim())) {
+            if (normalizedInput === normalizedAnswer) {
                 clearInterval(timer);
                 playSound('correct');
                 showExplanationModal(q);
