@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI - Complete Edition</title>
+    <title>ネプリーグ風 漢字ツアーズ AI - Fixed Edition</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
@@ -303,13 +303,14 @@
         function updateVolume(val) {
             soundVolume = val / 100;
             setStorage("sound_volume", val);
-            document.getElementById("volume-val").innerText = val;
+            const vVal = document.getElementById("volume-val");
+            if (vVal) vVal.innerText = val;
             playSound('click');
         }
 
         function startBGM() {
             stopBGM();
-            let notes = [130.81, 146.83, 164.81, 174.61]; // C3, D3, E3, F3
+            let notes = [130.81, 146.83, 164.81, 174.61];
             let step = 0;
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
@@ -340,10 +341,10 @@
         }
 
         function playSound(type) {
-            initAudio();
-            if (soundVolume <= 0 || !audioCtx) return;
-            
             try {
+                initAudio();
+                if (soundVolume <= 0 || !audioCtx) return;
+
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
@@ -359,10 +360,10 @@
                     osc.start(now); osc.stop(now + 0.04);
                 } else if (type === 'correct') {
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-                    osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    osc.frequency.setValueAtTime(783.99, now + 0.16);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.24);
                     gain.gain.setValueAtTime(baseVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                     osc.start(now); osc.stop(now + 0.45);
@@ -473,7 +474,7 @@
 
         let currentList = [];
         let currentIndex = 0;
-        let clearedCount = 0; // 正解撃破数を記録
+        let clearedCount = 0;
         let lives = 3;
         let timer = null;
         let timeRemaining = 15;
@@ -483,39 +484,42 @@
         let apiKey = getStorage("hf_api_key", "");
 
         window.onload = () => {
-            const savedVol = getStorage("sound_volume", "50");
-            soundVolume = parseInt(savedVol) / 100;
-            const volSlider = document.getElementById("volume-slider");
-            if (volSlider) volSlider.value = savedVol;
-            document.getElementById("volume-val").innerText = savedVol;
+            try {
+                const savedVol = getStorage("sound_volume", "50");
+                soundVolume = parseInt(savedVol) / 100;
+                const volSlider = document.getElementById("volume-slider");
+                if (volSlider) volSlider.value = savedVol;
+                const vVal = document.getElementById("volume-val");
+                if (vVal) vVal.innerText = savedVol;
 
-            const apiKeyInput = document.getElementById("api-key-input");
-            if (apiKeyInput) apiKeyInput.value = apiKey;
+                const apiKeyInput = document.getElementById("api-key-input");
+                if (apiKeyInput) apiKeyInput.value = apiKey;
 
-            changeInputMode(inputMode);
-            
-            const inputField = document.getElementById("user-input");
-            if (inputField) {
-                inputField.addEventListener("keydown", (e) => {
-                    if (e.key === "Enter") {
-                        if (e.isComposing) return;
-                        e.preventDefault();
-                        submitAnswer();
+                changeInputMode(inputMode);
+                
+                const inputField = document.getElementById("user-input");
+                if (inputField) {
+                    inputField.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter") {
+                            if (e.isComposing) return;
+                            e.preventDefault();
+                            submitAnswer();
+                        }
+                    });
+                }
+
+                window.addEventListener("keydown", (e) => {
+                    const gameScreen = document.getElementById("screen-game");
+                    const activeEl = document.activeElement;
+                    if (gameScreen && !gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                        if (e.key.length === 1 || e.key === "Backspace") {
+                            if (inputField) inputField.focus();
+                        }
                     }
                 });
-            }
 
-            window.addEventListener("keydown", (e) => {
-                const gameScreen = document.getElementById("screen-game");
-                const activeEl = document.activeElement;
-                if (gameScreen && !gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
-                    if (e.key.length === 1 || e.key === "Backspace") {
-                        if (inputField) inputField.focus();
-                    }
-                }
-            });
-
-            checkApiStatusBackground();
+                checkApiStatusBackground();
+            } catch(e) {}
         };
 
         async function checkApiStatusBackground() {
@@ -531,7 +535,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -587,31 +591,34 @@
         }
 
         async function startGame(mode) {
-            initAudio();
-            playSound('click');
+            try {
+                playSound('click');
+            } catch(e){}
+
             activeMode = mode;
             currentIndex = 0;
             clearedCount = 0;
             lives = 3;
 
+            // 画面を即座にローディングへ遷移
             document.getElementById("screen-title").classList.add("hidden");
             document.getElementById("screen-gameover").classList.add("hidden");
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.remove("hidden");
 
             apiKey = getStorage("hf_api_key", "");
+            let loadedFromApi = false;
 
+            // APIがオンラインでキーが存在する場合のみ試行（5秒タイムアウト）
             if (isApiOnline && apiKey && navigator.onLine) {
                 document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
-                document.getElementById("loading-desc").innerText = "AIが難易度カーブを計算しています";
+                document.getElementById("loading-desc").innerText = "AIが問題を生成しています";
 
                 try {
-                    let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。
-1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。
-JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
+                    let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000);
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                     const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
