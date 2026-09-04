@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI (Qwen2.5-7B-Instruct版)</title>
+    <title>ネプリーグ風 漢字ツアーズ AI (Hugging Face / サーバー認証版)</title>
     <style>
         * { box-sizing: border-box; }
         html, body {
@@ -136,7 +136,7 @@
                 <span id="status-dot" class="status-dot dot-red" title="接続状態"></span>
             </h1>
             <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
-                🚀 モデル: Qwen/Qwen2.5-7B-Instruct<br>制限時間15秒で漢字を撃破せよ！
+                🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
             </div>
             
             <button class="btn" onclick="startGame('小学生')">LEVEL 1 🎒 小学生ステージ</button>
@@ -149,7 +149,7 @@
         <!-- ローディング画面 -->
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
             <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
-            <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">Qwen2.5-7B 生成準備中...</h2>
+            <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
             <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">出題問題をロードしています</p>
         </div>
 
@@ -229,7 +229,7 @@
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
-                <!-- 独自サーバー認証 -->
+                <!-- 追加: サーバー認証 -->
                 <div style="margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 10px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">独自サーバー認証（自作APIプロキシ/バックエンド）：</label>
                     <input type="text" id="server-url-input" placeholder="https://your-api-server.com/endpoint" style="margin-top: 3px; font-size: 13px; padding: 8px; text-align: left;">
@@ -278,23 +278,32 @@
 
     <script>
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
-
         let audioCtx = null;
         let soundVolume = 0.5;
         let bgmTimer = null;
         let isApiOnline = false;
 
         function getStorage(key, defaultVal) {
-            try { return localStorage.getItem(key) || defaultVal; } catch(e) { return defaultVal; }
+            try {
+                return localStorage.getItem(key) || defaultVal;
+            } catch(e) {
+                return defaultVal;
+            }
         }
         function setStorage(key, val) {
-            try { localStorage.setItem(key, val); } catch(e) {}
+            try {
+                localStorage.setItem(key, val);
+            } catch(e) {}
         }
 
         function initAudio() {
             try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
             } catch(e) {}
         }
 
@@ -489,7 +498,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -519,6 +528,7 @@
             }
         }
 
+        // 独自サーバー認証テスト関数
         async function testServerAuth() {
             initAudio();
             playSound('click');
@@ -538,7 +548,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 const res = await fetch(url, {
                     method: "POST",
@@ -547,7 +557,7 @@
                         "X-Server-Key": key,
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ action: "auth_test", model: HF_MODEL, ping: true }),
+                    body: JSON.stringify({ action: "auth_test", ping: true }),
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
@@ -583,7 +593,7 @@
                 }
             } else {
                 if (customKey) customKey.classList.remove("hidden");
-                if (flickBtn) flickBtn.classList.add("hidden"); // ← classList.add に修正
+                if (flickBtn) flickBtn.classList.hidden = true;
                 if (inputField) {
                     inputField.readOnly = false;
                     inputField.placeholder = "画面ボタンか直接入力";
@@ -606,7 +616,7 @@
             apiKey = getStorage("hf_api_key", "");
 
             if (isApiOnline && apiKey && navigator.onLine) {
-                document.getElementById("loading-title").innerText = `${HF_MODEL} 生成中...`;
+                document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
                 document.getElementById("loading-desc").innerText = "AIが難易度カーブを計算しています";
 
                 try {
@@ -615,7 +625,7 @@
 JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 応答待ちを最大8秒に制限
+                    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
                     const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
@@ -651,7 +661,6 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
                 }
             }
 
-            // API非接続時または通信失敗時のフォールバック処理
             document.getElementById("loading-title").innerText = "ツアーズバギー 発進！";
             document.getElementById("loading-desc").innerText = "出題データロード完了";
             
@@ -687,7 +696,7 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
             if (resResult) resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -705,7 +714,7 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
                 clearTimeout(timeoutId);
 
                 if (res.ok) {
-                    if (resResult) resResult.innerHTML = `<span style='color:#22c55e;'>✅ 認証成功！（${HF_MODEL} 使用可能）</span>`;
+                    if (resResult) resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI出題モード有効）</span>";
                     playSound('correct');
                     isApiOnline = true;
                     if (dot) dot.className = "status-dot dot-green";
@@ -954,6 +963,7 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
             initAudio();
             playSound('click');
 
+            // 入力値の保持・取得
             const keyEl = document.getElementById("api-key-input");
             apiKey = keyEl ? keyEl.value.trim() : "";
             setStorage("hf_api_key", apiKey);
