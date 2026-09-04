@@ -143,7 +143,7 @@
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
             <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
                 漢字ツアーズ AI
-                <span id="status-dot" class="status-dot dot-red" title="API接続状態"></span>
+                <span id="status-dot" class="status-dot dot-red" title="Gemini API接続状態"></span>
             </h1>
             <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
                 🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
@@ -160,7 +160,7 @@
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
             <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
             <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
-            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">AIが出題問題をマッチング生成しています</p>
+            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">Gemini AIが出題問題をマッチング生成しています</p>
         </div>
 
         <!-- 3. ゲーム画面 -->
@@ -238,8 +238,8 @@
                 <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ システム設定</h2>
                 
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Groq APIキー：</label>
-                    <input type="password" id="api-key-input" placeholder="gsk_..." style="margin-top: 3px; font-size: 14px; padding: 8px;">
+                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Gemini APIキー：</label>
+                    <input type="password" id="api-key-input" placeholder="AIzaSy..." style="margin-top: 3px; font-size: 14px; padding: 8px;">
                     <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
@@ -283,7 +283,7 @@
     </div>
 
     <script>
-        const DEFAULT_API_KEY = "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";
+        const DEFAULT_API_KEY = "AIzaSyCdXAxroCJCWwc9x4uh43GleBlg2Jagf6s";
         let audioCtx = null;
         let soundVolume = 0.5;
         let bgmTimer = null;
@@ -389,7 +389,7 @@
             } catch(e) {}
         }
 
-        // 漢字データベース
+        // 漢字データベース (オフライン/フォールバック用)
         const KANJI_DATABASE = {
             "小学生": [
                 ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],["車","くるま","車輪で移動する乗り物。"],["花","はな","植物の咲かせるきれいな部分。"],
@@ -438,7 +438,7 @@
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = "keyboard";
-        let apiKey = localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
+        let apiKey = localStorage.getItem("gemini_api_key") || DEFAULT_API_KEY;
 
         window.onload = () => {
             document.getElementById("api-key-input").value = apiKey;
@@ -463,14 +463,13 @@
                 }
             });
 
-            // 起動時にAPI接続テストを実行し、タイトル横のドット色を更新
             checkApiStatusBackground();
         };
 
-        /* API接続チェックを行い、タイトルのステータスドットを赤/緑に変更 */
+        /* Gemini API接続チェックを行い、タイトルのステータスドットを赤/緑に変更 */
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
-            apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
+            apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("gemini_api_key") || DEFAULT_API_KEY;
 
             if (!apiKey || !navigator.onLine) {
                 isApiOnline = false;
@@ -479,10 +478,10 @@
             }
 
             try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "test" }], max_tokens: 1 })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
                 });
 
                 if (res.ok) {
@@ -531,11 +530,11 @@
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.remove("hidden");
 
-            apiKey = localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
+            apiKey = localStorage.getItem("gemini_api_key") || DEFAULT_API_KEY;
 
             if (isApiOnline && apiKey && navigator.onLine) {
                 document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
-                document.getElementById("loading-desc").innerText = "AIがネプリーグ仕様の難易度カーブを計算しています";
+                document.getElementById("loading-desc").innerText = "Gemini AIがネプリーグ仕様の難易度カーブを計算しています";
 
                 try {
                     let prompt = `あなたはネプリーグの「漢字ツアーズ」出題AIです。
@@ -557,15 +556,14 @@ JSONオブジェクトのみを出力してください。
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-                    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            model: "llama-3.3-70b-versatile",
-                            messages: [{ role: "user", content: prompt }],
-                            temperature: 0.6,
-                            max_tokens: 4096,
-                            response_format: { type: "json_object" }
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
                         }),
                         signal: controller.signal
                     });
@@ -573,11 +571,14 @@ JSONオブジェクトのみを出力してください。
 
                     if (res.ok) {
                         const data = await res.json();
-                        const jsonContent = JSON.parse(data.choices[0].message.content);
-                        if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
-                            currentList = jsonContent.questions;
-                            initGameScreen();
-                            return;
+                        const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (textContent) {
+                            const jsonContent = JSON.parse(textContent);
+                            if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
+                                currentList = jsonContent.questions;
+                                initGameScreen();
+                                return;
+                            }
                         }
                     }
                 } catch (e) {
@@ -611,13 +612,13 @@ JSONオブジェクトのみを出力してください。
             
             resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
             try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
-                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "test" }], max_tokens: 1 })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "test" }] }] })
                 });
                 if (res.ok) {
-                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI生成モード有効）</span>";
+                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（Gemini AI生成モード有効）</span>";
                     playSound('correct');
                     isApiOnline = true;
                     dot.className = "status-dot dot-green";
@@ -866,7 +867,7 @@ JSONオブジェクトのみを出力してください。
             initAudio();
             playSound('click');
             apiKey = document.getElementById("api-key-input").value.trim() || DEFAULT_API_KEY;
-            localStorage.setItem("groq_api_key", apiKey);
+            localStorage.setItem("gemini_api_key", apiKey);
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
             changeInputMode(inputMode);
