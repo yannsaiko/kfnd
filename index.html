@@ -95,12 +95,13 @@
             box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
         }
 
-        /* ステータスドット */
+        /* ステータスドット (赤・緑) */
         .status-dot {
-            display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px;
+            display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px; vertical-align: middle;
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
-        .dot-red { background-color: #ef4444; box-shadow: 0 0 6px #ef4444; }
-        .dot-green { background-color: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .dot-green { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
 
         @keyframes zoomIn {
             from { transform: scale(0.3); opacity: 0; }
@@ -170,7 +171,7 @@
                     <div id="stage-text" style="font-size: 13px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
                     <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
                 </div>
-                <!-- ライフ表示（ネプリーグ風バギー） -->
+                <!-- ライフ表示 -->
                 <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
                 <!-- カウントダウン -->
                 <div style="background: #0f172a; border: 2px solid #ef4444; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #f87171;" id="timer-box">
@@ -239,7 +240,7 @@
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Groq APIキー：</label>
                     <input type="password" id="api-key-input" placeholder="gsk_..." style="margin-top: 3px; font-size: 14px; padding: 8px;">
-                    <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 手動で再接続確認</button>
+                    <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
@@ -303,7 +304,7 @@
             playSound('click');
         }
 
-        /* ネプリーグ風の緊張感のあるBGMシミュレーション */
+        /* ネプリーグ風 BGM */
         function startBGM() {
             stopBGM();
             let notes = [110, 116.54, 123.47, 130.81];
@@ -462,10 +463,11 @@
                 }
             });
 
-            // 初期ロード（タイトル表示時）で裏で認証確認を実行
+            // 起動時にAPI接続テストを実行し、タイトル横のドット色を更新
             checkApiStatusBackground();
         };
 
+        /* API接続チェックを行い、タイトルのステータスドットを赤/緑に変更 */
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
             apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
@@ -605,8 +607,9 @@ JSONオブジェクトのみを出力してください。
             playSound('click');
             const key = document.getElementById("api-key-input").value.trim() || DEFAULT_API_KEY;
             const resResult = document.getElementById("auth-result");
+            const dot = document.getElementById("status-dot");
             
-            resResult.innerHTML = "<span style='color:#facc15;'>🔄 裏で接続認証テスト中...</span>";
+            resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
             try {
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
@@ -617,18 +620,18 @@ JSONオブジェクトのみを出力してください。
                     resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI生成モード有効）</span>";
                     playSound('correct');
                     isApiOnline = true;
-                    document.getElementById("status-dot").className = "status-dot dot-green";
+                    dot.className = "status-dot dot-green";
                 } else {
-                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（フォールバックモード）</span>";
+                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（固定データ使用）</span>";
                     playSound('wrong');
                     isApiOnline = false;
-                    document.getElementById("status-dot").className = "status-dot dot-red";
+                    dot.className = "status-dot dot-red";
                 }
             } catch (e) {
-                resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続不可</span>";
+                resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続不可（固定データ使用）</span>";
                 playSound('wrong');
                 isApiOnline = false;
-                document.getElementById("status-dot").className = "status-dot dot-red";
+                dot.className = "status-dot dot-red";
             }
         }
 
@@ -856,8 +859,6 @@ JSONオブジェクトのみを出力してください。
             playSound('click');
             isPaused = true;
             document.getElementById("modal-settings").classList.remove("hidden");
-            
-            // メニューを開く際にも手動確認枠で接続テストを実行
             testApiKey();
         }
 
@@ -869,8 +870,6 @@ JSONオブジェクトのみを出力してください。
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
             changeInputMode(inputMode);
-            
-            // 設定を閉じたら裏で接続状態を更新
             checkApiStatusBackground();
         }
 
@@ -882,8 +881,6 @@ JSONオブジェクトのみを出力してください。
             document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
             ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => document.getElementById(id).classList.add("hidden"));
             document.getElementById("screen-title").classList.remove("hidden");
-            
-            // タイトル画面に戻ったタイミングで自動的に裏でAPI接続確認を実行
             checkApiStatusBackground();
         }
     </script>
