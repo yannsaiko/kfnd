@@ -145,7 +145,7 @@
                 <span id="status-dot" class="status-dot dot-red" title="API接続状態"></span>
             </h1>
             <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
-                🚀 ツアーズバギー発進！全30問の漢字を撃破せよ！
+                🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
             </div>
             
             <button class="btn" onclick="startGame('小学生')">LEVEL 1 🎒 小学生ステージ</button>
@@ -174,7 +174,7 @@
                 <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
                 <!-- カウントダウン -->
                 <div style="background: #0f172a; border: 2px solid #ef4444; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #f87171;" id="timer-box">
-                    ⏱ <span id="timer-text">30</span>
+                    ⏱ <span id="timer-text">15</span>
                 </div>
             </div>
 
@@ -239,7 +239,7 @@
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Groq APIキー：</label>
                     <input type="password" id="api-key-input" placeholder="gsk_..." style="margin-top: 3px; font-size: 14px; padding: 8px;">
-                    <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続確認</button>
+                    <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 手動で再接続確認</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
@@ -282,6 +282,7 @@
     </div>
 
     <script>
+        const DEFAULT_API_KEY = "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";
         let audioCtx = null;
         let soundVolume = 0.5;
         let bgmTimer = null;
@@ -305,7 +306,7 @@
         /* ネプリーグ風の緊張感のあるBGMシミュレーション */
         function startBGM() {
             stopBGM();
-            let notes = [110, 116.54, 123.47, 130.81]; // サスペンス風の低音ループ
+            let notes = [110, 116.54, 123.47, 130.81];
             let step = 0;
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
@@ -320,7 +321,7 @@
 
                     osc.type = 'sawtooth';
                     let freq = notes[step % notes.length];
-                    if (timeRemaining <= 10) freq *= 1.5; // 残り10秒でテンポとピッチが上昇
+                    if (timeRemaining <= 5) freq *= 1.5;
 
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime(0.04 * soundVolume, now);
@@ -329,7 +330,7 @@
                     osc.stop(now + 0.18);
                     step++;
                 } catch(e) {}
-            }, timeRemaining <= 10 ? 250 : 400);
+            }, timeRemaining <= 5 ? 250 : 400);
         }
 
         function stopBGM() {
@@ -355,7 +356,6 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
                     osc.start(now); osc.stop(now + 0.04);
                 } else if (type === 'correct') {
-                    // 正解・大爆発音
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(523.25, now);
                     osc.frequency.setValueAtTime(659.25, now + 0.08);
@@ -365,7 +365,6 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                     osc.start(now); osc.stop(now + 0.45);
                 } else if (type === 'wrong') {
-                    // 不正解・ダメージ音
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(180, now);
                     osc.frequency.setValueAtTime(90, now + 0.12);
@@ -373,7 +372,6 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
                 } else if (type === 'boss') {
-                    // ボス出現警告
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(300, now);
                     osc.frequency.setValueAtTime(600, now + 0.15);
@@ -381,7 +379,6 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
                 } else if (type === 'tick') {
-                    // カウントダウン音
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(1000, now);
                     gain.gain.setValueAtTime(baseVolume * 0.3, now);
@@ -436,11 +433,11 @@
         let currentIndex = 0;
         let lives = 3;
         let timer = null;
-        let timeRemaining = 30;
+        let timeRemaining = 15;
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = "keyboard";
-        let apiKey = localStorage.getItem("groq_api_key") || "";
+        let apiKey = localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
 
         window.onload = () => {
             document.getElementById("api-key-input").value = apiKey;
@@ -465,12 +462,13 @@
                 }
             });
 
+            // 初期ロード（タイトル表示時）で裏で認証確認を実行
             checkApiStatusBackground();
         };
 
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
-            apiKey = localStorage.getItem("groq_api_key") || "";
+            apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
 
             if (!apiKey || !navigator.onLine) {
                 isApiOnline = false;
@@ -510,7 +508,7 @@
                 customKey.classList.add("hidden");
                 flickBtn.classList.remove("hidden");
                 inputField.readOnly = false;
-                inputField.placeholder = "タップしてフリックキーボードで力";
+                inputField.placeholder = "タップしてフリックキーボードで入力";
             } else {
                 customKey.classList.remove("hidden");
                 flickBtn.classList.add("hidden");
@@ -530,6 +528,8 @@
             document.getElementById("screen-gameover").classList.add("hidden");
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.remove("hidden");
+
+            apiKey = localStorage.getItem("groq_api_key") || DEFAULT_API_KEY;
 
             if (isApiOnline && apiKey && navigator.onLine) {
                 document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
@@ -603,26 +603,23 @@ JSONオブジェクトのみを出力してください。
         async function testApiKey() {
             initAudio();
             playSound('click');
-            const key = document.getElementById("api-key-input").value.trim();
+            const key = document.getElementById("api-key-input").value.trim() || DEFAULT_API_KEY;
             const resResult = document.getElementById("auth-result");
-            if (!key) {
-                resResult.innerHTML = "<span style='color:#ef4444;'>⚠️ キーを入力してください</span>";
-                return;
-            }
-            resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続確認中...</span>";
+            
+            resResult.innerHTML = "<span style='color:#facc15;'>🔄 裏で接続認証テスト中...</span>";
             try {
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
-                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "test" }], max_tokens: 5 })
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "test" }], max_tokens: 1 })
                 });
                 if (res.ok) {
-                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ API接続成功！</span>";
+                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI生成モード有効）</span>";
                     playSound('correct');
                     isApiOnline = true;
                     document.getElementById("status-dot").className = "status-dot dot-green";
                 } else {
-                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー</span>";
+                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（フォールバックモード）</span>";
                     playSound('wrong');
                     isApiOnline = false;
                     document.getElementById("status-dot").className = "status-dot dot-red";
@@ -650,7 +647,6 @@ JSONオブジェクトのみを出力してください。
             kanjiDisplay.classList.remove("destroy-anim");
             kanjiDisplay.innerText = q.kanji;
             
-            // アニメーションのリセット
             void kanjiDisplay.offsetWidth;
             kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
@@ -679,7 +675,7 @@ JSONオブジェクトのみを出力してください。
 
         function resetTimer() {
             clearInterval(timer);
-            timeRemaining = 30;
+            timeRemaining = 15;
             const timerText = document.getElementById("timer-text");
             const timerBox = document.getElementById("timer-box");
             timerText.innerText = timeRemaining;
@@ -690,7 +686,7 @@ JSONオブジェクトのみを出力してください。
                 timeRemaining--;
                 timerText.innerText = timeRemaining;
 
-                if (timeRemaining <= 10) {
+                if (timeRemaining <= 5) {
                     timerBox.classList.add("timer-warning");
                     playSound('tick');
                 }
@@ -784,7 +780,6 @@ JSONオブジェクトのみを出力してください。
                 clearInterval(timer);
                 playSound('correct');
                 
-                // 漢字爆発アニメーション
                 const kanjiDisplay = document.getElementById("kanji-display");
                 kanjiDisplay.classList.add("destroy-anim");
 
@@ -861,16 +856,21 @@ JSONオブジェクトのみを出力してください。
             playSound('click');
             isPaused = true;
             document.getElementById("modal-settings").classList.remove("hidden");
+            
+            // メニューを開く際にも手動確認枠で接続テストを実行
+            testApiKey();
         }
 
         function closeSettings() {
             initAudio();
             playSound('click');
-            apiKey = document.getElementById("api-key-input").value.trim();
+            apiKey = document.getElementById("api-key-input").value.trim() || DEFAULT_API_KEY;
             localStorage.setItem("groq_api_key", apiKey);
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
             changeInputMode(inputMode);
+            
+            // 設定を閉じたら裏で接続状態を更新
             checkApiStatusBackground();
         }
 
@@ -882,6 +882,8 @@ JSONオブジェクトのみを出力してください。
             document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
             ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => document.getElementById(id).classList.add("hidden"));
             document.getElementById("screen-title").classList.remove("hidden");
+            
+            // タイトル画面に戻ったタイミングで自動的に裏でAPI接続確認を実行
             checkApiStatusBackground();
         }
     </script>
