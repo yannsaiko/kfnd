@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI (Hugging Face版)</title>
+    <title>ネプリーグ風 漢字ツアーズ AI</title>
     <style>
         * { box-sizing: border-box; }
         html, body {
@@ -21,159 +21,100 @@
             width: 100%; max-width: 450px; padding: 0 15px; text-align: center;
             display: flex; flex-direction: column; align-items: center; position: relative;
         }
-        .hidden { display: none !important; }
-
-        .show-title-badge {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000; font-weight: 900; font-size: 11px; padding: 2px 10px;
-            border-radius: 4px; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 4px;
-        }
-
+        
         .btn { 
             background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); 
-            color: white; padding: 12px; margin: 6px 0; border: 2px solid #60a5fa; border-radius: 12px; 
+            color: white; padding: 14px; margin: 6px 0; border: 2px solid #60a5fa; border-radius: 12px; 
             font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(29, 78, 216, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-            touch-action: manipulation; transition: transform 0.1s;
+            box-shadow: 0 4px 10px rgba(29, 78, 216, 0.5);
+            touch-action: manipulation; display: block;
         }
         .btn:active { transform: scale(0.97); }
 
         .key-btn { 
             background: linear-gradient(180deg, #334155 0%, #1e293b 100%); 
             color: white; padding: 8px 0; margin: 2px; border: 1px solid #475569; border-radius: 6px; 
-            font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); touch-action: manipulation;
+            font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; touch-action: manipulation;
         }
-        .key-btn:active { background: #0f172a; }
         .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 2px; }
 
         input, select { 
             width: 100%; padding: 10px; font-size: 18px; text-align: center; border-radius: 10px; 
             border: 2px solid #38bdf8; margin-bottom: 6px; background: #0f172a; color: #fff; font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
         }
         
         .stage-view { 
             background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); 
             border: 3px solid #f59e0b; border-radius: 16px; padding: 15px 10px; margin: 6px 0; width: 100%; 
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(0,0,0,0.8); 
-            position: relative; overflow: hidden; flex-shrink: 0;
-        }
-
-        .stage-view::before {
-            content: ''; position: absolute; inset: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(56, 189, 248, 0.05) 2px, rgba(56, 189, 248, 0.05) 4px);
-            pointer-events: none;
+            position: relative; overflow: hidden;
         }
 
         .kanji-text {
             font-size: 58px; font-weight: 900; line-height: 1.1; color: #ffffff;
-            text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8, 0 0 30px #0284c7;
-            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .timer-warning {
-            color: #ef4444 !important;
-            animation: pulse 0.5s infinite alternate;
+            text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;
         }
 
         .modal {
-            position: fixed; inset: 0; background: rgba(5, 11, 20, 0.92); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(5, 11, 20, 0.95);
             display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 100;
-            animation: fadeIn 0.2s ease-out;
         }
         .modal-content {
             background: #1e293b; border: 2px solid #f59e0b; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
-            max-height: 90vh; overflow-y: auto;
         }
 
-        @keyframes zoomIn {
-            from { transform: scale(0.3); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        #debug-log {
+            color: #f87171; font-size: 11px; margin-top: 10px; text-align: left; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px; display: none; width: 100%;
         }
-        @keyframes pulse {
-            from { transform: scale(1); opacity: 1; }
-            to { transform: scale(1.15); opacity: 0.8; }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-12px); }
-            40%, 80% { transform: translateX(12px); }
-        }
-        .shake { animation: shake 0.4s ease-in-out; }
-
-        @keyframes destroy {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.3); filter: brightness(3) drop-shadow(0 0 20px #ef4444); }
-            100% { transform: scale(0); opacity: 0; }
-        }
-        .destroy-anim { animation: destroy 0.4s forwards; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- ヘッダー -->
         <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <div class="show-title-badge">フジテレビ風 クイズ番組</div>
-            <button onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
-                ⚙️ 設定 / PAUSE
+            <div style="background: #f59e0b; color: #000; font-weight: 900; font-size: 11px; padding: 2px 10px; border-radius: 4px;">ネプリーグ風</div>
+            <button onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                ⚙️ 設定
             </button>
         </div>
 
         <!-- タイトル画面 -->
-        <div id="screen-title" style="width: 100%;">
-            <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
-            <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
-                漢字ツアーズ AI
-            </h1>
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
-                🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
-            </div>
+        <div id="screen-title" style="width: 100%; display: block;">
+            <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 15px 0;">漢字ツアーズ AI</h1>
+            <p style="color: #cbd5e1; font-size: 13px; margin-bottom: 20px;">難易度を選択してゲームスタート！</p>
             
-            <button class="btn" onclick="startGame('小学生')">LEVEL 1 🎒 小学生ステージ</button>
-            <button class="btn" onclick="startGame('中学生')">LEVEL 2 ✏️ 中学生ステージ</button>
-            <button class="btn" onclick="startGame('高校生')">LEVEL 3 🏫 高校生ステージ</button>
-            <button class="btn" onclick="startGame('一般常識')">LEVEL 4 💼 一般常識ステージ</button>
-            <button class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
-        </div>
-
-        <!-- ローディング画面 -->
-        <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
-            <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
-            <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
-            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">出題問題をロードしています</p>
+            <button class="btn start-btn" data-mode="小学生">LEVEL 1 🎒 小学生ステージ</button>
+            <button class="btn start-btn" data-mode="中学生">LEVEL 2 ✏️ 中学生ステージ</button>
+            <button class="btn start-btn" data-mode="高校生">LEVEL 3 🏫 高校生ステージ</button>
+            <button class="btn start-btn" data-mode="一般常識">LEVEL 4 💼 一般常識ステージ</button>
+            <button class="btn start-btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171;" data-mode="漢字王">FINAL LEVEL 👑 漢字王ステージ</button>
         </div>
 
         <!-- ゲーム画面 -->
-        <div id="screen-game" class="hidden" style="width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+        <div id="screen-game" style="width: 100%; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 10px;">
                 <div style="text-align: left;">
-                    <div id="stage-text" style="font-size: 13px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
+                    <div id="stage-text" style="font-size: 13px; font-weight: 900; color: #facc15;">STAGE 1 / 30</div>
                     <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
                 </div>
-                <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
-                <div style="background: #0f172a; border: 2px solid #ef4444; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #f87171;" id="timer-box">
+                <div id="lives-container" style="font-size: 18px;">🚀🚀🚀</div>
+                <div style="background: #0f172a; border: 2px solid #ef4444; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #f87171;">
                     ⏱ <span id="timer-text">15</span>
                 </div>
             </div>
 
-            <div style="background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 4px solid #38bdf8; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left; color: #e2e8f0;">
-                🎙️ <span id="ai-message">「さあ、漢字ツアーズ スタートです！」</span>
+            <div style="background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 4px; font-size: 12px; width: 100%; margin-bottom: 6px; text-align: left;">
+                🎙️ <span id="ai-message">「問題の読みを入力してください！」</span>
             </div>
 
             <div class="stage-view" id="enemy-box">
-                <div id="boss-badge" class="hidden" style="position: absolute; top: 8px; right: 10px; background: #dc2626; color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 4px; box-shadow: 0 0 8px #dc2626; letter-spacing: 1px;">⚠️ BOSS</div>
-                <div id="enemy-emoji" style="font-size: 32px; margin-bottom: 4px; transition: transform 0.2s;">👾</div>
+                <div id="enemy-emoji" style="font-size: 32px; margin-bottom: 4px;">👾</div>
                 <div id="kanji-display" class="kanji-text">川</div>
             </div>
 
             <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off">
 
-            <button id="flick-submit-btn" class="btn hidden" style="background: #2563eb; margin-bottom: 6px; padding: 10px;" onclick="submitAnswer()">攻撃（解答する） ➔</button>
-            
-            <div id="custom-keyboard" style="width: 100%; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="custom-keyboard" style="width: 100%; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px;">
                 <div class="key-row"><button class="key-btn" onclick="addKey('あ')">あ</button><button class="key-btn" onclick="addKey('い')">い</button><button class="key-btn" onclick="addKey('う')">う</button><button class="key-btn" onclick="addKey('え')">え</button><button class="key-btn" onclick="addKey('お')">お</button></div>
                 <div class="key-row"><button class="key-btn" onclick="addKey('か')">か</button><button class="key-btn" onclick="addKey('き')">き</button><button class="key-btn" onclick="addKey('く')">く</button><button class="key-btn" onclick="addKey('け')">け</button><button class="key-btn" onclick="addKey('こ')">こ</button></div>
                 <div class="key-row"><button class="key-btn" onclick="addKey('さ')">さ</button><button class="key-btn" onclick="addKey('し')">し</button><button class="key-btn" onclick="addKey('す')">す</button><button class="key-btn" onclick="addKey('せ')">せ</button><button class="key-btn" onclick="addKey('そ')">そ</button></div>
@@ -188,350 +129,226 @@
                 </div>
                 <div class="key-row" style="margin-top: 3px;">
                     <button class="key-btn" style="background:#d97706;" onclick="addDakuten()">濁点 ”</button>
-                    <button class="key-btn" style="background:#d97706;" onclick="addHandakuten()">半濁点 ゜</button>
                     <button class="key-btn" style="background:#dc2626;" onclick="delKey()">1文字消す</button>
-                    <button class="key-btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; flex: 1.5; font-size: 16px;" onclick="submitAnswer()">発射（決定）</button>
+                    <button class="key-btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); flex: 1.5; font-size: 16px;" onclick="submitAnswer()">攻撃（決定）</button>
                 </div>
             </div>
         </div>
 
         <!-- 解説モーダル -->
-        <div id="modal-explanation" class="modal hidden">
+        <div id="modal-explanation" class="modal" style="display: none;">
             <div class="modal-content">
-                <h2 id="modal-title" style="font-size: 26px; margin-bottom: 5px; font-weight: 900;">💥 CLEAR!</h2>
-                <div id="modal-kanji" style="font-size: 48px; font-weight: 900; margin: 6px 0; color: #facc15; text-shadow: 0 0 10px #facc15;">漢字</div>
-                <div id="modal-reading" style="font-size: 20px; color: #4ade80; font-weight: bold; margin-bottom: 12px;">【読み】よみ</div>
-                <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; text-align: left; font-size: 13px; margin-bottom: 15px; border: 1px solid #475569;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【広辞苑・意味解説】</div>
-                    <div id="modal-meaning" style="line-height: 1.5; color: #e2e8f0;">解説文</div>
+                <h2 id="modal-title" style="font-size: 26px; margin-bottom: 5px;">💥 CLEAR!</h2>
+                <div id="modal-kanji" style="font-size: 48px; font-weight: 900; margin: 6px 0; color: #facc15;">漢字</div>
+                <div id="modal-reading" style="font-size: 20px; color: #4ade80; margin-bottom: 12px;">【読み】よみ</div>
+                <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; text-align: left; font-size: 13px; margin-bottom: 15px;">
+                    <div id="modal-meaning">解説文</div>
                 </div>
-                <button id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="nextStage()">次のステージへ進む ➔</button>
+                <button id="modal-next-btn" class="btn" style="background: #22c55e;" onclick="nextStage()">次のステージへ ➔</button>
             </div>
         </div>
 
         <!-- 設定モーダル -->
-        <div id="modal-settings" class="modal hidden">
-            <div class="modal-content" style="text-align: left;">
-                <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ システム設定</h2>
-                
-                <!-- Hugging Face API認証 -->
-                <div style="margin-bottom: 12px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Hugging Face Access Token (hf_...)：</label>
-                    <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 3px; font-size: 14px; padding: 8px;">
-                    <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続のテスト</button>
-                    <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
-                </div>
-
-                <!-- サーバー認証 -->
-                <div style="margin-bottom: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">サーバー認証 (自作・プロキシサーバー)：</label>
-                    <input type="text" id="server-url-input" placeholder="https://example.com/api" style="margin-top: 3px; font-size: 14px; padding: 8px; text-align: left;">
-                    <input type="password" id="server-key-input" placeholder="サーバーPass / API Key" style="margin-top: 3px; font-size: 14px; padding: 8px;">
-                    <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testServerAuth()">🌐 サーバー認証のテスト</button>
-                    <div id="server-auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
-                </div>
-
-                <div style="margin-bottom: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">解答操作スタイル：</label>
-                    <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 3px; padding: 8px; font-size: 14px;">
-                        <option value="keyboard">アーケード五十音パネル</option>
-                        <option value="flick">フリック/スマホ直接入力</option>
-                    </select>
-                </div>
-
-                <div style="margin-bottom: 15px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">BGM/効果音: <span id="volume-val">50</span>%</label>
-                    <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 3px; width: 100%; cursor: pointer;">
-                </div>
-
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn" style="background: #22c55e; border-color:#4ade80; flex: 1; padding: 10px;" onclick="closeSettings()">保存して閉じる</button>
-                    <button class="btn" style="background: #dc2626; border-color:#f87171; flex: 1; padding: 10px;" onclick="goToTitle()">タイトルへ</button>
-                </div>
+        <div id="modal-settings" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px;">⚙️ 設定</h2>
+                <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 15px;">ゲーム設定画面です。</p>
+                <button class="btn" style="background: #22c55e;" onclick="closeSettings()">閉じる</button>
+                <button class="btn" style="background: #dc2626;" onclick="goToTitle()">タイトルに戻る</button>
             </div>
         </div>
 
-        <!-- ゲームオーバー -->
-        <div id="screen-gameover" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 36px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 15px #ef4444;">GAME OVER</h2>
-            <p style="color: #cbd5e1; font-size: 16px; margin-bottom: 5px;">ツアーズバギー 大破！</p>
-            <p id="gameover-stats" style="color: #facc15; font-weight: bold; margin-bottom: 20px;">到達: STAGE 0 / 30</p>
-            <button class="btn" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #fbbf24; color: black; font-size: 18px;" onclick="startGame(activeMode)">コンティニュー 🔄</button>
-            <button class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
-        </div>
-
-        <!-- 完全制覇クリア -->
-        <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 32px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 20px #facc15;">🏆 全30ステージ撃破！ 🏆</h2>
-            <p style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 20px;">漢字ツアーズ 完全制覇達成！</p>
-            <button class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="startGame(activeMode)">もう一度挑戦する</button>
-            <button class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
-        </div>
+        <!-- デバッグログ表示エリア -->
+        <div id="debug-log"></div>
     </div>
 
     <script>
-        const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
-        let audioCtx = null;
-        let soundVolume = 0.5;
-        let bgmTimer = null;
-
-        // 安全なストレージ操作
-        function getStorage(key, defaultVal) {
-            try { return localStorage.getItem(key) || defaultVal; } catch(e) { return defaultVal; }
-        }
-        function setStorage(key, val) {
-            try { localStorage.setItem(key, val); } catch(e) {}
-        }
-
-        function initAudio() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            } catch(e) {}
-        }
-
-        function updateVolume(val) {
-            soundVolume = val / 100;
-            document.getElementById("volume-val").innerText = val;
-            playSound('click');
-        }
-
-        function startBGM() {
-            stopBGM();
-            let notes = [110, 116.54, 123.47, 130.81];
-            let step = 0;
-            bgmTimer = setInterval(() => {
-                if (soundVolume <= 0 || isPaused || !audioCtx) return;
-                try {
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    const now = audioCtx.currentTime;
-
-                    osc.type = 'sawtooth';
-                    let freq = notes[step % notes.length];
-                    if (timeRemaining <= 5) freq *= 1.5;
-
-                    osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0.04 * soundVolume, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-                    osc.start(now);
-                    osc.stop(now + 0.18);
-                    step++;
-                } catch(e) {}
-            }, timeRemaining <= 5 ? 250 : 400);
-        }
-
-        function stopBGM() {
-            if (bgmTimer) clearInterval(bgmTimer);
-        }
-
-        function playSound(type) {
-            try {
-                initAudio();
-                if (soundVolume <= 0 || !audioCtx) return;
-                
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
-                let baseVolume = 0.25 * soundVolume;
-
-                if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(800, now);
-                    gain.gain.setValueAtTime(baseVolume * 0.5, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-                    osc.start(now); osc.stop(now + 0.04);
-                } else if (type === 'correct') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.08);
-                    osc.frequency.setValueAtTime(783.99, now + 0.16);
-                    osc.frequency.setValueAtTime(1046.50, now + 0.24);
-                    gain.gain.setValueAtTime(baseVolume, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-                    osc.start(now); osc.stop(now + 0.45);
-                } else if (type === 'wrong') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(180, now);
-                    osc.frequency.setValueAtTime(90, now + 0.12);
-                    gain.gain.setValueAtTime(baseVolume * 1.5, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-                    osc.start(now); osc.stop(now + 0.35);
-                } else if (type === 'boss') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.setValueAtTime(600, now + 0.15);
-                    gain.gain.setValueAtTime(baseVolume, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-                    osc.start(now); osc.stop(now + 0.35);
-                } else if (type === 'tick') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, now);
-                    gain.gain.setValueAtTime(baseVolume * 0.3, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                    osc.start(now); osc.stop(now + 0.05);
-                }
-            } catch(e) {}
-        }
+        // エラー検出用ハンドラ
+        window.onerror = function(msg, url, line) {
+            const log = document.getElementById("debug-log");
+            if (log) {
+                log.style.display = "block";
+                log.innerText = "エラー検出: " + msg + " (行: " + line + ")";
+            }
+            return false;
+        };
 
         const KANJI_DATABASE = {
             "小学生": [
-                ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],["車","くるま","車輪で移動する乗り物。"],["花","はな","植物の咲かせるきれいな部分。"],
-                ["学校","がっこう","勉強や学問を学ぶ場所。"],["友達","ともだち","親しく付き合っている人。"],["勉強","べんきょう","知識や技術を身につけること。"],["太陽","たいよう","地球に光と熱を届ける星。"],["漢字","かんじ","中国から伝わった文字。"]
+                ["川","かわ","水が流れる場所。"],["山","やま","周囲より高い土地。"],["木","き","植物の一種。"],["車","くるま","乗り物。"],["花","はな","植物の咲かせるきれいな部分。"]
             ],
             "中学生": [
-                ["笑顔","えがお","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
-                ["複雑","ふくざつ","事情や形が入り組んでいること。"],["矛盾","むじゅん","つじつまが合わないこと。"],["謙遜","けんそん","控えめな態度をとること。"],["把握","はあく","しっかり理解してつかむこと。"],["克服","こくふく","困難に打ち勝つこと。"]
+                ["笑顔","えがお","にこにこした顔。"],["挨拶","あいさつ","人と会う時の言葉。"],["感謝","かんしゃ","ありがたく思う気持ち。"]
             ],
             "高校生": [
-                ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],["概念","がいねん","物事の大まかな意味や内容。"],["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"]
+                ["明瞭","めいりょう","はっきりしている様子。"],["躊躇","ちゅうちょ","ためらうこと。"]
             ],
             "一般常識": [
-                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],["重複","ちょうふく","同じことが重なること。"],["代替","だいたい","他のものと取り替えること。"]
+                ["醤油","しょうゆ","日本の基礎調味料。"],["流石","さすが","評判通り素晴らしいこと。"]
             ],
             "漢字王": [
-                ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"]
+                ["魑魅魍魎","ちみもうりょう","いろいろなバケモノのこと。"],["蒲公英","たんぽぽ","黄色い花を咲かせる植物。"]
             ]
         };
-
-        function generateFallbackData(mode) {
-            const rawPool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
-            const shuffled = [...rawPool].sort(() => Math.random() - 0.5);
-            
-            const result = [];
-            for (let i = 0; i < 30; i++) {
-                const item = shuffled[i % shuffled.length];
-                const isBoss = (i + 1) % 5 === 0;
-                result.push({
-                    id: i + 1,
-                    kanji: item[0],
-                    reading: item[1],
-                    category: isBoss ? `${mode}【BOSS】` : mode,
-                    meaning: item[2] || `【STAGE ${i + 1}】${mode}レベルの常用漢字です。`,
-                    isBoss: isBoss
-                });
-            }
-            return result;
-        }
 
         let currentList = [];
         let currentIndex = 0;
         let lives = 3;
         let timer = null;
         let timeRemaining = 15;
-        let isPaused = false;
         let activeMode = "小学生";
-        let inputMode = "keyboard";
-        
-        let apiKey = getStorage("hf_api_key", "");
-        let serverUrl = getStorage("server_url", "");
-        let serverKey = getStorage("server_key", "");
 
-        window.onload = () => {
-            if (document.getElementById("api-key-input")) document.getElementById("api-key-input").value = apiKey;
-            if (document.getElementById("server-url-input")) document.getElementById("server-url-input").value = serverUrl;
-            if (document.getElementById("server-key-input")) document.getElementById("server-key-input").value = serverKey;
-            
-            changeInputMode(inputMode);
-            
-            const inputField = document.getElementById("user-input");
-            if (inputField) {
-                inputField.addEventListener("keydown", (e) => {
-                    if (e.key === "Enter") {
-                        if (e.isComposing) return;
-                        e.preventDefault();
-                        submitAnswer();
-                    }
+        // 初期化処理
+        window.addEventListener("DOMContentLoaded", () => {
+            // タイトルボタンのイベント登録をJavaScript側からも確実に行う
+            const btns = document.querySelectorAll(".start-btn");
+            btns.forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const mode = e.currentTarget.getAttribute("data-mode");
+                    startGame(mode);
                 });
-            }
-
-            window.addEventListener("keydown", (e) => {
-                const gameScreen = document.getElementById("screen-game");
-                const activeEl = document.activeElement;
-                if (gameScreen && !gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
-                    if (e.key.length === 1 || e.key === "Backspace" || e.key.startsWith("Arrow")) {
-                        if (inputField) inputField.focus();
-                    }
-                }
             });
-        };
 
-        function changeInputMode(mode) {
-            inputMode = mode;
-            const selectEl = document.getElementById("settings-input-mode");
-            if (selectEl) selectEl.value = mode;
-            
-            const customKey = document.getElementById("custom-keyboard");
-            const flickBtn = document.getElementById("flick-submit-btn");
-            const inputField = document.getElementById("user-input");
-            
-            if (inputMode === "flick") {
-                if (customKey) customKey.classList.add("hidden");
-                if (flickBtn) flickBtn.classList.remove("hidden");
-                if (inputField) {
-                    inputField.readOnly = false;
-                    inputField.placeholder = "タップしてフリックキーボードで入力";
-                }
-            } else {
-                if (customKey) customKey.classList.remove("hidden");
-                if (flickBtn) flickBtn.classList.add("hidden");
-                if (inputField) {
-                    inputField.readOnly = false;
-                    inputField.placeholder = "画面ボタンか直接入力";
-                }
-            }
-        }
+            // Enterキーで回答送信
+            document.getElementById("user-input").addEventListener("keydown", (e) => {
+                if (e.key === "Enter") submitAnswer();
+            });
+        });
 
-        async function startGame(mode) {
-            try { playSound('click'); } catch(e){}
+        // ゲーム開始処理（即時画面遷移）
+        function startGame(mode) {
             activeMode = mode;
             currentIndex = 0;
             lives = 3;
 
-            document.getElementById("screen-title").classList.add("hidden");
-            document.getElementById("screen-gameover").classList.add("hidden");
-            document.getElementById("screen-clear").classList.add("hidden");
-            document.getElementById("screen-loading").classList.remove("hidden");
+            // データ準備
+            const pool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
+            currentList = [];
+            for (let i = 0; i < 30; i++) {
+                const item = pool[i % pool.length];
+                currentList.push({
+                    id: i + 1,
+                    kanji: item[0],
+                    reading: item[1],
+                    meaning: item[2]
+                });
+            }
 
-            apiKey = getStorage("hf_api_key", "");
+            // 画面を直接切り替え
+            document.getElementById("screen-title").style.display = "none";
+            document.getElementById("screen-game").style.display = "block";
 
-            let apiSuccess = false;
+            loadQuestion();
+        }
 
-            if (apiKey && navigator.onLine) {
-                document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
-                document.getElementById("loading-desc").innerText = "AIが出題難易度を計算しています";
+        function loadQuestion() {
+            if (currentIndex >= currentList.length) {
+                alert("全ステージクリア！");
+                goToTitle();
+                return;
+            }
 
-                try {
-                    let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。
-1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。
-JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
+            const q = currentList[currentIndex];
+            document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
+            document.getElementById("category-text").innerText = `【${activeMode}】`;
+            document.getElementById("kanji-display").innerText = q.kanji;
+            document.getElementById("user-input").value = "";
 
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000); // タイムアウト8秒
+            updateLives();
+            resetTimer();
+        }
 
-                    const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${apiKey}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            model: HF_MODEL,
-                            messages: [{ role: "user", content: prompt }],
-                            max_tokens: 2000,
-                            temperature: 0.7
-                        }),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
+        function updateLives() {
+            document.getElementById("lives-container").innerText = "🚀".repeat(lives) + "💥".repeat(3 - lives);
+        }
 
-                    if (res.ok) {
-                        const data = await res.json();
-                        let textContent = data.choices?.[0]?.message?.content;
-                        if (textContent) {
-                            textContent = textContent.replace(/```json/g, '').replace(/
+        function resetTimer() {
+            clearInterval(timer);
+            timeRemaining = 15;
+            document.getElementById("timer-text").innerText = timeRemaining;
+
+            timer = setInterval(() => {
+                timeRemaining--;
+                document.getElementById("timer-text").innerText = timeRemaining;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timer);
+                    showExplanationModal(currentList[currentIndex], false);
+                }
+            }, 1000);
+        }
+
+        function addKey(char) {
+            const input = document.getElementById("user-input");
+            input.value += char;
+        }
+
+        function delKey() {
+            const input = document.getElementById("user-input");
+            input.value = input.value.slice(0, -1);
+        }
+
+        function addDakuten() {
+            const input = document.getElementById("user-input");
+            let str = input.value;
+            if(!str) return;
+            const last = str.slice(-1);
+            const map = { "か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ" };
+            if (map[last]) input.value = str.slice(0, -1) + map[last];
+        }
+
+        function submitAnswer() {
+            const inputVal = document.getElementById("user-input").value.trim();
+            if (!inputVal) return;
+
+            const q = currentList[currentIndex];
+            if (inputVal === q.reading) {
+                clearInterval(timer);
+                showExplanationModal(q, true);
+            } else {
+                lives--;
+                updateLives();
+                if (lives <= 0) {
+                    clearInterval(timer);
+                    alert("ゲームオーバー！タイトルに戻ります。");
+                    goToTitle();
+                } else {
+                    document.getElementById("ai-message").innerText = `🎙️「不正解！残りライフ ${lives}」`;
+                    document.getElementById("user-input").value = "";
+                }
+            }
+        }
+
+        function showExplanationModal(q, isClear) {
+            const modal = document.getElementById("modal-explanation");
+            document.getElementById("modal-title").innerText = isClear ? "💥 CLEAR!" : "⏰ タイムアップ！";
+            document.getElementById("modal-kanji").innerText = q.kanji;
+            document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
+            document.getElementById("modal-meaning").innerText = q.meaning;
+            modal.style.display = "flex";
+        }
+
+        function nextStage() {
+            document.getElementById("modal-explanation").style.display = "none";
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function openSettings() {
+            document.getElementById("modal-settings").style.display = "flex";
+        }
+
+        function closeSettings() {
+            document.getElementById("modal-settings").style.display = "none";
+        }
+
+        function goToTitle() {
+            clearInterval(timer);
+            document.getElementById("modal-explanation").style.display = "none";
+            document.getElementById("modal-settings").style.display = "none";
+            document.getElementById("screen-game").style.display = "none";
+            document.getElementById("screen-title").style.display = "block";
+        }
+    </script>
+</body>
+</html>
