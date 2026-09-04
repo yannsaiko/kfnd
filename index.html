@@ -283,8 +283,14 @@
         let isApiOnline = false;
 
         function getStorage(key, defaultVal) {
-            try { return localStorage.getItem(key) ?? defaultVal; } catch(e) { return defaultVal; }
+            try { 
+                const val = localStorage.getItem(key);
+                return val !== null ? val : defaultVal;
+            } catch(e) { 
+                return defaultVal; 
+            }
         }
+
         function setStorage(key, val) {
             try { localStorage.setItem(key, val); } catch(e) {}
         }
@@ -292,10 +298,13 @@
         function initAudio() {
             try {
                 if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContextClass) {
+                        audioCtx = new AudioContextClass();
+                    }
                 }
                 if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume();
+                    audioCtx.resume().catch(() => {});
                 }
             } catch(e) {}
         }
@@ -315,7 +324,7 @@
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
                 try {
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.connect(gain);
@@ -524,18 +533,18 @@
 
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
-            const inputVal = document.getElementById("api-key-input") ? document.getElementById("api-key-input").value.trim() : "";
-            apiKey = inputVal || getStorage("hf_api_key", "");
-
-            if (!apiKey || !navigator.onLine) {
-                isApiOnline = false;
-                if (dot) dot.className = "status-dot dot-red";
-                return;
-            }
-
             try {
+                const inputVal = document.getElementById("api-key-input") ? document.getElementById("api-key-input").value.trim() : "";
+                apiKey = inputVal || getStorage("hf_api_key", "");
+
+                if (!apiKey || !navigator.onLine) {
+                    isApiOnline = false;
+                    if (dot) dot.className = "status-dot dot-red";
+                    return;
+                }
+
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -592,6 +601,7 @@
 
         async function startGame(mode) {
             try {
+                initAudio();
                 playSound('click');
             } catch(e){}
 
@@ -600,25 +610,31 @@
             clearedCount = 0;
             lives = 3;
 
-            // 画面を即座にローディングへ遷移
-            document.getElementById("screen-title").classList.add("hidden");
-            document.getElementById("screen-gameover").classList.add("hidden");
-            document.getElementById("screen-clear").classList.add("hidden");
-            document.getElementById("screen-loading").classList.remove("hidden");
+            // 画面要素切り替え
+            const titleEl = document.getElementById("screen-title");
+            const overEl = document.getElementById("screen-gameover");
+            const clearEl = document.getElementById("screen-clear");
+            const loadEl = document.getElementById("screen-loading");
+
+            if (titleEl) titleEl.classList.add("hidden");
+            if (overEl) overEl.classList.add("hidden");
+            if (clearEl) clearEl.classList.add("hidden");
+            if (loadEl) loadEl.classList.remove("hidden");
 
             apiKey = getStorage("hf_api_key", "");
             let loadedFromApi = false;
 
-            // APIがオンラインでキーが存在する場合のみ試行（5秒タイムアウト）
             if (isApiOnline && apiKey && navigator.onLine) {
-                document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
-                document.getElementById("loading-desc").innerText = "AIが問題を生成しています";
-
                 try {
+                    const lTitle = document.getElementById("loading-title");
+                    const lDesc = document.getElementById("loading-desc");
+                    if (lTitle) lTitle.innerText = "ツアーズジェット 30問生成中...";
+                    if (lDesc) lDesc.innerText = "AIが問題を生成しています";
+
                     let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
                     const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
