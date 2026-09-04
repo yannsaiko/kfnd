@@ -23,7 +23,6 @@
         }
         .hidden { display: none !important; }
 
-        /* 番組風ヘッダー */
         .show-title-badge {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: #000; font-weight: 900; font-size: 11px; padding: 2px 10px;
@@ -40,7 +39,6 @@
         }
         .btn:active { transform: scale(0.97); }
 
-        /* キーボード */
         .key-btn { 
             background: linear-gradient(180deg, #334155 0%, #1e293b 100%); 
             color: white; padding: 8px 0; margin: 2px; border: 1px solid #475569; border-radius: 6px; 
@@ -56,7 +54,6 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
         }
         
-        /* 敵・ステージボックス */
         .stage-view { 
             background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); 
             border: 3px solid #f59e0b; border-radius: 16px; padding: 15px 10px; margin: 6px 0; width: 100%; 
@@ -64,27 +61,23 @@
             position: relative; overflow: hidden; flex-shrink: 0;
         }
 
-        /* アニメーション用背景ライン */
         .stage-view::before {
             content: ''; position: absolute; inset: 0;
             background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(56, 189, 248, 0.05) 2px, rgba(56, 189, 248, 0.05) 4px);
             pointer-events: none;
         }
 
-        /* 漢字表示アニメーション */
         .kanji-text {
             font-size: 58px; font-weight: 900; line-height: 1.1; color: #ffffff;
             text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8, 0 0 30px #0284c7;
             animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* タイマー警告表示 */
         .timer-warning {
             color: #ef4444 !important;
             animation: pulse 0.5s infinite alternate;
         }
 
-        /* モーダル */
         .modal {
             position: fixed; inset: 0; background: rgba(5, 11, 20, 0.92); backdrop-filter: blur(8px);
             display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 100;
@@ -95,7 +88,6 @@
             box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
         }
 
-        /* ステータスドット (赤・緑) */
         .status-dot {
             display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px; vertical-align: middle;
             transition: background-color 0.3s, box-shadow 0.3s;
@@ -118,7 +110,6 @@
         }
         .shake { animation: shake 0.4s ease-in-out; }
 
-        /* 撃破エフェクト */
         @keyframes destroy {
             0% { transform: scale(1); filter: brightness(1); }
             50% { transform: scale(1.3); filter: brightness(3) drop-shadow(0 0 20px #ef4444); }
@@ -130,7 +121,6 @@
 <body>
 
     <div class="container">
-        <!-- ヘッダー設定 -->
         <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             <div class="show-title-badge">フジテレビ風 クイズ番組</div>
             <button onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
@@ -138,7 +128,7 @@
             </button>
         </div>
 
-        <!-- 1. タイトル画面 -->
+        <!-- タイトル画面 -->
         <div id="screen-title" style="width: 100%;">
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
             <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
@@ -156,35 +146,30 @@
             <button class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
         </div>
 
-        <!-- 2. ローディング画面 -->
+        <!-- ローディング画面 -->
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
             <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
             <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
             <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">Hugging Face AIが出題問題をマッチング生成しています</p>
         </div>
 
-        <!-- 3. ゲーム画面 -->
+        <!-- ゲーム画面 -->
         <div id="screen-game" class="hidden" style="width: 100%;">
-            <!-- ステージ進行ヘッダー -->
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
                 <div style="text-align: left;">
                     <div id="stage-text" style="font-size: 13px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
                     <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
                 </div>
-                <!-- ライフ表示 -->
                 <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
-                <!-- カウントダウン -->
                 <div style="background: #0f172a; border: 2px solid #ef4444; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #f87171;" id="timer-box">
                     ⏱ <span id="timer-text">15</span>
                 </div>
             </div>
 
-            <!-- AI ナレーションバー -->
             <div style="background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 4px solid #38bdf8; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left; color: #e2e8f0;">
                 🎙️ <span id="ai-message">「さあ、漢字ツアーズ スタートです！」</span>
             </div>
 
-            <!-- メイン出題画面 -->
             <div class="stage-view" id="enemy-box">
                 <div id="boss-badge" class="hidden" style="position: absolute; top: 8px; right: 10px; background: #dc2626; color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 4px; box-shadow: 0 0 8px #dc2626; letter-spacing: 1px;">⚠️ BOSS</div>
                 <div id="enemy-emoji" style="font-size: 32px; margin-bottom: 4px; transition: transform 0.2s;">👾</div>
@@ -195,7 +180,6 @@
 
             <button id="flick-submit-btn" class="btn hidden" style="background: #2563eb; margin-bottom: 6px; padding: 10px;" onclick="submitAnswer()">攻撃（解答する） ➔</button>
             
-            <!-- 専用キーボード -->
             <div id="custom-keyboard" style="width: 100%; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
                 <div class="key-row"><button class="key-btn" onclick="addKey('あ')">あ</button><button class="key-btn" onclick="addKey('い')">い</button><button class="key-btn" onclick="addKey('う')">う</button><button class="key-btn" onclick="addKey('え')">え</button><button class="key-btn" onclick="addKey('お')">お</button></div>
                 <div class="key-row"><button class="key-btn" onclick="addKey('か')">か</button><button class="key-btn" onclick="addKey('き')">き</button><button class="key-btn" onclick="addKey('く')">く</button><button class="key-btn" onclick="addKey('け')">け</button><button class="key-btn" onclick="addKey('こ')">こ</button></div>
@@ -218,7 +202,7 @@
             </div>
         </div>
 
-        <!-- 4. 解説モーダル -->
+        <!-- 解説モーダル -->
         <div id="modal-explanation" class="modal hidden">
             <div class="modal-content">
                 <h2 id="modal-title" style="font-size: 26px; margin-bottom: 5px; font-weight: 900;">💥 CLEAR!</h2>
@@ -232,7 +216,7 @@
             </div>
         </div>
 
-        <!-- 5. 設定モーダル -->
+        <!-- 設定モーダル -->
         <div id="modal-settings" class="modal hidden">
             <div class="modal-content" style="text-align: left;">
                 <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ システム設定</h2>
@@ -264,7 +248,7 @@
             </div>
         </div>
 
-        <!-- 6. ゲームオーバー -->
+        <!-- ゲームオーバー -->
         <div id="screen-gameover" class="hidden" style="width: 100%; padding: 20px 0;">
             <h2 style="font-size: 36px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 15px #ef4444;">GAME OVER</h2>
             <p style="color: #cbd5e1; font-size: 16px; margin-bottom: 5px;">ツアーズバギー 大破！</p>
@@ -273,7 +257,7 @@
             <button class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
         </div>
 
-        <!-- 7. 完全制覇クリア -->
+        <!-- 完全制覇クリア -->
         <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
             <h2 style="font-size: 32px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 20px #facc15;">🏆 全30ステージ撃破！ 🏆</h2>
             <p style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 20px;">漢字ツアーズ 完全制覇達成！</p>
@@ -283,7 +267,6 @@
     </div>
 
     <script>
-        // Hugging Face API設定
         const HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct";
         let audioCtx = null;
         let soundVolume = 0.5;
@@ -305,7 +288,6 @@
             playSound('click');
         }
 
-        /* ネプリーグ風 BGM */
         function startBGM() {
             stopBGM();
             let notes = [110, 116.54, 123.47, 130.81];
@@ -390,21 +372,20 @@
             } catch(e) {}
         }
 
-        // 漢字データベース (オフライン/フォールバック用)
         const KANJI_DATABASE = {
             "小学生": [
                 ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],["車","くるま","車輪で移動する乗り物。"],["花","はな","植物の咲かせるきれいな部分。"],
                 ["学校","がっこう","勉強や学問を学ぶ場所。"],["友達","ともだち","親しく付き合っている人。"],["勉強","べんきょう","知識や技術を身につけること。"],["太陽","たいよう","地球に光と熱を届ける星。"],["漢字","かんじ","中国から伝わった文字。"]
             ],
             "中学生": [
-                ["笑顔","えがえ","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
+                ["笑顔","えがお","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
                 ["複雑","ふくざつ","事情や形が入り組んでいること。"],["矛盾","むじゅん","つじつまが合わないこと。"],["謙遜","けんそん","控えめな態度をとること。"],["把握","はあく","しっかり理解してつかむこと。"],["克服","こくふく","困難に打ち勝つこと。"]
             ],
             "高校生": [
                 ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],["概念","がいねん","物事の大まかな意味や内容。"],["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"]
             ],
             "一般常識": [
-                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],["重複","ちょうふく","同じことが重なること。「じゅうふく」とも。"],["代替","だいたい","他のものと取り替えること。"]
+                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],["重複","ちょうふく","同じことが重なること。"],["代替","だいたい","他のものと取り替えること。"]
             ],
             "漢字王": [
                 ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"]
@@ -439,10 +420,13 @@
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = "keyboard";
-        let apiKey = localStorage.getItem("hf_api_key") || "";
+        
+        // ご提示いただいたトークンを初期値として設定
+        let apiKey = localStorage.getItem("hf_api_key") || "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";
 
         window.onload = () => {
             document.getElementById("api-key-input").value = apiKey;
+            localStorage.setItem("hf_api_key", apiKey);
             changeInputMode(inputMode);
             
             const inputField = document.getElementById("user-input");
@@ -467,7 +451,6 @@
             checkApiStatusBackground();
         };
 
-        /* Hugging Face API接続チェックを行い、タイトルのステータスドットを赤/緑に変更 */
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
             apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("hf_api_key") || "";
@@ -583,334 +566,4 @@
                         const data = await res.json();
                         let textContent = data.choices?.[0]?.message?.content;
                         if (textContent) {
-                            // JSON文字列のクリーンアップ
-                            textContent = textContent.replace(/```json/g, '').replace(/```/g, '').trim();
-                            const jsonContent = JSON.parse(textContent);
-                            if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
-                                currentList = jsonContent.questions;
-                                initGameScreen();
-                                return;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.log("AI生成スキップ（固定データ使用）:", e);
-                }
-            }
-
-            document.getElementById("loading-title").innerText = "ツアーズバギー 発進！";
-            document.getElementById("loading-desc").innerText = "内蔵データベースより出題シーケンスをロード中...";
-            
-            setTimeout(() => {
-                currentList = generateFallbackData(mode);
-                initGameScreen();
-            }, 600);
-        }
-
-        function initGameScreen() {
-            document.getElementById("screen-loading").classList.add("hidden");
-            document.getElementById("screen-game").classList.remove("hidden");
-            changeInputMode(inputMode);
-            startBGM();
-            loadQuestion();
-        }
-
-        async function testApiKey() {
-            initAudio();
-            playSound('click');
-            const key = document.getElementById("api-key-input").value.trim();
-            const resResult = document.getElementById("auth-result");
-            const dot = document.getElementById("status-dot");
-            
-            if (!key) {
-                resResult.innerHTML = "<span style='color:#ef4444;'>❌ トークンを入力してください</span>";
-                isApiOnline = false;
-                dot.className = "status-dot dot-red";
-                return;
-            }
-
-            resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
-            try {
-                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${key}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: HF_MODEL,
-                        messages: [{ role: "user", content: "test" }],
-                        max_tokens: 5
-                    })
-                });
-
-                if (res.ok) {
-                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（Hugging Face AI生成モード有効）</span>";
-                    playSound('correct');
-                    isApiOnline = true;
-                    dot.className = "status-dot dot-green";
-                } else {
-                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークンまたは制限）</span>";
-                    playSound('wrong');
-                    isApiOnline = false;
-                    dot.className = "status-dot dot-red";
-                }
-            } catch (e) {
-                resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続不可（固定データ使用）</span>";
-                playSound('wrong');
-                isApiOnline = false;
-                dot.className = "status-dot dot-red";
-            }
-        }
-
-        function loadQuestion() {
-            if (currentIndex >= currentList.length) {
-                stopBGM();
-                document.getElementById("screen-game").classList.add("hidden");
-                document.getElementById("screen-clear").classList.remove("hidden");
-                return;
-            }
-            const q = currentList[currentIndex];
-            document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
-            document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
-            
-            const kanjiDisplay = document.getElementById("kanji-display");
-            kanjiDisplay.classList.remove("destroy-anim");
-            kanjiDisplay.innerText = q.kanji;
-            
-            void kanjiDisplay.offsetWidth;
-            kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-
-            document.getElementById("user-input").value = "";
-
-            const bossBadge = document.getElementById("boss-badge");
-            const enemyEmoji = document.getElementById("enemy-emoji");
-            if (q.isBoss) {
-                bossBadge.classList.remove("hidden");
-                enemyEmoji.innerText = "👹";
-                document.getElementById("ai-message").innerText = `🎙️「⚠️ BOSS出現！第${currentIndex + 1}問！正解して粉砕せよ！」`;
-                playSound('boss');
-            } else {
-                bossBadge.classList.add("hidden");
-                enemyEmoji.innerText = "👾";
-                document.getElementById("ai-message").innerText = `🎙️「第${currentIndex + 1}問！この漢字の読みを入力してください！」`;
-            }
-
-            updateLives();
-            resetTimer();
-        }
-
-        function updateLives() {
-            document.getElementById("lives-container").innerText = "🚀".repeat(lives) + "💥".repeat(3 - lives);
-        }
-
-        function resetTimer() {
-            clearInterval(timer);
-            timeRemaining = 15;
-            const timerText = document.getElementById("timer-text");
-            const timerBox = document.getElementById("timer-box");
-            timerText.innerText = timeRemaining;
-            timerBox.classList.remove("timer-warning");
-
-            timer = setInterval(() => {
-                if (isPaused) return;
-                timeRemaining--;
-                timerText.innerText = timeRemaining;
-
-                if (timeRemaining <= 5) {
-                    timerBox.classList.add("timer-warning");
-                    playSound('tick');
-                }
-
-                if (timeRemaining <= 0) {
-                    clearInterval(timer);
-                    triggerTimeUp();
-                }
-            }, 1000);
-        }
-
-        function triggerTimeUp() {
-            playSound('wrong');
-            const q = currentList[currentIndex];
-            showExplanationModal(q, 'timeup');
-        }
-
-        function addKey(char) {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            input.value += char;
-            input.focus();
-        }
-
-        function delKey() {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            input.value = input.value.slice(0, -1);
-            input.focus();
-        }
-
-        function addDakuten() {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            let str = input.value;
-            if(!str) return;
-            const last = str.slice(-1);
-            const map = { "か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ","う":"ゔ" };
-            if (map[last]) {
-                input.value = str.slice(0, -1) + map[last];
-            }
-            input.focus();
-        }
-
-        function addHandakuten() {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            let str = input.value;
-            if(!str) return;
-            const last = str.slice(-1);
-            const map = { "は":"ぱ","ひ":"ぴ","ふ":"ぷ","へ":"ぺ","ほ":"ぽ" };
-            if (map[last]) {
-                input.value = str.slice(0, -1) + map[last];
-            }
-            input.focus();
-        }
-
-        function normalizeText(str) {
-            if (!str) return "";
-            let text = str.normalize('NFKC');
-            text = text.replace(/\s+/g, '');
-            text = text.replace(/[\u30a1-\u30f6]/g, function(match) {
-                return String.fromCharCode(match.charCodeAt(0) - 0x60);
-            });
-            return text.trim();
-        }
-
-        function submitAnswer() {
-            initAudio();
-            const inputField = document.getElementById("user-input");
-            inputField.blur();
-
-            const rawVal = inputField.value;
-            const normalizedInput = normalizeText(rawVal);
-            
-            if (!normalizedInput) {
-                document.getElementById("ai-message").innerText = "🎙️「読みが入力されていません！」";
-                playSound('click');
-                inputField.focus();
-                return;
-            }
-
-            const q = currentList[currentIndex];
-            const normalizedAnswer = normalizeText(q.reading);
-            
-            if (normalizedInput === normalizedAnswer) {
-                clearInterval(timer);
-                playSound('correct');
-                
-                const kanjiDisplay = document.getElementById("kanji-display");
-                kanjiDisplay.classList.add("destroy-anim");
-
-                setTimeout(() => {
-                    showExplanationModal(q, 'correct');
-                }, 400);
-
-            } else {
-                loseLife();
-            }
-        }
-
-        function loseLife() {
-            playSound('wrong');
-            lives--;
-            updateLives();
-            const box = document.getElementById("enemy-box");
-            box.classList.add("shake");
-            setTimeout(() => box.classList.remove("shake"), 400);
-
-            if (lives <= 0) {
-                clearInterval(timer);
-                stopBGM();
-                const q = currentList[currentIndex];
-                showExplanationModal(q, 'gameover');
-            } else {
-                document.getElementById("ai-message").innerText = `🎙️「違う！残りライフ ${lives}！」`;
-                document.getElementById("user-input").value = "";
-            }
-        }
-
-        function showExplanationModal(q, status) {
-            const titleEl = document.getElementById("modal-title");
-            const nextBtn = document.getElementById("modal-next-btn");
-            
-            if (status === 'correct') {
-                titleEl.innerText = q.isBoss ? "💥 BOSS K.O.! 撃破！" : "💥 CLEAR! 撃破！";
-                titleEl.style.color = "#4ade80";
-                nextBtn.innerText = "次のエリアへ進降 ➔";
-                nextBtn.onclick = nextStage;
-            } else if (status === 'timeup') {
-                titleEl.innerText = "⏰ TIME UP! タイムアップ";
-                titleEl.style.color = "#ef4444";
-                nextBtn.innerText = "タイトルに戻る ➔";
-                nextBtn.onclick = goToTitle;
-            } else if (status === 'gameover') {
-                titleEl.innerText = "💥 バギー大破！不正解";
-                titleEl.style.color = "#ef4444";
-                nextBtn.innerText = "リザルトへ ➔";
-                nextBtn.onclick = () => {
-                    document.getElementById("modal-explanation").classList.add("hidden");
-                    document.getElementById("screen-game").classList.add("hidden");
-                    document.getElementById("screen-gameover").classList.remove("hidden");
-                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex} / ${currentList.length}`;
-                };
-            }
-
-            document.getElementById("modal-kanji").innerText = q.kanji;
-            document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
-            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報が登録されていません。";
-            document.getElementById("modal-explanation").classList.remove("hidden");
-        }
-
-        function nextStage() {
-            initAudio();
-            playSound('click');
-            document.getElementById("modal-explanation").classList.add("hidden");
-            currentIndex++;
-            loadQuestion();
-        }
-
-        function openSettings() {
-            initAudio();
-            playSound('click');
-            isPaused = true;
-            document.getElementById("modal-settings").classList.remove("hidden");
-            testApiKey();
-        }
-
-        function closeSettings() {
-            initAudio();
-            playSound('click');
-            apiKey = document.getElementById("api-key-input").value.trim();
-            localStorage.setItem("hf_api_key", apiKey);
-            isPaused = false;
-            document.getElementById("modal-settings").classList.add("hidden");
-            changeInputMode(inputMode);
-            checkApiStatusBackground();
-        }
-
-        function goToTitle() {
-            initAudio();
-            clearInterval(timer);
-            stopBGM();
-            isPaused = false;
-            document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
-            ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => document.getElementById(id).classList.add("hidden"));
-            document.getElementById("screen-title").classList.remove("hidden");
-            checkApiStatusBackground();
-        }
-    </script>
-</body>
-</html>
+                            textContent = textContent.replace(/```json/g, '').replace(/
