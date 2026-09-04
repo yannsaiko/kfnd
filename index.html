@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI (Hugging Face / サーバー認証版)</title>
+    <title>ネプリーグ風 漢字ツアーズ AI</title>
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
             height: 100%; margin: 0; padding: 0;
             background: #050b14; color: white;
             font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
-            overflow-x: hidden;
+            overflow-x: hidden; user-select: none;
         }
         body { 
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -27,7 +27,7 @@
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: #000; font-weight: 900; font-size: 11px; padding: 2px 10px;
             border-radius: 4px; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .btn { 
@@ -35,9 +35,10 @@
             color: white; padding: 12px; margin: 6px 0; border: 2px solid #60a5fa; border-radius: 12px; 
             font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; 
             box-shadow: 0 4px 10px rgba(29, 78, 216, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-            touch-action: manipulation; transition: transform 0.1s;
+            touch-action: manipulation; transition: transform 0.1s, filter 0.2s;
         }
         .btn:active { transform: scale(0.97); }
+        .btn:hover { filter: brightness(1.1); }
 
         .key-btn { 
             background: linear-gradient(180deg, #334155 0%, #1e293b 100%); 
@@ -45,13 +46,13 @@
             font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.4); touch-action: manipulation;
         }
-        .key-btn:active { background: #0f172a; }
+        .key-btn:active { background: #0f172a; transform: scale(0.95); }
         .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 2px; }
 
         input, select { 
             width: 100%; padding: 10px; font-size: 18px; text-align: center; border-radius: 10px; 
             border: 2px solid #38bdf8; margin-bottom: 6px; background: #0f172a; color: #fff; font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6); outline: none;
         }
         
         .stage-view { 
@@ -95,6 +96,7 @@
         .dot-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
         .dot-green { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
 
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes zoomIn {
             from { transform: scale(0.3); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
@@ -121,6 +123,7 @@
 <body>
 
     <div class="container">
+        <!-- ヘッダー -->
         <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             <div class="show-title-badge">フジテレビ風 クイズ番組</div>
             <button onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
@@ -176,7 +179,7 @@
                 <div id="kanji-display" class="kanji-text">川</div>
             </div>
 
-            <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off">
+            <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off" autocapitalize="none">
 
             <button id="flick-submit-btn" class="btn hidden" style="background: #2563eb; margin-bottom: 6px; padding: 10px;" onclick="submitAnswer()">攻撃（解答する） ➔</button>
             
@@ -188,7 +191,7 @@
                 <div class="key-row"><button class="key-btn" onclick="addKey('な')">な</button><button class="key-btn" onclick="addKey('に')">に</button><button class="key-btn" onclick="addKey('ぬ')">ぬ</button><button class="key-btn" onclick="addKey('ね')">ね</button><button class="key-btn" onclick="addKey('の')">の</button></div>
                 <div class="key-row"><button class="key-btn" onclick="addKey('は')">は</button><button class="key-btn" onclick="addKey('ひ')">ひ</button><button class="key-btn" onclick="addKey('ふ')">ふ</button><button class="key-btn" onclick="addKey('へ')">へ</button><button class="key-btn" onclick="addKey('ほ')">ほ</button></div>
                 <div class="key-row"><button class="key-btn" onclick="addKey('ま')">ま</button><button class="key-btn" onclick="addKey('み')">み</button><button class="key-btn" onclick="addKey('む')">む</button><button class="key-btn" onclick="addKey('め')">め</button><button class="key-btn" onclick="addKey('も')">も</button></div>
-                <div class="key-row"><button class="key-btn" onclick="addKey('や')">や</button><button class="key-btn" style="opacity:0.2;">-</button><button class="key-btn" onclick="addKey('ゆ')">ゆ</button><button class="key-btn" style="opacity:0.2;">-</button><button class="key-btn" onclick="addKey('よ')">よ</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('や')">や</button><button class="key-btn" style="opacity:0.2;" disabled>-</button><button class="key-btn" onclick="addKey('ゆ')">ゆ</button><button class="key-btn" style="opacity:0.2;" disabled>-</button><button class="key-btn" onclick="addKey('よ')">よ</button></div>
                 <div class="key-row"><button class="key-btn" onclick="addKey('ら')">ら</button><button class="key-btn" onclick="addKey('り')">り</button><button class="key-btn" onclick="addKey('る')">る</button><button class="key-btn" onclick="addKey('れ')">れ</button><button class="key-btn" onclick="addKey('ろ')">ろ</button></div>
                 <div class="key-row">
                     <button class="key-btn" onclick="addKey('わ')">わ</button><button class="key-btn" onclick="addKey('を')">を</button><button class="key-btn" onclick="addKey('ん')">ん</button><button class="key-btn" onclick="addKey('っ')">っ</button><button class="key-btn" onclick="addKey('ー')">ー</button>
@@ -229,7 +232,7 @@
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
-                <!-- 追加: サーバー認証 -->
+                <!-- サーバー認証 -->
                 <div style="margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 10px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">独自サーバー認証（自作APIプロキシ/バックエンド）：</label>
                     <input type="text" id="server-url-input" placeholder="https://your-api-server.com/endpoint" style="margin-top: 3px; font-size: 13px; padding: 8px; text-align: left;">
@@ -284,16 +287,10 @@
         let isApiOnline = false;
 
         function getStorage(key, defaultVal) {
-            try {
-                return localStorage.getItem(key) || defaultVal;
-            } catch(e) {
-                return defaultVal;
-            }
+            try { return localStorage.getItem(key) ?? defaultVal; } catch(e) { return defaultVal; }
         }
         function setStorage(key, val) {
-            try {
-                localStorage.setItem(key, val);
-            } catch(e) {}
+            try { localStorage.setItem(key, val); } catch(e) {}
         }
 
         function initAudio() {
@@ -309,6 +306,7 @@
 
         function updateVolume(val) {
             soundVolume = val / 100;
+            setStorage("sound_volume", val);
             document.getElementById("volume-val").innerText = val;
             playSound('click');
         }
@@ -418,11 +416,9 @@
 
         function generateFallbackData(mode) {
             const rawPool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
-            const shuffled = [...rawPool].sort(() => Math.random() - 0.5);
-            
             const result = [];
             for (let i = 0; i < 30; i++) {
-                const item = shuffled[i % shuffled.length];
+                const item = rawPool[i % rawPool.length];
                 const isBoss = (i + 1) % 5 === 0;
                 result.push({
                     id: i + 1,
@@ -443,13 +439,19 @@
         let timeRemaining = 15;
         let isPaused = false;
         let activeMode = "小学生";
-        let inputMode = "keyboard";
+        let inputMode = getStorage("input_mode", "keyboard");
         
         let apiKey = getStorage("hf_api_key", "");
         let serverUrl = getStorage("server_url", "");
         let serverKey = getStorage("server_key", "");
 
         window.onload = () => {
+            const savedVol = getStorage("sound_volume", "50");
+            soundVolume = parseInt(savedVol) / 100;
+            const volSlider = document.getElementById("volume-slider");
+            if (volSlider) volSlider.value = savedVol;
+            document.getElementById("volume-val").innerText = savedVol;
+
             const apiKeyInput = document.getElementById("api-key-input");
             if (apiKeyInput) apiKeyInput.value = apiKey;
 
@@ -476,7 +478,7 @@
                 const gameScreen = document.getElementById("screen-game");
                 const activeEl = document.activeElement;
                 if (gameScreen && !gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
-                    if (e.key.length === 1 || e.key === "Backspace" || e.key.startsWith("Arrow")) {
+                    if (e.key.length === 1 || e.key === "Backspace") {
                         if (inputField) inputField.focus();
                     }
                 }
@@ -498,7 +500,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -528,7 +530,6 @@
             }
         }
 
-        // 独自サーバー認証テスト関数
         async function testServerAuth() {
             initAudio();
             playSound('click');
@@ -577,6 +578,7 @@
 
         function changeInputMode(mode) {
             inputMode = mode;
+            setStorage("input_mode", mode);
             const selectEl = document.getElementById("settings-input-mode");
             if (selectEl) selectEl.value = mode;
             
@@ -588,14 +590,12 @@
                 if (customKey) customKey.classList.add("hidden");
                 if (flickBtn) flickBtn.classList.remove("hidden");
                 if (inputField) {
-                    inputField.readOnly = false;
                     inputField.placeholder = "タップしてフリックキーボードで入力";
                 }
             } else {
                 if (customKey) customKey.classList.remove("hidden");
-                if (flickBtn) flickBtn.classList.hidden = true;
+                if (flickBtn) flickBtn.classList.add("hidden");
                 if (inputField) {
-                    inputField.readOnly = false;
                     inputField.placeholder = "画面ボタンか直接入力";
                 }
             }
@@ -719,13 +719,13 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
                     isApiOnline = true;
                     if (dot) dot.className = "status-dot dot-green";
                 } else {
-                    if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークンまたはモデルの応答制限）</span>";
+                    if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークン）</span>";
                     playSound('wrong');
                     isApiOnline = false;
                     if (dot) dot.className = "status-dot dot-red";
                 }
             } catch (e) {
-                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続タイムアウト（内蔵データを使用します）</span>";
+                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続タイムアウト</span>";
                 playSound('wrong');
                 isApiOnline = false;
                 if (dot) dot.className = "status-dot dot-red";
@@ -852,6 +852,7 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
             if (!str) return "";
             let text = str.normalize('NFKC');
             text = text.replace(/\s+/g, '');
+            // カタカナをひらがなに変換
             text = text.replace(/[\u30a1-\u30f6]/g, function(match) {
                 return String.fromCharCode(match.charCodeAt(0) - 0x60);
             });
@@ -963,7 +964,6 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
             initAudio();
             playSound('click');
 
-            // 入力値の保持・取得
             const keyEl = document.getElementById("api-key-input");
             apiKey = keyEl ? keyEl.value.trim() : "";
             setStorage("hf_api_key", apiKey);
