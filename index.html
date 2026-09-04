@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI</title>
+    <title>ネプリーグ風 漢字ツアーズ AI (Hugging Face版)</title>
     <style>
         * { box-sizing: border-box; }
         html, body {
@@ -143,7 +143,7 @@
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
             <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
                 漢字ツアーズ AI
-                <span id="status-dot" class="status-dot dot-red" title="Gemini API接続状態"></span>
+                <span id="status-dot" class="status-dot dot-red" title="Hugging Face API接続状態"></span>
             </h1>
             <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
                 🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
@@ -160,7 +160,7 @@
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
             <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
             <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
-            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">Gemini AIが出題問題をマッチング生成しています</p>
+            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">Hugging Face AIが出題問題をマッチング生成しています</p>
         </div>
 
         <!-- 3. ゲーム画面 -->
@@ -238,8 +238,8 @@
                 <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ システム設定</h2>
                 
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Gemini APIキー：</label>
-                    <input type="password" id="api-key-input" placeholder="AIzaSy..." style="margin-top: 3px; font-size: 14px; padding: 8px;">
+                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Hugging Face Access Token (hf_...)：</label>
+                    <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 3px; font-size: 14px; padding: 8px;">
                     <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
@@ -283,8 +283,8 @@
     </div>
 
     <script>
-        // APIキーの設定
-        const DEFAULT_API_KEY = "AQ.Ab8RN6JinckNSh0fLHQkU6vgM2B4K8mqIYeAiAMPbioByGXPWg";
+        // Hugging Face API設定
+        const HF_MODEL = "meta-llama/Llama-3.2-3B-Instruct";
         let audioCtx = null;
         let soundVolume = 0.5;
         let bgmTimer = null;
@@ -397,7 +397,7 @@
                 ["学校","がっこう","勉強や学問を学ぶ場所。"],["友達","ともだち","親しく付き合っている人。"],["勉強","べんきょう","知識や技術を身につけること。"],["太陽","たいよう","地球に光と熱を届ける星。"],["漢字","かんじ","中国から伝わった文字。"]
             ],
             "中学生": [
-                ["笑顔","え顔","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
+                ["笑顔","えがえ","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
                 ["複雑","ふくざつ","事情や形が入り組んでいること。"],["矛盾","むじゅん","つじつまが合わないこと。"],["謙遜","けんそん","控えめな態度をとること。"],["把握","はあく","しっかり理解してつかむこと。"],["克服","こくふく","困難に打ち勝つこと。"]
             ],
             "高校生": [
@@ -439,7 +439,7 @@
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = "keyboard";
-        let apiKey = localStorage.getItem("gemini_api_key") || DEFAULT_API_KEY;
+        let apiKey = localStorage.getItem("hf_api_key") || "";
 
         window.onload = () => {
             document.getElementById("api-key-input").value = apiKey;
@@ -467,10 +467,10 @@
             checkApiStatusBackground();
         };
 
-        /* Gemini API接続チェックを行い、タイトルのステータスドットを赤/緑に変更 */
+        /* Hugging Face API接続チェックを行い、タイトルのステータスドットを赤/緑に変更 */
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
-            apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("gemini_api_key") || DEFAULT_API_KEY;
+            apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("hf_api_key") || "";
 
             if (!apiKey || !navigator.onLine) {
                 isApiOnline = false;
@@ -479,10 +479,17 @@
             }
 
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: HF_MODEL,
+                        messages: [{ role: "user", content: "ping" }],
+                        max_tokens: 5
+                    })
                 });
 
                 if (res.ok) {
@@ -531,11 +538,11 @@
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.remove("hidden");
 
-            apiKey = localStorage.getItem("gemini_api_key") || DEFAULT_API_KEY;
+            apiKey = localStorage.getItem("hf_api_key") || "";
 
             if (isApiOnline && apiKey && navigator.onLine) {
                 document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
-                document.getElementById("loading-desc").innerText = "Gemini AIがネプリーグ仕様の難易度カーブを計算しています";
+                document.getElementById("loading-desc").innerText = "Hugging Face AIが難易度カーブを計算しています";
 
                 try {
                     let prompt = `あなたはネプリーグの「漢字ツアーズ」出題AIです。
@@ -544,27 +551,29 @@
 【ルール】
 - 1〜30問にかけて段階的に難易度をアップしてください。
 - 5, 10, 15, 20, 25, 30問目はBOSSとし、"isBoss": true、"category": "${mode}【BOSS】"としてください。
+- 返答は必ず有効な純粋なJSONオブジェクトのみを出力してください（Markdownの\`\`\`jsonタグや説明文章は一切含めないでください）。
 
 【出力形式】
-JSONオブジェクトのみを出力してください。
 {
   "questions": [
-    {"id":1, "kanji":"川", "reading":"かわ", "category":"${mode}", "meaning":"水が流れる川のこと。", "isBoss":false},
-    ... 30問目まで
+    {"id":1, "kanji":"川", "reading":"かわ", "category":"${mode}", "meaning":"水が流れる川のこと。", "isBoss":false}
   ]
 }`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 12000);
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Authorization": `Bearer ${apiKey}`,
+                            "Content-Type": "application/json"
+                        },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            generationConfig: {
-                                responseMimeType: "application/json"
-                            }
+                            model: HF_MODEL,
+                            messages: [{ role: "user", content: prompt }],
+                            max_tokens: 2000,
+                            temperature: 0.7
                         }),
                         signal: controller.signal
                     });
@@ -572,8 +581,10 @@ JSONオブジェクトのみを出力してください。
 
                     if (res.ok) {
                         const data = await res.json();
-                        const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        let textContent = data.choices?.[0]?.message?.content;
                         if (textContent) {
+                            // JSON文字列のクリーンアップ
+                            textContent = textContent.replace(/```json/g, '').replace(/```/g, '').trim();
                             const jsonContent = JSON.parse(textContent);
                             if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
                                 currentList = jsonContent.questions;
@@ -607,24 +618,39 @@ JSONオブジェクトのみを出力してください。
         async function testApiKey() {
             initAudio();
             playSound('click');
-            const key = document.getElementById("api-key-input").value.trim() || DEFAULT_API_KEY;
+            const key = document.getElementById("api-key-input").value.trim();
             const resResult = document.getElementById("auth-result");
             const dot = document.getElementById("status-dot");
             
+            if (!key) {
+                resResult.innerHTML = "<span style='color:#ef4444;'>❌ トークンを入力してください</span>";
+                isApiOnline = false;
+                dot.className = "status-dot dot-red";
+                return;
+            }
+
             resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "test" }] }] })
+                    headers: {
+                        "Authorization": `Bearer ${key}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: HF_MODEL,
+                        messages: [{ role: "user", content: "test" }],
+                        max_tokens: 5
+                    })
                 });
+
                 if (res.ok) {
-                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（Gemini AI生成モード有効）</span>";
+                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（Hugging Face AI生成モード有効）</span>";
                     playSound('correct');
                     isApiOnline = true;
                     dot.className = "status-dot dot-green";
                 } else {
-                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（固定データ使用）</span>";
+                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークンまたは制限）</span>";
                     playSound('wrong');
                     isApiOnline = false;
                     dot.className = "status-dot dot-red";
@@ -867,8 +893,8 @@ JSONオブジェクトのみを出力してください。
         function closeSettings() {
             initAudio();
             playSound('click');
-            apiKey = document.getElementById("api-key-input").value.trim() || DEFAULT_API_KEY;
-            localStorage.setItem("gemini_api_key", apiKey);
+            apiKey = document.getElementById("api-key-input").value.trim();
+            localStorage.setItem("hf_api_key", apiKey);
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
             changeInputMode(inputMode);
