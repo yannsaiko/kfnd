@@ -241,8 +241,13 @@
                 <div id="kanji-display" class="kanji-text">川</div>
             </div>
 
-            <!-- キーボードを起動させない input 属性（inputmode="none" readonly） -->
+            <!-- 解答入力用テキストボックス -->
             <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off" autocapitalize="none" inputmode="none" readonly>
+
+            <!-- 直接入力（端末キーボード）モード用発射ボタン -->
+            <div id="direct-submit-container" class="hidden" style="width: 100%; margin-bottom: 6px;">
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin: 0; padding: 12px; font-size: 18px;" onclick="submitAnswer()">🚀 発射（決定）</button>
+            </div>
 
             <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 6px;">
                 <button type="button" class="btn" style="background: linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color: #f59e0b; width: 100%; margin: 0; padding: 10px; font-size: 14px;" onclick="passQuestion()">⏭️ パス (-1 LIFE)</button>
@@ -321,6 +326,7 @@
                     <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 3px; padding: 8px; font-size: 14px;">
                         <option value="flick">Web自作フリックキーボード（NEW）</option>
                         <option value="keyboard">アーケード五十音パネル</option>
+                        <option value="direct">端末標準キーボード（直接入力）</option>
                     </select>
                 </div>
 
@@ -587,7 +593,6 @@
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = getStorage("input_mode", "flick");
-        if (inputMode === "direct") inputMode = "flick";
         let apiKey = getStorage("hf_api_key", "");
 
         function initApp() {
@@ -602,8 +607,18 @@
                 const apiKeyInput = document.getElementById("api-key-input");
                 if (apiKeyInput) apiKeyInput.value = apiKey;
 
-                changeInputMode(inputMode);
+                // Enterキーで正解判定を送信するイベントを追加
+                const userInputEl = document.getElementById("user-input");
+                if (userInputEl) {
+                    userInputEl.addEventListener("keydown", function(e) {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            submitAnswer();
+                        }
+                    });
+                }
 
+                changeInputMode(inputMode);
                 setupFlickEvents();
                 checkApiStatusBackground();
             } catch(e) {}
@@ -775,7 +790,6 @@
         }
 
         function changeInputMode(mode) {
-            if (mode === "direct") mode = "flick";
             inputMode = mode;
             setStorage("input_mode", mode);
             const selectEl = document.getElementById("settings-input-mode");
@@ -783,16 +797,36 @@
             
             const flickKey = document.getElementById("flick-keyboard");
             const customKey = document.getElementById("custom-keyboard");
+            const directSubmit = document.getElementById("direct-submit-container");
             const inputField = document.getElementById("user-input");
             
             if (inputMode === "flick") {
                 if (flickKey) flickKey.classList.remove("hidden");
                 if (customKey) customKey.classList.add("hidden");
-                if (inputField) inputField.placeholder = "画面下のフリックキーで入力";
-            } else {
+                if (directSubmit) directSubmit.classList.add("hidden");
+                if (inputField) {
+                    inputField.placeholder = "画面下のフリックキーで入力";
+                    inputField.setAttribute("readonly", "true");
+                    inputField.setAttribute("inputmode", "none");
+                }
+            } else if (inputMode === "keyboard") {
                 if (flickKey) flickKey.classList.add("hidden");
                 if (customKey) customKey.classList.remove("hidden");
-                if (inputField) inputField.placeholder = "画面の五十音ボタンで入力";
+                if (directSubmit) directSubmit.classList.add("hidden");
+                if (inputField) {
+                    inputField.placeholder = "画面の五十音ボタンで入力";
+                    inputField.setAttribute("readonly", "true");
+                    inputField.setAttribute("inputmode", "none");
+                }
+            } else if (inputMode === "direct") {
+                if (flickKey) flickKey.classList.add("hidden");
+                if (customKey) customKey.classList.add("hidden");
+                if (directSubmit) directSubmit.classList.remove("hidden");
+                if (inputField) {
+                    inputField.placeholder = "キーボードで入力（Enterで発射）";
+                    inputField.removeAttribute("readonly");
+                    inputField.removeAttribute("inputmode");
+                }
             }
         }
 
@@ -962,7 +996,14 @@
             void kanjiDisplay.offsetWidth;
             kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
-            document.getElementById("user-input").value = "";
+            const inputField = document.getElementById("user-input");
+            inputField.value = "";
+
+            if (inputMode === "direct") {
+                setTimeout(() => {
+                    inputField.focus();
+                }, 100);
+            }
 
             const bossBadge = document.getElementById("boss-badge");
             const enemyEmoji = document.getElementById("enemy-emoji");
@@ -1127,6 +1168,9 @@
             } else {
                 document.getElementById("ai-message").innerText = `🎙️「違う！残りライフ ${lives}！」`;
                 document.getElementById("user-input").value = "";
+                if (inputMode === "direct") {
+                    document.getElementById("user-input").focus();
+                }
             }
         }
 
