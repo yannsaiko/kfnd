@@ -74,7 +74,7 @@
         .flick-key .sub-left { left: 4px; top: 50%; transform: translateY(-50%); }
         .flick-key .sub-top { top: 2px; left: 50%; transform: translateX(-50%); }
         .flick-key .sub-right { right: 4px; top: 50%; transform: translateY(-50%); }
-        .flick-key .sub-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .flick-key .sub-bottom { bottom: 2px; left: 50%; transform: translateY(-50%); }
 
         /* フリックポップアップガイド */
         .flick-popover {
@@ -107,6 +107,7 @@
             border: 3px solid #f59e0b; border-radius: 16px; padding: 16px 10px; margin: 6px 0; width: 100%; 
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(0,0,0,0.9); 
             position: relative; overflow: hidden; flex-shrink: 0;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
         .stage-view::before {
             content: ''; position: absolute; inset: 0;
@@ -121,9 +122,17 @@
             word-break: break-all;
         }
 
+        /* 5秒前警告演出スタイル */
         .timer-warning {
             color: #ef4444 !important; border-color: #ef4444 !important;
-            animation: pulse 0.5s infinite alternate;
+            background: rgba(239, 68, 68, 0.2) !important;
+            animation: pulse 0.3s infinite alternate !important;
+        }
+
+        .danger-border {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.7), inset 0 0 25px rgba(239, 68, 68, 0.4) !important;
+            animation: shake 0.3s infinite alternate;
         }
 
         .modal {
@@ -150,12 +159,12 @@
         }
         @keyframes pulse {
             from { transform: scale(1); opacity: 1; }
-            to { transform: scale(1.1); opacity: 0.8; }
+            to { transform: scale(1.15); opacity: 0.8; }
         }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
         }
         .shake { animation: shake 0.4s ease-in-out; }
 
@@ -188,9 +197,14 @@
         <!-- ヘッダー -->
         <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             <div class="show-title-badge">フジテレビ風 クイズ番組</div>
-            <button type="button" onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
-                ⚙️ 設定 / PAUSE
-            </button>
+            <div style="display: flex; gap: 6px;">
+                <button type="button" id="header-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s;">
+                    🔊 音声ON
+                </button>
+                <button type="button" onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                    ⚙️ 設定 / PAUSE
+                </button>
+            </div>
         </div>
 
         <!-- タイトル画面 -->
@@ -201,7 +215,7 @@
                 <span id="status-dot" class="status-dot dot-red" title="AI API接続状態"></span>
             </h1>
             <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
-                🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
+                🚀 ツアーズバギー発進！制限時間10秒で漢字を撃破せよ！
             </div>
             
             <button type="button" class="btn" onclick="startGame('小学生')">LEVEL 1 🎒 小学生ステージ</button>
@@ -226,8 +240,8 @@
                     <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
                 </div>
                 <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
-                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #38bdf8;" id="timer-box">
-                    ⏱ <span id="timer-text">15</span>
+                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #38bdf8; transition: all 0.3s;" id="timer-box">
+                    ⏱ <span id="timer-text">10</span>
                 </div>
             </div>
 
@@ -331,7 +345,12 @@
                 </div>
 
                 <div style="margin-bottom: 15px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">BGM/効果音: <span id="volume-val">50</span>%</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">BGM/効果音: <span id="volume-val">50</span>%</label>
+                        <button type="button" id="setting-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s;">
+                            🔊 音声ON
+                        </button>
+                    </div>
                     <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 3px; width: 100%; cursor: pointer;">
                 </div>
 
@@ -364,6 +383,7 @@
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
         let audioCtx = null;
         let soundVolume = 0.5;
+        let previousVolume = 50;
         let bgmTimer = null;
         let isApiOnline = false;
 
@@ -412,18 +432,53 @@
             } catch(e) {}
         }
 
+        function toggleMute() {
+            const volSlider = document.getElementById("volume-slider");
+            if (soundVolume > 0) {
+                const currentVal = parseInt(document.getElementById("volume-val")?.innerText || "50");
+                if (currentVal > 0) previousVolume = currentVal;
+                updateVolume(0);
+                if (volSlider) volSlider.value = 0;
+            } else {
+                const targetVol = previousVolume > 0 ? previousVolume : 50;
+                updateVolume(targetVol);
+                if (volSlider) volSlider.value = targetVol;
+            }
+        }
+
+        function updateMuteUI() {
+            const headerMuteBtn = document.getElementById("header-mute-btn");
+            const settingMuteBtn = document.getElementById("setting-mute-btn");
+            const isMuted = soundVolume === 0;
+            const text = isMuted ? "🔇 ミュート" : "🔊 音声ON";
+
+            if (headerMuteBtn) {
+                headerMuteBtn.innerText = text;
+                headerMuteBtn.style.background = isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255,255,255,0.1)";
+                headerMuteBtn.style.borderColor = isMuted ? "#ef4444" : "rgba(255,255,255,0.2)";
+            }
+            if (settingMuteBtn) {
+                settingMuteBtn.innerText = text;
+                settingMuteBtn.style.background = isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255,255,255,0.1)";
+                settingMuteBtn.style.borderColor = isMuted ? "#ef4444" : "rgba(255,255,255,0.2)";
+            }
+        }
+
         function updateVolume(val) {
             soundVolume = val / 100;
             setStorage("sound_volume", val);
             const vVal = document.getElementById("volume-val");
             if (vVal) vVal.innerText = val;
-            playSound('click');
+            updateMuteUI();
+            if (soundVolume > 0) playSound('click');
         }
 
         function startBGM() {
             stopBGM();
             let notes = [130.81, 146.83, 164.81, 174.61];
             let step = 0;
+            const intervalTime = timeRemaining <= 5 ? 200 : 400; // 残り5秒以下でBGMテンポが倍速に
+
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
                 try {
@@ -436,16 +491,16 @@
 
                     osc.type = 'sawtooth';
                     let freq = notes[step % notes.length];
-                    if (timeRemaining <= 5) freq *= 1.5;
+                    if (timeRemaining <= 5) freq *= 1.5; // 残り5秒以下でピッチ上昇
 
                     osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0.03 * soundVolume, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    gain.gain.setValueAtTime((timeRemaining <= 5 ? 0.05 : 0.03) * soundVolume, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (timeRemaining <= 5 ? 0.12 : 0.18));
                     osc.start(now);
-                    osc.stop(now + 0.18);
+                    osc.stop(now + (timeRemaining <= 5 ? 0.12 : 0.18));
                     step++;
                 } catch(e) {}
-            }, timeRemaining <= 5 ? 250 : 400);
+            }, intervalTime);
         }
 
         function stopBGM() {
@@ -495,8 +550,8 @@
                     osc.start(now); osc.stop(now + 0.35);
                 } else if (type === 'tick') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, now);
-                    gain.gain.setValueAtTime(baseVolume * 0.3, now);
+                    osc.frequency.setValueAtTime(1200, now);
+                    gain.gain.setValueAtTime(baseVolume * 0.4, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
                     osc.start(now); osc.stop(now + 0.05);
                 }
@@ -589,7 +644,7 @@
         let clearedCount = 0;
         let lives = 3;
         let timer = null;
-        let timeRemaining = 15;
+        let timeRemaining = 10; // 制限時間を10秒に変更
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = getStorage("input_mode", "flick");
@@ -598,11 +653,16 @@
         function initApp() {
             try {
                 const savedVol = getStorage("sound_volume", "50");
-                soundVolume = parseInt(savedVol) / 100;
+                const parsedVol = parseInt(savedVol);
+                soundVolume = parsedVol / 100;
+                if (parsedVol > 0) previousVolume = parsedVol;
+
                 const volSlider = document.getElementById("volume-slider");
                 if (volSlider) volSlider.value = savedVol;
                 const vVal = document.getElementById("volume-val");
                 if (vVal) vVal.innerText = savedVol;
+
+                updateMuteUI();
 
                 const apiKeyInput = document.getElementById("api-key-input");
                 if (apiKeyInput) apiKeyInput.value = apiKey;
@@ -920,7 +980,6 @@
             if (gameEl) gameEl.classList.remove("hidden");
             
             changeInputMode(inputMode);
-            startBGM();
             loadQuestion();
         }
 
@@ -1028,19 +1087,30 @@
 
         function resetTimer() {
             clearInterval(timer);
-            timeRemaining = 15;
+            timeRemaining = 10; // 制限時間 10秒にセット
             const timerText = document.getElementById("timer-text");
             const timerBox = document.getElementById("timer-box");
+            const enemyBox = document.getElementById("enemy-box");
+
             timerText.innerText = timeRemaining;
             timerBox.classList.remove("timer-warning");
+            if (enemyBox) enemyBox.classList.remove("danger-border");
+
+            startBGM(); // 通常テンポでBGM開始
 
             timer = setInterval(() => {
                 if (isPaused) return;
                 timeRemaining--;
                 timerText.innerText = timeRemaining;
 
+                // 5秒前に到達したときの変化（視覚演出・BGMの加速・警告音）
+                if (timeRemaining === 5) {
+                    startBGM(); // 残り5秒でBGMを加速して再スタート
+                }
+
                 if (timeRemaining <= 5) {
                     timerBox.classList.add("timer-warning");
+                    if (enemyBox) enemyBox.classList.add("danger-border");
                     playSound('tick');
                 }
 
