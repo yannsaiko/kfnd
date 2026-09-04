@@ -277,7 +277,6 @@
     </div>
 
     <script>
-        // モデルを Qwen/Qwen2.5-7B-Instruct に指定
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
 
         let audioCtx = null;
@@ -286,26 +285,16 @@
         let isApiOnline = false;
 
         function getStorage(key, defaultVal) {
-            try {
-                return localStorage.getItem(key) || defaultVal;
-            } catch(e) {
-                return defaultVal;
-            }
+            try { return localStorage.getItem(key) || defaultVal; } catch(e) { return defaultVal; }
         }
         function setStorage(key, val) {
-            try {
-                localStorage.setItem(key, val);
-            } catch(e) {}
+            try { localStorage.setItem(key, val); } catch(e) {}
         }
 
         function initAudio() {
             try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             } catch(e) {}
         }
 
@@ -500,7 +489,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒タイムアウト
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -549,7 +538,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const res = await fetch(url, {
                     method: "POST",
@@ -594,7 +583,7 @@
                 }
             } else {
                 if (customKey) customKey.classList.remove("hidden");
-                if (flickBtn) flickBtn.classList.hidden = true;
+                if (flickBtn) flickBtn.classList.add("hidden"); // classList.add("hidden")に修正
                 if (inputField) {
                     inputField.readOnly = false;
                     inputField.placeholder = "画面ボタンか直接入力";
@@ -626,7 +615,7 @@
 JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 20000);
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒でタイムアウトして即内蔵データへ
 
                     const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
