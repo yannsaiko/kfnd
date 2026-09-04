@@ -150,7 +150,7 @@
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
             <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
             <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
-            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">Hugging Face AIが出題問題をマッチング生成しています</p>
+            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">出題問題をロードしています</p>
         </div>
 
         <!-- ゲーム画面 -->
@@ -212,7 +212,7 @@
                     <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【広辞苑・意味解説】</div>
                     <div id="modal-meaning" style="line-height: 1.5; color: #e2e8f0;">解説文</div>
                 </div>
-                <button id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="nextStage()">次のステージへ進降 ➔</button>
+                <button id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="nextStage()">次のステージへ進む ➔</button>
             </div>
         </div>
 
@@ -273,13 +273,29 @@
         let bgmTimer = null;
         let isApiOnline = false;
 
+        // 安全なストレージ操作（localStorageのブロックエラー回避）
+        function getStorage(key, defaultVal) {
+            try {
+                return localStorage.getItem(key) || defaultVal;
+            } catch(e) {
+                return defaultVal;
+            }
+        }
+        function setStorage(key, val) {
+            try {
+                localStorage.setItem(key, val);
+            } catch(e) {}
+        }
+
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch(e) {}
         }
 
         function updateVolume(val) {
@@ -294,9 +310,8 @@
             let step = 0;
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
                 try {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.connect(gain);
@@ -421,29 +436,31 @@
         let activeMode = "小学生";
         let inputMode = "keyboard";
         
-        // ご提示いただいたトークンを初期値として設定
-        let apiKey = localStorage.getItem("hf_api_key") || "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";
+        let apiKey = getStorage("hf_api_key", "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");
 
         window.onload = () => {
-            document.getElementById("api-key-input").value = apiKey;
-            localStorage.setItem("hf_api_key", apiKey);
+            const apiKeyInput = document.getElementById("api-key-input");
+            if (apiKeyInput) apiKeyInput.value = apiKey;
+            setStorage("hf_api_key", apiKey);
             changeInputMode(inputMode);
             
             const inputField = document.getElementById("user-input");
-            inputField.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    if (e.isComposing) return;
-                    e.preventDefault();
-                    submitAnswer();
-                }
-            });
+            if (inputField) {
+                inputField.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        if (e.isComposing) return;
+                        e.preventDefault();
+                        submitAnswer();
+                    }
+                });
+            }
 
             window.addEventListener("keydown", (e) => {
                 const gameScreen = document.getElementById("screen-game");
                 const activeEl = document.activeElement;
-                if (!gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                if (gameScreen && !gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
                     if (e.key.length === 1 || e.key === "Backspace" || e.key.startsWith("Arrow")) {
-                        inputField.focus();
+                        if (inputField) inputField.focus();
                     }
                 }
             });
@@ -453,15 +470,19 @@
 
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
-            apiKey = document.getElementById("api-key-input").value.trim() || localStorage.getItem("hf_api_key") || "";
+            const inputVal = document.getElementById("api-key-input") ? document.getElementById("api-key-input").value.trim() : "";
+            apiKey = inputVal || getStorage("hf_api_key", "");
 
             if (!apiKey || !navigator.onLine) {
                 isApiOnline = false;
-                dot.className = "status-dot dot-red";
+                if (dot) dot.className = "status-dot dot-red";
                 return;
             }
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒でタイムアウト判定
+
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
                     headers: {
@@ -472,40 +493,47 @@
                         model: HF_MODEL,
                         messages: [{ role: "user", content: "ping" }],
                         max_tokens: 5
-                    })
+                    }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 if (res.ok) {
                     isApiOnline = true;
-                    dot.className = "status-dot dot-green";
+                    if (dot) dot.className = "status-dot dot-green";
                 } else {
                     isApiOnline = false;
-                    dot.className = "status-dot dot-red";
+                    if (dot) dot.className = "status-dot dot-red";
                 }
             } catch (e) {
                 isApiOnline = false;
-                dot.className = "status-dot dot-red";
+                if (dot) dot.className = "status-dot dot-red";
             }
         }
 
         function changeInputMode(mode) {
             inputMode = mode;
-            document.getElementById("settings-input-mode").value = mode;
+            const selectEl = document.getElementById("settings-input-mode");
+            if (selectEl) selectEl.value = mode;
             
             const customKey = document.getElementById("custom-keyboard");
             const flickBtn = document.getElementById("flick-submit-btn");
             const inputField = document.getElementById("user-input");
             
             if (inputMode === "flick") {
-                customKey.classList.add("hidden");
-                flickBtn.classList.remove("hidden");
-                inputField.readOnly = false;
-                inputField.placeholder = "タップしてフリックキーボードで入力";
+                if (customKey) customKey.classList.add("hidden");
+                if (flickBtn) flickBtn.classList.remove("hidden");
+                if (inputField) {
+                    inputField.readOnly = false;
+                    inputField.placeholder = "タップしてフリックキーボードで入力";
+                }
             } else {
-                customKey.classList.remove("hidden");
-                flickBtn.classList.add("hidden");
-                inputField.readOnly = false;
-                inputField.placeholder = "画面ボタンか直接入力";
+                if (customKey) customKey.classList.remove("hidden");
+                if (flickBtn) flickBtn.classList.add("hidden");
+                if (inputField) {
+                    inputField.readOnly = false;
+                    inputField.placeholder = "画面ボタンか直接入力";
+                }
             }
         }
 
@@ -521,30 +549,19 @@
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.remove("hidden");
 
-            apiKey = localStorage.getItem("hf_api_key") || "";
+            apiKey = getStorage("hf_api_key", "");
 
             if (isApiOnline && apiKey && navigator.onLine) {
                 document.getElementById("loading-title").innerText = "ツアーズジェット 30問生成中...";
                 document.getElementById("loading-desc").innerText = "Hugging Face AIが難易度カーブを計算しています";
 
                 try {
-                    let prompt = `あなたはネプリーグの「漢字ツアーズ」出題AIです。
-「${mode}」コース用の全30問の漢字クイズを出題してください。
-
-【ルール】
-- 1〜30問にかけて段階的に難易度をアップしてください。
-- 5, 10, 15, 20, 25, 30問目はBOSSとし、"isBoss": true、"category": "${mode}【BOSS】"としてください。
-- 返答は必ず有効な純粋なJSONオブジェクトのみを出力してください（Markdownの\`\`\`jsonタグや説明文章は一切含めないでください）。
-
-【出力形式】
-{
-  "questions": [
-    {"id":1, "kanji":"川", "reading":"かわ", "category":"${mode}", "meaning":"水が流れる川のこと。", "isBoss":false}
-  ]
-}`;
+                    let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。
+1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。
+JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000);
+                    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4秒以上かかったらフォールバックへ
 
                     const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
@@ -566,4 +583,341 @@
                         const data = await res.json();
                         let textContent = data.choices?.[0]?.message?.content;
                         if (textContent) {
-                            textContent = textContent.replace(/```json/g, '').replace(/
+                            textContent = textContent.replace(/```json/g, '').replace(/```/g, '').trim();
+                            const jsonContent = JSON.parse(textContent);
+                            if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
+                                currentList = jsonContent.questions;
+                                initGameScreen();
+                                return;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log("AI生成スキップ（内蔵データ使用）:", e);
+                }
+            }
+
+            // オンライン生成がタイムアウト/エラー時は即座に内蔵データベースを使用
+            document.getElementById("loading-title").innerText = "ツアーズバギー 発進！";
+            document.getElementById("loading-desc").innerText = "出題データロード完了";
+            
+            setTimeout(() => {
+                currentList = generateFallbackData(mode);
+                initGameScreen();
+            }, 300);
+        }
+
+        function initGameScreen() {
+            document.getElementById("screen-loading").classList.add("hidden");
+            document.getElementById("screen-game").classList.remove("hidden");
+            changeInputMode(inputMode);
+            startBGM();
+            loadQuestion();
+        }
+
+        async function testApiKey() {
+            initAudio();
+            playSound('click');
+            const keyEl = document.getElementById("api-key-input");
+            const key = keyEl ? keyEl.value.trim() : "";
+            const resResult = document.getElementById("auth-result");
+            const dot = document.getElementById("status-dot");
+            
+            if (!key) {
+                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ トークンを入力してください</span>";
+                isApiOnline = false;
+                if (dot) dot.className = "status-dot dot-red";
+                return;
+            }
+
+            if (resResult) resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${key}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: HF_MODEL,
+                        messages: [{ role: "user", content: "test" }],
+                        max_tokens: 5
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (res.ok) {
+                    if (resResult) resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI出題モード有効）</span>";
+                    playSound('correct');
+                    isApiOnline = true;
+                    if (dot) dot.className = "status-dot dot-green";
+                } else {
+                    if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークン）</span>";
+                    playSound('wrong');
+                    isApiOnline = false;
+                    if (dot) dot.className = "status-dot dot-red";
+                }
+            } catch (e) {
+                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続不可（内蔵データを使用します）</span>";
+                playSound('wrong');
+                isApiOnline = false;
+                if (dot) dot.className = "status-dot dot-red";
+            }
+        }
+
+        function loadQuestion() {
+            if (currentIndex >= currentList.length) {
+                stopBGM();
+                document.getElementById("screen-game").classList.add("hidden");
+                document.getElementById("screen-clear").classList.remove("hidden");
+                return;
+            }
+            const q = currentList[currentIndex];
+            document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
+            document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
+            
+            const kanjiDisplay = document.getElementById("kanji-display");
+            kanjiDisplay.classList.remove("destroy-anim");
+            kanjiDisplay.innerText = q.kanji;
+            
+            void kanjiDisplay.offsetWidth;
+            kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+            document.getElementById("user-input").value = "";
+
+            const bossBadge = document.getElementById("boss-badge");
+            const enemyEmoji = document.getElementById("enemy-emoji");
+            if (q.isBoss) {
+                bossBadge.classList.remove("hidden");
+                enemyEmoji.innerText = "👹";
+                document.getElementById("ai-message").innerText = `🎙️「⚠️ BOSS出現！第${currentIndex + 1}問！正解して粉砕せよ！」`;
+                playSound('boss');
+            } else {
+                bossBadge.classList.add("hidden");
+                enemyEmoji.innerText = "👾";
+                document.getElementById("ai-message").innerText = `🎙️「第${currentIndex + 1}問！この漢字の読みを入力してください！」`;
+            }
+
+            updateLives();
+            resetTimer();
+        }
+
+        function updateLives() {
+            document.getElementById("lives-container").innerText = "🚀".repeat(lives) + "💥".repeat(3 - lives);
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeRemaining = 15;
+            const timerText = document.getElementById("timer-text");
+            const timerBox = document.getElementById("timer-box");
+            timerText.innerText = timeRemaining;
+            timerBox.classList.remove("timer-warning");
+
+            timer = setInterval(() => {
+                if (isPaused) return;
+                timeRemaining--;
+                timerText.innerText = timeRemaining;
+
+                if (timeRemaining <= 5) {
+                    timerBox.classList.add("timer-warning");
+                    playSound('tick');
+                }
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timer);
+                    triggerTimeUp();
+                }
+            }, 1000);
+        }
+
+        function triggerTimeUp() {
+            playSound('wrong');
+            const q = currentList[currentIndex];
+            showExplanationModal(q, 'timeup');
+        }
+
+        function addKey(char) {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            input.value += char;
+            input.focus();
+        }
+
+        function delKey() {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            input.value = input.value.slice(0, -1);
+            input.focus();
+        }
+
+        function addDakuten() {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            let str = input.value;
+            if(!str) return;
+            const last = str.slice(-1);
+            const map = { "か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ","う":"ゔ" };
+            if (map[last]) {
+                input.value = str.slice(0, -1) + map[last];
+            }
+            input.focus();
+        }
+
+        function addHandakuten() {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            let str = input.value;
+            if(!str) return;
+            const last = str.slice(-1);
+            const map = { "は":"ぱ","ひ":"ぴ","ふ":"ぷ","へ":"ぺ","ほ":"ぽ" };
+            if (map[last]) {
+                input.value = str.slice(0, -1) + map[last];
+            }
+            input.focus();
+        }
+
+        function normalizeText(str) {
+            if (!str) return "";
+            let text = str.normalize('NFKC');
+            text = text.replace(/\s+/g, '');
+            text = text.replace(/[\u30a1-\u30f6]/g, function(match) {
+                return String.fromCharCode(match.charCodeAt(0) - 0x60);
+            });
+            return text.trim();
+        }
+
+        function submitAnswer() {
+            initAudio();
+            const inputField = document.getElementById("user-input");
+            inputField.blur();
+
+            const rawVal = inputField.value;
+            const normalizedInput = normalizeText(rawVal);
+            
+            if (!normalizedInput) {
+                document.getElementById("ai-message").innerText = "🎙️「読みが入力されていません！」";
+                playSound('click');
+                inputField.focus();
+                return;
+            }
+
+            const q = currentList[currentIndex];
+            const normalizedAnswer = normalizeText(q.reading);
+            
+            if (normalizedInput === normalizedAnswer) {
+                clearInterval(timer);
+                playSound('correct');
+                
+                const kanjiDisplay = document.getElementById("kanji-display");
+                kanjiDisplay.classList.add("destroy-anim");
+
+                setTimeout(() => {
+                    showExplanationModal(q, 'correct');
+                }, 400);
+
+            } else {
+                loseLife();
+            }
+        }
+
+        function loseLife() {
+            playSound('wrong');
+            lives--;
+            updateLives();
+            const box = document.getElementById("enemy-box");
+            box.classList.add("shake");
+            setTimeout(() => box.classList.remove("shake"), 400);
+
+            if (lives <= 0) {
+                clearInterval(timer);
+                stopBGM();
+                const q = currentList[currentIndex];
+                showExplanationModal(q, 'gameover');
+            } else {
+                document.getElementById("ai-message").innerText = `🎙️「違う！残りライフ ${lives}！」`;
+                document.getElementById("user-input").value = "";
+            }
+        }
+
+        function showExplanationModal(q, status) {
+            const titleEl = document.getElementById("modal-title");
+            const nextBtn = document.getElementById("modal-next-btn");
+            
+            if (status === 'correct') {
+                titleEl.innerText = q.isBoss ? "💥 BOSS K.O.! 撃破！" : "💥 CLEAR! 撃破！";
+                titleEl.style.color = "#4ade80";
+                nextBtn.innerText = "次のエリアへ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'timeup') {
+                titleEl.innerText = "⏰ TIME UP! タイムアップ";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "タイトルに戻る ➔";
+                nextBtn.onclick = goToTitle;
+            } else if (status === 'gameover') {
+                titleEl.innerText = "💥 バギー大破！不正解";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "リザルトへ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex} / ${currentList.length}`;
+                };
+            }
+
+            document.getElementById("modal-kanji").innerText = q.kanji;
+            document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
+            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報が登録されていません。";
+            document.getElementById("modal-explanation").classList.remove("hidden");
+        }
+
+        function nextStage() {
+            initAudio();
+            playSound('click');
+            document.getElementById("modal-explanation").classList.add("hidden");
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function openSettings() {
+            initAudio();
+            playSound('click');
+            isPaused = true;
+            document.getElementById("modal-settings").classList.remove("hidden");
+            testApiKey();
+        }
+
+        function closeSettings() {
+            initAudio();
+            playSound('click');
+            const keyEl = document.getElementById("api-key-input");
+            apiKey = keyEl ? keyEl.value.trim() : "";
+            setStorage("hf_api_key", apiKey);
+            isPaused = false;
+            document.getElementById("modal-settings").classList.add("hidden");
+            changeInputMode(inputMode);
+            checkApiStatusBackground();
+        }
+
+        function goToTitle() {
+            initAudio();
+            clearInterval(timer);
+            stopBGM();
+            isPaused = false;
+            document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
+            ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => document.getElementById(id).classList.add("hidden"));
+            document.getElementById("screen-title").classList.remove("hidden");
+            checkApiStatusBackground();
+        }
+    </script>
+</body>
+</html>
