@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI</title>
+    <title>ネプリーグ風 漢字ツアーズ AI - Complete Edition</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
             height: 100%; margin: 0; padding: 0;
             background: #050b14; color: white;
-            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
             overflow-x: hidden; user-select: none;
         }
         body { 
@@ -18,36 +18,36 @@
             background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
         }
         .container {
-            width: 100%; max-width: 450px; padding: 0 15px; text-align: center;
+            width: 100%; max-width: 480px; padding: 0 12px; text-align: center;
             display: flex; flex-direction: column; align-items: center; position: relative;
         }
         .hidden { display: none !important; }
 
         .show-title-badge {
             background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000; font-weight: 900; font-size: 11px; padding: 2px 10px;
+            color: #000; font-weight: 900; font-size: 11px; padding: 3px 10px;
             border-radius: 4px; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
         }
 
         .btn { 
             background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); 
-            color: white; padding: 12px; margin: 6px 0; border: 2px solid #60a5fa; border-radius: 12px; 
-            font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(29, 78, 216, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+            color: white; padding: 12px; margin: 5px 0; border: 2px solid #60a5fa; border-radius: 12px; 
+            font-size: 15px; font-weight: bold; width: 100%; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
             touch-action: manipulation; transition: transform 0.1s, filter 0.2s;
         }
         .btn:active { transform: scale(0.97); }
-        .btn:hover { filter: brightness(1.1); }
+        .btn:hover { filter: brightness(1.15); }
 
         .key-btn { 
             background: linear-gradient(180deg, #334155 0%, #1e293b 100%); 
-            color: white; padding: 8px 0; margin: 2px; border: 1px solid #475569; border-radius: 6px; 
+            color: white; padding: 9px 0; margin: 2px; border: 1px solid #475569; border-radius: 6px; 
             font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.4); touch-action: manipulation;
         }
-        .key-btn:active { background: #0f172a; transform: scale(0.95); }
-        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 2px; }
+        .key-btn:active { background: #0f172a; transform: scale(0.93); }
+        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 1px; }
 
         input, select { 
             width: 100%; padding: 10px; font-size: 18px; text-align: center; border-radius: 10px; 
@@ -57,8 +57,8 @@
         
         .stage-view { 
             background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); 
-            border: 3px solid #f59e0b; border-radius: 16px; padding: 15px 10px; margin: 6px 0; width: 100%; 
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(0,0,0,0.8); 
+            border: 3px solid #f59e0b; border-radius: 16px; padding: 16px 10px; margin: 6px 0; width: 100%; 
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(0,0,0,0.9); 
             position: relative; overflow: hidden; flex-shrink: 0;
         }
 
@@ -69,13 +69,15 @@
         }
 
         .kanji-text {
-            font-size: 58px; font-weight: 900; line-height: 1.1; color: #ffffff;
+            font-size: 56px; font-weight: 900; line-height: 1.1; color: #ffffff;
             text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8, 0 0 30px #0284c7;
             animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            word-break: break-all;
         }
 
         .timer-warning {
             color: #ef4444 !important;
+            border-color: #ef4444 !important;
             animation: pulse 0.5s infinite alternate;
         }
 
@@ -103,12 +105,12 @@
         }
         @keyframes pulse {
             from { transform: scale(1); opacity: 1; }
-            to { transform: scale(1.15); opacity: 0.8; }
+            to { transform: scale(1.1); opacity: 0.8; }
         }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-12px); }
-            40%, 80% { transform: translateX(12px); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
         }
         .shake { animation: shake 0.4s ease-in-out; }
 
@@ -136,7 +138,7 @@
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
             <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
                 漢字ツアーズ AI
-                <span id="status-dot" class="status-dot dot-red" title="接続状態"></span>
+                <span id="status-dot" class="status-dot dot-red" title="AI API接続状態"></span>
             </h1>
             <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
                 🚀 ツアーズバギー発進！制限時間15秒で漢字を撃破せよ！
@@ -164,7 +166,7 @@
                     <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
                 </div>
                 <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
-                <div style="background: #0f172a; border: 2px solid #ef4444; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #f87171;" id="timer-box">
+                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #38bdf8;" id="timer-box">
                     ⏱ <span id="timer-text">15</span>
                 </div>
             </div>
@@ -212,7 +214,7 @@
                 <div id="modal-kanji" style="font-size: 48px; font-weight: 900; margin: 6px 0; color: #facc15; text-shadow: 0 0 10px #facc15;">漢字</div>
                 <div id="modal-reading" style="font-size: 20px; color: #4ade80; font-weight: bold; margin-bottom: 12px;">【読み】よみ</div>
                 <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; text-align: left; font-size: 13px; margin-bottom: 15px; border: 1px solid #475569;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【広辞苑・意味解説】</div>
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【辞書・意味解説】</div>
                     <div id="modal-meaning" style="line-height: 1.5; color: #e2e8f0;">解説文</div>
                 </div>
                 <button id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="nextStage()">次のステージへ進む ➔</button>
@@ -230,15 +232,6 @@
                     <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 3px; font-size: 14px; padding: 8px;">
                     <button class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
-                </div>
-
-                <!-- サーバー認証 -->
-                <div style="margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 10px;">
-                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">独自サーバー認証（自作APIプロキシ/バックエンド）：</label>
-                    <input type="text" id="server-url-input" placeholder="https://your-api-server.com/endpoint" style="margin-top: 3px; font-size: 13px; padding: 8px; text-align: left;">
-                    <input type="password" id="server-key-input" placeholder="サーバー認証キー / Auth Token" style="margin-top: 3px; font-size: 13px; padding: 8px; text-align: left;">
-                    <button class="btn" style="background: #0d9488; border-color: #2dd4bf; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testServerAuth()">🌐 サーバー認証テスト</button>
-                    <div id="server-auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
                 <div style="margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 10px;">
@@ -313,7 +306,7 @@
 
         function startBGM() {
             stopBGM();
-            let notes = [110, 116.54, 123.47, 130.81];
+            let notes = [130.81, 146.83, 164.81, 174.61]; // C3, D3, E3, F3
             let step = 0;
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
@@ -330,7 +323,7 @@
                     if (timeRemaining <= 5) freq *= 1.5;
 
                     osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0.04 * soundVolume, now);
+                    gain.gain.setValueAtTime(0.03 * soundVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
                     osc.start(now);
                     osc.stop(now + 0.18);
@@ -363,24 +356,24 @@
                     osc.start(now); osc.stop(now + 0.04);
                 } else if (type === 'correct') {
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.08);
-                    osc.frequency.setValueAtTime(783.99, now + 0.16);
-                    osc.frequency.setValueAtTime(1046.50, now + 0.24);
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
                     gain.gain.setValueAtTime(baseVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                     osc.start(now); osc.stop(now + 0.45);
                 } else if (type === 'wrong') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(180, now);
-                    osc.frequency.setValueAtTime(90, now + 0.12);
+                    osc.frequency.setValueAtTime(120, now + 0.12);
                     gain.gain.setValueAtTime(baseVolume * 1.5, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
                 } else if (type === 'boss') {
                     osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.setValueAtTime(600, now + 0.15);
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(440, now + 0.15);
                     gain.gain.setValueAtTime(baseVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
@@ -396,21 +389,64 @@
 
         const KANJI_DATABASE = {
             "小学生": [
-                ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],["車","くるま","車輪で移動する乗り物。"],["花","はな","植物の咲かせるきれいな部分。"],
-                ["学校","がっこう","勉強や学問を学ぶ場所。"],["友達","ともだち","親しく付き合っている人。"],["勉強","べんきょう","知識や技術を身につけること。"],["太陽","たいよう","地球に光と熱を届ける星。"],["漢字","かんじ","中国から伝わった文字。"]
+                ["川","かわ","絶えず水が流れている大きなすじ。"],
+                ["山","やま","周囲より高く盛り上がった土地。"],
+                ["木","き","地面から生える植物の一種。"],
+                ["車","くるま","車輪で移動する乗り物。"],
+                ["花","はな","植物の咲かせるきれいな部分。"],
+                ["学校","がっこう","勉強や学問を学ぶ場所。"],
+                ["友達","ともだち","親しく付き合っている人。"],
+                ["勉強","べんきょう","知識や技術を身につけること。"],
+                ["太陽","たいよう","地球に光と熱を届ける星。"],
+                ["漢字","かんじ","中国から伝わった文字。"]
             ],
             "中学生": [
-                ["笑顔","えがお","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
-                ["複雑","ふくざつ","事情や形が入り組んでいること。"],["矛盾","むじゅん","つじつまが合わないこと。"],["謙遜","けんそん","控えめな態度をとること。"],["把握","はあく","しっかり理解してつかむこと。"],["克服","こくふく","困難に打ち勝つこと。"]
+                ["笑顔","えがお","にこにこと笑った顔。"],
+                ["挨拶","あいさつ","人に会った時や別れる時の言葉。"],
+                ["故郷","ふるさと","自分が生まれ育った土地。"],
+                ["感謝","かんしゃ","ありがたいと思う気持ち。"],
+                ["努力","どりょく","目標のために力を尽くすこと。"],
+                ["複雑","ふくざつ","事情や形が入り組んでいること。"],
+                ["矛盾","むじゅん","つじつまが合わないこと。"],
+                ["謙遜","けんそん","控えめな態度をとること。"],
+                ["把握","はあく","しっかり理解してつかむこと。"],
+                ["克服","こくふく","困難に打ち勝つこと。"]
             ],
             "高校生": [
-                ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],["概念","がいねん","物事の大まかな意味や内容。"],["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"]
+                ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],
+                ["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],
+                ["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],
+                ["概念","がいねん","物事の大まかな意味や内容。"],
+                ["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"],
+                ["脆弱","ぜいじゃく","脆くて弱いこと。"],
+                ["破綻","はたん","物事が立ち行かなくなること。"],
+                ["矛盾","むじゅん","前後の辻褄が合わないこと。"],
+                ["洞察","どうさつ","見えない部分を見抜くこと。"],
+                ["歪曲","わいきょく","事実をねじ曲げること。"]
             ],
             "一般常識": [
-                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],["重複","ちょうふく","同じことが重なること。"],["代替","だいたい","他のものと取り替えること。"]
+                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],
+                ["流石","さすが","期待通りで素晴らしい様子。"],
+                ["相殺","そうさい","互いの貸し借りを消し分けること。"],
+                ["重複","ちょうふく","同じことが重なること。"],
+                ["代替","だいたい","他のものと取り替えること。"],
+                ["固執","こしゅう","自分の意見を譲らないこと。"],
+                ["脆弱","ぜいじゃく","もろく弱いこと。"],
+                ["情緒","じょうちょ","感情や情趣のこと。"],
+                ["刷新","さっしん","悪習を改めて新しくすること。"],
+                ["破天荒","はてんこう","誰も成し得なかったことを行うこと。"]
             ],
             "漢字王": [
-                ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"]
+                ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],
+                ["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],
+                ["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],
+                ["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],
+                ["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"],
+                ["海老","えび","甲殻類の一種。"],
+                ["向日葵","ひまわり","夏に大きな黄色い花を咲かせる植物。"],
+                ["無花果","いちじく","果実として食用にするクワ科の植物。"],
+                ["心太","ところてん","テングサから作る食品。"],
+                ["微塵","みじん","ごく僅かなこと。"]
             ]
         };
 
@@ -440,10 +476,7 @@
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = getStorage("input_mode", "keyboard");
-        
         let apiKey = getStorage("hf_api_key", "");
-        let serverUrl = getStorage("server_url", "");
-        let serverKey = getStorage("server_key", "");
 
         window.onload = () => {
             const savedVol = getStorage("sound_volume", "50");
@@ -454,12 +487,6 @@
 
             const apiKeyInput = document.getElementById("api-key-input");
             if (apiKeyInput) apiKeyInput.value = apiKey;
-
-            const serverUrlInput = document.getElementById("server-url-input");
-            if (serverUrlInput) serverUrlInput.value = serverUrl;
-
-            const serverKeyInput = document.getElementById("server-key-input");
-            if (serverKeyInput) serverKeyInput.value = serverKey;
 
             changeInputMode(inputMode);
             
@@ -500,7 +527,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
 
                 const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                     method: "POST",
@@ -530,52 +557,6 @@
             }
         }
 
-        async function testServerAuth() {
-            initAudio();
-            playSound('click');
-            const urlEl = document.getElementById("server-url-input");
-            const keyEl = document.getElementById("server-key-input");
-            const resResult = document.getElementById("server-auth-result");
-
-            const url = urlEl ? urlEl.value.trim() : "";
-            const key = keyEl ? keyEl.value.trim() : "";
-
-            if (!url) {
-                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ サーバーURLを入力してください</span>";
-                return;
-            }
-
-            if (resResult) resResult.innerHTML = "<span style='color:#facc15;'>🔄 サーバー認証接続テスト中...</span>";
-
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const res = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${key}`,
-                        "X-Server-Key": key,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ action: "auth_test", ping: true }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (res.ok) {
-                    if (resResult) resResult.innerHTML = "<span style='color:#22c55e;'>✅ サーバー接続・認証成功！</span>";
-                    playSound('correct');
-                } else {
-                    if (resResult) resResult.innerHTML = `<span style='color:#ef4444;'>❌ 認証エラー (HTTP Status: ${res.status})</span>`;
-                    playSound('wrong');
-                }
-            } catch (e) {
-                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ サーバー接続失敗（URLまたはネットワーク設定を確認）</span>";
-                playSound('wrong');
-            }
-        }
-
         function changeInputMode(mode) {
             inputMode = mode;
             setStorage("input_mode", mode);
@@ -590,13 +571,13 @@
                 if (customKey) customKey.classList.add("hidden");
                 if (flickBtn) flickBtn.classList.remove("hidden");
                 if (inputField) {
-                    inputField.placeholder = "タップしてフリックキーボードで入力";
+                    inputField.placeholder = "タップしてキーボードで入力";
                 }
             } else {
                 if (customKey) customKey.classList.remove("hidden");
                 if (flickBtn) flickBtn.classList.add("hidden");
                 if (inputField) {
-                    inputField.placeholder = "画面ボタンか直接入力";
+                    inputField.placeholder = "画面の五十音ボタンで入力";
                 }
             }
         }
@@ -625,7 +606,7 @@
 JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 20000);
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                     const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
                         method: "POST",
@@ -647,351 +628,4 @@ JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"�
                         const data = await res.json();
                         let textContent = data.choices?.[0]?.message?.content;
                         if (textContent) {
-                            textContent = textContent.replace(/```json/g, '').replace(/```/g, '').trim();
-                            const jsonContent = JSON.parse(textContent);
-                            if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
-                                currentList = jsonContent.questions;
-                                initGameScreen();
-                                return;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.log("AI生成スキップ（内蔵データ使用）:", e);
-                }
-            }
-
-            document.getElementById("loading-title").innerText = "ツアーズバギー 発進！";
-            document.getElementById("loading-desc").innerText = "出題データロード完了";
-            
-            setTimeout(() => {
-                currentList = generateFallbackData(mode);
-                initGameScreen();
-            }, 300);
-        }
-
-        function initGameScreen() {
-            document.getElementById("screen-loading").classList.add("hidden");
-            document.getElementById("screen-game").classList.remove("hidden");
-            changeInputMode(inputMode);
-            startBGM();
-            loadQuestion();
-        }
-
-        async function testApiKey() {
-            initAudio();
-            playSound('click');
-            const keyEl = document.getElementById("api-key-input");
-            const key = keyEl ? keyEl.value.trim() : "";
-            const resResult = document.getElementById("auth-result");
-            const dot = document.getElementById("status-dot");
-            
-            if (!key) {
-                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ トークンを入力してください</span>";
-                isApiOnline = false;
-                if (dot) dot.className = "status-dot dot-red";
-                return;
-            }
-
-            if (resResult) resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${key}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: HF_MODEL,
-                        messages: [{ role: "user", content: "test" }],
-                        max_tokens: 5
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (res.ok) {
-                    if (resResult) resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI出題モード有効）</span>";
-                    playSound('correct');
-                    isApiOnline = true;
-                    if (dot) dot.className = "status-dot dot-green";
-                } else {
-                    if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークン）</span>";
-                    playSound('wrong');
-                    isApiOnline = false;
-                    if (dot) dot.className = "status-dot dot-red";
-                }
-            } catch (e) {
-                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続タイムアウト</span>";
-                playSound('wrong');
-                isApiOnline = false;
-                if (dot) dot.className = "status-dot dot-red";
-            }
-        }
-
-        function loadQuestion() {
-            if (currentIndex >= currentList.length) {
-                stopBGM();
-                document.getElementById("screen-game").classList.add("hidden");
-                document.getElementById("screen-clear").classList.remove("hidden");
-                return;
-            }
-            const q = currentList[currentIndex];
-            document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
-            document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
-            
-            const kanjiDisplay = document.getElementById("kanji-display");
-            kanjiDisplay.classList.remove("destroy-anim");
-            kanjiDisplay.innerText = q.kanji;
-            
-            void kanjiDisplay.offsetWidth;
-            kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-
-            document.getElementById("user-input").value = "";
-
-            const bossBadge = document.getElementById("boss-badge");
-            const enemyEmoji = document.getElementById("enemy-emoji");
-            if (q.isBoss) {
-                bossBadge.classList.remove("hidden");
-                enemyEmoji.innerText = "👹";
-                document.getElementById("ai-message").innerText = `🎙️「⚠️ BOSS出現！第${currentIndex + 1}問！正解して粉砕せよ！」`;
-                playSound('boss');
-            } else {
-                bossBadge.classList.add("hidden");
-                enemyEmoji.innerText = "👾";
-                document.getElementById("ai-message").innerText = `🎙️「第${currentIndex + 1}問！この漢字の読みを入力してください！」`;
-            }
-
-            updateLives();
-            resetTimer();
-        }
-
-        function updateLives() {
-            document.getElementById("lives-container").innerText = "🚀".repeat(lives) + "💥".repeat(3 - lives);
-        }
-
-        function resetTimer() {
-            clearInterval(timer);
-            timeRemaining = 15;
-            const timerText = document.getElementById("timer-text");
-            const timerBox = document.getElementById("timer-box");
-            timerText.innerText = timeRemaining;
-            timerBox.classList.remove("timer-warning");
-
-            timer = setInterval(() => {
-                if (isPaused) return;
-                timeRemaining--;
-                timerText.innerText = timeRemaining;
-
-                if (timeRemaining <= 5) {
-                    timerBox.classList.add("timer-warning");
-                    playSound('tick');
-                }
-
-                if (timeRemaining <= 0) {
-                    clearInterval(timer);
-                    triggerTimeUp();
-                }
-            }, 1000);
-        }
-
-        function triggerTimeUp() {
-            playSound('wrong');
-            const q = currentList[currentIndex];
-            showExplanationModal(q, 'timeup');
-        }
-
-        function addKey(char) {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            input.value += char;
-            input.focus();
-        }
-
-        function delKey() {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            input.value = input.value.slice(0, -1);
-            input.focus();
-        }
-
-        function addDakuten() {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            let str = input.value;
-            if(!str) return;
-            const last = str.slice(-1);
-            const map = { "か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ","う":"ゔ" };
-            if (map[last]) {
-                input.value = str.slice(0, -1) + map[last];
-            }
-            input.focus();
-        }
-
-        function addHandakuten() {
-            initAudio();
-            playSound('click');
-            const input = document.getElementById("user-input");
-            let str = input.value;
-            if(!str) return;
-            const last = str.slice(-1);
-            const map = { "は":"ぱ","ひ":"ぴ","ふ":"ぷ","へ":"ぺ","ほ":"ぽ" };
-            if (map[last]) {
-                input.value = str.slice(0, -1) + map[last];
-            }
-            input.focus();
-        }
-
-        function normalizeText(str) {
-            if (!str) return "";
-            let text = str.normalize('NFKC');
-            text = text.replace(/\s+/g, '');
-            // カタカナをひらがなに変換
-            text = text.replace(/[\u30a1-\u30f6]/g, function(match) {
-                return String.fromCharCode(match.charCodeAt(0) - 0x60);
-            });
-            return text.trim();
-        }
-
-        function submitAnswer() {
-            initAudio();
-            const inputField = document.getElementById("user-input");
-            inputField.blur();
-
-            const rawVal = inputField.value;
-            const normalizedInput = normalizeText(rawVal);
-            
-            if (!normalizedInput) {
-                document.getElementById("ai-message").innerText = "🎙️「読みが入力されていません！」";
-                playSound('click');
-                inputField.focus();
-                return;
-            }
-
-            const q = currentList[currentIndex];
-            const normalizedAnswer = normalizeText(q.reading);
-            
-            if (normalizedInput === normalizedAnswer) {
-                clearInterval(timer);
-                playSound('correct');
-                
-                const kanjiDisplay = document.getElementById("kanji-display");
-                kanjiDisplay.classList.add("destroy-anim");
-
-                setTimeout(() => {
-                    showExplanationModal(q, 'correct');
-                }, 400);
-
-            } else {
-                loseLife();
-            }
-        }
-
-        function loseLife() {
-            playSound('wrong');
-            lives--;
-            updateLives();
-            const box = document.getElementById("enemy-box");
-            box.classList.add("shake");
-            setTimeout(() => box.classList.remove("shake"), 400);
-
-            if (lives <= 0) {
-                clearInterval(timer);
-                stopBGM();
-                const q = currentList[currentIndex];
-                showExplanationModal(q, 'gameover');
-            } else {
-                document.getElementById("ai-message").innerText = `🎙️「違う！残りライフ ${lives}！」`;
-                document.getElementById("user-input").value = "";
-            }
-        }
-
-        function showExplanationModal(q, status) {
-            const titleEl = document.getElementById("modal-title");
-            const nextBtn = document.getElementById("modal-next-btn");
-            
-            if (status === 'correct') {
-                titleEl.innerText = q.isBoss ? "💥 BOSS K.O.! 撃破！" : "💥 CLEAR! 撃破！";
-                titleEl.style.color = "#4ade80";
-                nextBtn.innerText = "次のエリアへ進む ➔";
-                nextBtn.onclick = nextStage;
-            } else if (status === 'timeup') {
-                titleEl.innerText = "⏰ TIME UP! タイムアップ";
-                titleEl.style.color = "#ef4444";
-                nextBtn.innerText = "タイトルに戻る ➔";
-                nextBtn.onclick = goToTitle;
-            } else if (status === 'gameover') {
-                titleEl.innerText = "💥 バギー大破！不正解";
-                titleEl.style.color = "#ef4444";
-                nextBtn.innerText = "リザルトへ ➔";
-                nextBtn.onclick = () => {
-                    document.getElementById("modal-explanation").classList.add("hidden");
-                    document.getElementById("screen-game").classList.add("hidden");
-                    document.getElementById("screen-gameover").classList.remove("hidden");
-                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex} / ${currentList.length}`;
-                };
-            }
-
-            document.getElementById("modal-kanji").innerText = q.kanji;
-            document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
-            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報が登録されていません。";
-            document.getElementById("modal-explanation").classList.remove("hidden");
-        }
-
-        function nextStage() {
-            initAudio();
-            playSound('click');
-            document.getElementById("modal-explanation").classList.add("hidden");
-            currentIndex++;
-            loadQuestion();
-        }
-
-        function openSettings() {
-            initAudio();
-            playSound('click');
-            isPaused = true;
-            document.getElementById("modal-settings").classList.remove("hidden");
-            testApiKey();
-        }
-
-        function closeSettings() {
-            initAudio();
-            playSound('click');
-
-            const keyEl = document.getElementById("api-key-input");
-            apiKey = keyEl ? keyEl.value.trim() : "";
-            setStorage("hf_api_key", apiKey);
-
-            const serverUrlEl = document.getElementById("server-url-input");
-            serverUrl = serverUrlEl ? serverUrlEl.value.trim() : "";
-            setStorage("server_url", serverUrl);
-
-            const serverKeyEl = document.getElementById("server-key-input");
-            serverKey = serverKeyEl ? serverKeyEl.value.trim() : "";
-            setStorage("server_key", serverKey);
-
-            isPaused = false;
-            document.getElementById("modal-settings").classList.add("hidden");
-            changeInputMode(inputMode);
-            checkApiStatusBackground();
-        }
-
-        function goToTitle() {
-            initAudio();
-            clearInterval(timer);
-            stopBGM();
-            isPaused = false;
-            document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
-            ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => document.getElementById(id).classList.add("hidden"));
-            document.getElementById("screen-title").classList.remove("hidden");
-            checkApiStatusBackground();
-        }
-    </script>
-</body>
-</html>
+                            textContent = textContent.replace(/```json/g, '').replace(/
