@@ -26,114 +26,773 @@
             background: #2563eb; color: white; padding: 12px; margin: 5px 0; border: none; border-radius: 12px; 
             font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             touch-action: manipulation;
+            transition: background 0.2s, transform 0.1s;
         }
         .btn:active { transform: scale(0.98); background: #1d4ed8; }
 
-        /* ゲーム表示エリア */
-        .stage-box {
-            background: #1e293b; border: 2px solid #38bdf8; border-radius: 12px;
-            width: 100%; padding: 20px 10px; margin-bottom: 15px; text-align: center;
+        .key-btn { 
+            background: #334155; color: white; padding: 8px 0; margin: 2px; border: none; border-radius: 6px; 
+            font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+            touch-action: manipulation;
         }
-        .question-text { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #f3f4f6; }
-        .kanji-display { font-size: 40px; font-weight: bold; color: #facc15; letter-spacing: 4px; }
+        .key-btn:active { background: #1e293b; }
+        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 2px; }
 
-        /* 解答入力エリア */
-        .input-display {
-            background: #0f172a; border: 2px solid #475569; border-radius: 8px;
-            width: 100%; height: 50px; font-size: 24px; line-height: 46px;
-            margin-bottom: 15px; text-align: center; font-weight: bold; color: #38bdf8;
+        input, select { 
+            width: 100%; padding: 10px; font-size: 16px; text-align: center; border-radius: 10px; 
+            border: 2px solid #cbd5e1; margin-bottom: 6px; background: white; color: black; font-weight: bold;
+        }
+        
+        .box { 
+            background: #1e293b; border: 3px solid #eab308; border-radius: 16px; padding: 10px; margin: 6px 0; width: 100%; 
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); position: relative; flex-shrink: 0;
         }
 
-        /* モーダルオーバーレイ */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 1000; opacity: 1; transition: opacity 0.2s ease;
+        /* モーダル共通スタイル */
+        .modal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 100;
+            animation: fadeIn 0.2s ease-out;
         }
-        .modal-card {
-            background: #1e293b; border: 2px solid #38bdf8; border-radius: 16px;
-            width: 90%; max-width: 380px; padding: 20px; text-align: center;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        .modal-content {
+            background: #1e293b; border: 2px solid #38bdf8; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; text-align: center;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .modal-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-        .modal-title.correct { color: #4ade80; }
-        .modal-title.incorrect { color: #f87171; }
 
-        .modal-body { text-align: left; background: #0f172a; padding: 15px; border-radius: 8px; margin: 15px 0; }
-        .modal-item { margin-bottom: 8px; font-size: 15px; line-height: 1.5; }
-        .modal-item strong { color: #38bdf8; }
+        /* 認証ステータスドット */
+        .status-dot {
+            display: inline-block;
+            width: 12px; height: 12px;
+            border-radius: 50%; margin-left: 6px;
+            vertical-align: middle;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .dot-green { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.3s ease-in-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>漢字ツアーズ AI</h2>
-        
-        <div class="stage-box">
-            <div class="question-text" id="question">第1問：ひらがなを漢字に変換せよ</div>
-            <div class="kanji-display" id="target-kanji">●●する</div>
+        <!-- ヘッダー設定ボタン -->
+        <div style="width: 100%; display: flex; justify-content: flex-end; margin-bottom: 5px;">
+            <button onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; cursor: pointer;">
+                ⚙️ 設定（一時停止）
+            </button>
         </div>
 
-        <div class="input-display" id="input-box"></div>
-        <button class="btn" onclick="submitAnswer()">回答する</button>
-    </div>
+        <!-- 1. タイトル画面 -->
+        <div id="screen-title" style="width: 100%;">
+            <h1 style="font-size: 26px; color: #facc15; margin-bottom: 5px; display: flex; align-items: center; justify-content: center;">
+                漢字ツアーズ AI
+                <span id="status-dot" class="status-dot dot-red" title="API認証ステータス"></span>
+            </h1>
+            <p style="color: #94a3b8; margin-bottom: 15px; font-size: 13px;">ネプリーグ風 漢字バトル（全30問）</p>
+            <button class="btn" onclick="startGame('小学生')">🎒 小学生コース（★☆☆☆☆）</button>
+            <button class="btn" onclick="startGame('中学生')">✏️ 中学生コース（★★☆☆☆）</button>
+            <button class="btn" onclick="startGame('高校生')">🏫 高校生コース（★★★☆☆）</button>
+            <button class="btn" onclick="startGame('一般常識')">💼 一般常識コース（★★★★☆）</button>
+            <button class="btn" onclick="startGame('漢字王')">👑 漢字王コース（★★★★★）</button>
+        </div>
 
-    <!-- 解説モーダル -->
-    <div id="explanation-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div id="modal-result-title" class="modal-title correct">正解！</div>
-            
-            <div class="modal-body">
-                <div class="modal-item"><strong>正解：</strong> <span id="modal-answer"></span></div>
-                <div class="modal-item"><strong>読み：</strong> <span id="modal-reading"></span></div>
-                <div class="modal-item"><strong>意味：</strong> <span id="modal-meaning"></span></div>
-                <div class="modal-item"><strong>例文：</strong> <span id="modal-example"></span></div>
+        <!-- 2. ローディング画面（AI生成中） -->
+        <div id="screen-loading" class="hidden" style="width: 100%; padding: 30px 0;">
+            <div style="font-size: 40px; margin-bottom: 10px;">⚡️🤖</div>
+            <h2 style="color: #facc15; font-size: 20px; margin-bottom: 8px;" id="loading-title">問題を作成中...</h2>
+            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">難易度とボス配置を計算して問題を作成しています。</p>
+        </div>
+
+        <!-- 3. ゲームプレイ画面 -->
+        <div id="screen-game" class="hidden" style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+                <div style="text-align: left;">
+                    <div id="stage-text" style="font-size: 11px; font-weight: bold; color: #facc15;">STAGE 1 / 30</div>
+                    <div id="category-text" style="font-size: 12px; font-weight: bold; color: #38bdf8;">【小学生】</div>
+                </div>
+                <div id="lives-container" style="font-size: 16px;">❤️❤️❤️</div>
+                <div style="background: rgba(239, 68, 68, 0.3); border: 1px solid #ef4444; padding: 3px 8px; border-radius: 8px; font-weight: bold; font-size: 13px;">
+                    ⏱ <span id="timer-text">30</span>秒
+                </div>
             </div>
 
-            <button class="btn" onclick="closeModal()">次の問題へ</button>
+            <div style="background: rgba(255,255,255,0.1); padding: 5px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left;">
+                🤖 <span id="ai-message">AI「バトルスタート！」</span>
+            </div>
+
+            <div class="box" id="enemy-box">
+                <div id="boss-badge" class="hidden" style="position: absolute; top: 6px; right: 10px; background: #dc2626; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 6px;">⚠️ BOSS</div>
+                <div id="enemy-emoji" style="font-size: 32px; margin-bottom: 0px;">👾</div>
+                <div id="kanji-display" style="font-size: 52px; font-weight: bold; line-height: 1.1; word-break: break-all;">川</div>
+            </div>
+
+            <input type="text" id="user-input" placeholder="ひらがなを入力" autocomplete="off" style="font-size: 18px;">
+
+            <button id="flick-submit-btn" class="btn hidden" style="background: #2563eb; margin-bottom: 6px; padding: 10px;" onclick="submitAnswer()">決定する ➔</button>
+            
+            <div id="custom-keyboard" style="width: 100%; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 10px;">
+                <div class="key-row"><button class="key-btn" onclick="addKey('あ')">あ</button><button class="key-btn" onclick="addKey('い')">い</button><button class="key-btn" onclick="addKey('う')">う</button><button class="key-btn" onclick="addKey('え')">え</button><button class="key-btn" onclick="addKey('お')">お</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('か')">か</button><button class="key-btn" onclick="addKey('き')">き</button><button class="key-btn" onclick="addKey('く')">く</button><button class="key-btn" onclick="addKey('け')">け</button><button class="key-btn" onclick="addKey('こ')">こ</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('さ')">さ</button><button class="key-btn" onclick="addKey('し')">し</button><button class="key-btn" onclick="addKey('す')">す</button><button class="key-btn" onclick="addKey('せ')">せ</button><button class="key-btn" onclick="addKey('そ')">そ</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('た')">た</button><button class="key-btn" onclick="addKey('ち')">ち</button><button class="key-btn" onclick="addKey('つ')">つ</button><button class="key-btn" onclick="addKey('て')">て</button><button class="key-btn" onclick="addKey('と')">と</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('な')">な</button><button class="key-btn" onclick="addKey('に')">に</button><button class="key-btn" onclick="addKey('ぬ')">ぬ</button><button class="key-btn" onclick="addKey('ね')">ね</button><button class="key-btn" onclick="addKey('の')">の</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('は')">は</button><button class="key-btn" onclick="addKey('ひ')">ひ</button><button class="key-btn" onclick="addKey('ふ')">ふ</button><button class="key-btn" onclick="addKey('へ')">へ</button><button class="key-btn" onclick="addKey('ほ')">ほ</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('ま')">ま</button><button class="key-btn" onclick="addKey('み')">み</button><button class="key-btn" onclick="addKey('む')">む</button><button class="key-btn" onclick="addKey('め')">め</button><button class="key-btn" onclick="addKey('も')">も</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('や')">や</button><button class="key-btn" style="opacity:0.2;">-</button><button class="key-btn" onclick="addKey('ゆ')">ゆ</button><button class="key-btn" style="opacity:0.2;">-</button><button class="key-btn" onclick="addKey('よ')">よ</button></div>
+                <div class="key-row"><button class="key-btn" onclick="addKey('ら')">ら</button><button class="key-btn" onclick="addKey('り')">り</button><button class="key-btn" onclick="addKey('る')">る</button><button class="key-btn" onclick="addKey('れ')">れ</button><button class="key-btn" onclick="addKey('ろ')">ろ</button></div>
+                <div class="key-row">
+                    <button class="key-btn" onclick="addKey('わ')">わ</button><button class="key-btn" onclick="addKey('を')">を</button><button class="key-btn" onclick="addKey('ん')">ん</button><button class="key-btn" onclick="addKey('っ')">っ</button><button class="key-btn" onclick="addKey('ー')">ー</button>
+                </div>
+                <div class="key-row" style="margin-top: 3px;">
+                    <button class="key-btn" style="background:#d97706;" onclick="addDakuten()">濁点 ”</button>
+                    <button class="key-btn" style="background:#d97706;" onclick="addHandakuten()">半濁点 ゜</button>
+                    <button class="key-btn" style="background:#dc2626;" onclick="delKey()">消去</button>
+                    <button class="key-btn" style="background:#2563eb; flex: 1.5;" onclick="submitAnswer()">決定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 解説モーダル -->
+        <div id="modal-explanation" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="modal-title" style="font-size: 24px; margin-bottom: 5px;">🎉 正解！</h2>
+                <div id="modal-kanji" style="font-size: 42px; font-weight: bold; margin: 8px 0; color: #facc15;">漢字</div>
+                <div id="modal-reading" style="font-size: 18px; color: #4ade80; font-weight: bold; margin-bottom: 10px;">読み：よみ</div>
+                <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; text-align: left; font-size: 13px; margin-bottom: 15px; border: 1px solid #334155;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【意味・解説】</div>
+                    <div id="modal-meaning" style="line-height: 1.5; color: #e2e8f0;">解説文</div>
+                </div>
+                <button id="modal-next-btn" class="btn" onclick="nextStage()">次のステージへ ➔</button>
+            </div>
+        </div>
+
+        <!-- 5. 設定画面モーダル -->
+        <div id="modal-settings" class="modal hidden">
+            <div class="modal-content" style="background: #0f172a; border-color: #38bdf8; text-align: left;">
+                <h2 style="color: #38bdf8; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ ゲーム設定 (一時停止中)</h2>
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Groq APIキー：</label>
+                    <input type="password" id="api-key-input" placeholder="gsk_..." style="margin-top: 3px; font-size: 14px; padding: 8px;">
+                    <button class="btn" style="background: #0284c7; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 API認証テスト</button>
+                    <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">入力方式：</label>
+                    <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 3px; padding: 8px; font-size: 14px;">
+                        <option value="keyboard">五十音キーボード</option>
+                        <option value="flick">キーボード・フリック直接入力</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">効果音音量: <span id="volume-val">50</span>%</label>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 3px; width: 100%; cursor: pointer;">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" style="background: #22c55e; flex: 1; padding: 10px;" onclick="closeSettings()">保存して戻る</button>
+                    <button class="btn" style="background: #dc2626; flex: 1; padding: 10px;" onclick="goToTitle()">メニューに戻る</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. ゲームオーバー画面 -->
+        <div id="screen-gameover" class="hidden" style="width: 100%;">
+            <h2 style="font-size: 34px; color: #ef4444; margin-bottom: 5px;">GAME OVER</h2>
+            <p id="gameover-stats" style="color: #94a3b8; margin-bottom: 15px;">ライフが尽きました...</p>
+            <button class="btn" style="background: #eab308; color: black;" onclick="startGame(activeMode)">新しい問題で再挑戦 🔄</button>
+            <button class="btn" style="background: #475569;" onclick="goToTitle()">メニューに戻る</button>
+        </div>
+
+        <!-- 7. クリア画面 -->
+        <div id="screen-clear" class="hidden" style="width: 100%;">
+            <h2 style="font-size: 30px; color: #facc15; margin-bottom: 10px;">🏆 30ステージ全制覇！ 🏆</h2>
+            <p style="color: #38bdf8; margin-bottom: 15px;">おめでとうございます！漢字完全マスター！</p>
+            <button class="btn" style="background: #22c55e;" onclick="startGame(activeMode)">もう一度遊ぶ</button>
+            <button class="btn" style="background: #475569;" onclick="goToTitle()">メニューに戻る</button>
         </div>
     </div>
 
     <script>
-        // サンプル問題データ
-        const currentProblem = {
-            kanji: "挑戦",
-            reading: "ちょうせん",
-            meaning: "困難なことや新しいことに立ち向かうこと。",
-            example: "新記録に挑戦する。"
+        let audioCtx = null;
+        let soundVolume = 0.5;
+        let bgmTimer = null;
+        let isApiOnline = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function updateVolume(val) {
+            soundVolume = val / 100;
+            document.getElementById("volume-val").innerText = val;
+            playSound('click');
+        }
+
+        function startBGM() {
+            stopBGM();
+            let notes = [261.63, 329.63, 392.00, 523.25];
+            let step = 0;
+            bgmTimer = setInterval(() => {
+                if (soundVolume <= 0 || isPaused || !audioCtx) return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    const now = audioCtx.currentTime;
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(notes[step % notes.length], now);
+                    gain.gain.setValueAtTime(0.03 * soundVolume, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                    step++;
+                } catch(e) {}
+            }, 400);
+        }
+
+        function stopBGM() {
+            if (bgmTimer) clearInterval(bgmTimer);
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (soundVolume <= 0 || !audioCtx) return;
+            
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                let baseVolume = 0.2 * soundVolume;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(baseVolume, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now); osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    gain.gain.setValueAtTime(baseVolume * 1.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.setValueAtTime(110, now + 0.15);
+                    gain.gain.setValueAtTime(baseVolume * 1.5, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now); osc.stop(now + 0.4);
+                } else if (type === 'boss') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(880, now + 0.2);
+                    gain.gain.setValueAtTime(baseVolume, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now); osc.stop(now + 0.4);
+                }
+            } catch(e) {}
+        }
+
+        // オフライン用 超大規模問題データベース
+        const KANJI_DATABASE = {
+            "小学生": [
+                ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],["車","くるま","車輪で移動する乗り物。"],["花","はな","植物の咲かせるきれいな部分。"],
+                ["学校","がっこう","勉強や学問を学ぶ場所。"],["友達","ともだち","親しく付き合っている人。"],["勉強","べんきょう","知識や技術を身につけること。"],["太陽","たいよう","地球に光と熱を届ける星。"],["漢字","かんじ","中国から伝わった文字。"]
+            ],
+            "中学生": [
+                ["笑顔","えがお","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],
+                ["複雑","ふくざつ","事情や形が入り組んでいること。"],["矛盾","むじゅん","つじつまが合わないこと。"],["謙遜","けんそん","控えめな態度をとること。"],["把握","はあく","しっかり理解してつかむこと。"],["克服","こくふく","困難に打ち勝つこと。"]
+            ],
+            "高校生": [
+                ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],["概念","がいねん","物事の大まかな意味や内容。"],["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"]
+            ],
+            "一般常識": [
+                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],["重複","ちょうふく","同じことが重なること。「じゅうふく」とも。"],["代替","だいたい","他のものと取り替えること。"]
+            ],
+            "漢字王": [
+                ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"]
+            ]
         };
 
-        // 仮の入力文字列
-        let currentInput = "挑戦";
-        document.getElementById('input-box').innerText = currentInput;
-
-        function submitAnswer() {
-            const isCorrect = (currentInput === currentProblem.kanji);
-            showExplanation(isCorrect);
+        function generateFallbackData(mode) {
+            const rawPool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
+            const shuffled = [...rawPool].sort(() => Math.random() - 0.5);
+            
+            const result = [];
+            for (let i = 0; i < 30; i++) {
+                const item = shuffled[i % shuffled.length];
+                const isBoss = (i + 1) % 5 === 0;
+                result.push({
+                    id: i + 1,
+                    kanji: item[0],
+                    reading: item[1],
+                    category: isBoss ? `${mode}【BOSS】` : mode,
+                    meaning: item[2] || `【STAGE ${i + 1}】${mode}コースの漢字問題です。`,
+                    isBoss: isBoss
+                });
+            }
+            return result;
         }
 
-        function showExplanation(isCorrect) {
-            const titleEl = document.getElementById('modal-result-title');
+        let currentList = [];
+        let currentIndex = 0;
+        let lives = 3;
+        let timer = null;
+        let timeRemaining = 30;
+        let isPaused = false;
+        let activeMode = "小学生";
+        let inputMode = "keyboard";
+        let apiKey = localStorage.getItem("groq_api_key") || "";
+
+        window.onload = () => {
+            document.getElementById("api-key-input").value = apiKey;
+            changeInputMode(inputMode);
             
-            if (isCorrect) {
-                titleEl.innerText = "正解！";
-                titleEl.className = "modal-title correct";
-            } else {
-                titleEl.innerText = "不正解...";
-                titleEl.className = "modal-title incorrect";
+            const inputField = document.getElementById("user-input");
+            
+            inputField.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    if (e.isComposing) return;
+                    e.preventDefault();
+                    submitAnswer();
+                }
+            });
+
+            window.addEventListener("keydown", (e) => {
+                const gameScreen = document.getElementById("screen-game");
+                const activeEl = document.activeElement;
+                if (!gameScreen.classList.contains("hidden") && activeEl !== inputField && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                    if (e.key.length === 1 || e.key === "Backspace" || e.key.startsWith("Arrow")) {
+                        inputField.focus();
+                    }
+                }
+            });
+
+            checkApiStatusBackground();
+        };
+
+        async function checkApiStatusBackground() {
+            const dot = document.getElementById("status-dot");
+            apiKey = localStorage.getItem("groq_api_key") || "";
+
+            if (!apiKey || !navigator.onLine) {
+                isApiOnline = false;
+                dot.className = "status-dot dot-red";
+                dot.title = "オフライン / API未設定";
+                return;
             }
 
-            document.getElementById('modal-answer').innerText = currentProblem.kanji;
-            document.getElementById('modal-reading').innerText = currentProblem.reading;
-            document.getElementById('modal-meaning').innerText = currentProblem.meaning;
-            document.getElementById('modal-example').innerText = currentProblem.example;
+            try {
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "test" }], max_tokens: 1 })
+                });
 
-            document.getElementById('explanation-modal').classList.remove('hidden');
+                if (res.ok) {
+                    isApiOnline = true;
+                    dot.className = "status-dot dot-green";
+                    dot.title = "API接続正常（AI問題生成機能：ON）";
+                } else {
+                    isApiOnline = false;
+                    dot.className = "status-dot dot-red";
+                    dot.title = "API認証エラー";
+                }
+            } catch (e) {
+                isApiOnline = false;
+                dot.className = "status-dot dot-red";
+                dot.title = "ネットワークエラー / 通信不可";
+            }
         }
 
-        function closeModal() {
-            document.getElementById('explanation-modal').classList.add('hidden');
+        function changeInputMode(mode) {
+            inputMode = mode;
+            document.getElementById("settings-input-mode").value = mode;
+            
+            const customKey = document.getElementById("custom-keyboard");
+            const flickBtn = document.getElementById("flick-submit-btn");
+            const inputField = document.getElementById("user-input");
+            
+            if (inputMode === "flick") {
+                customKey.classList.add("hidden");
+                flickBtn.classList.remove("hidden");
+                inputField.readOnly = false;
+                inputField.placeholder = "ここをタップしてフリック入力";
+            } else {
+                customKey.classList.remove("hidden");
+                flickBtn.classList.add("hidden");
+                inputField.readOnly = false;
+                inputField.placeholder = "画面ボタンか直接入力";
+            }
+        }
+
+        async function startGame(mode) {
+            initAudio();
+            playSound('click');
+            activeMode = mode;
+            currentIndex = 0;
+            lives = 3;
+
+            document.getElementById("screen-title").classList.add("hidden");
+            document.getElementById("screen-gameover").classList.add("hidden");
+            document.getElementById("screen-clear").classList.add("hidden");
+            document.getElementById("screen-loading").classList.remove("hidden");
+            startBGM();
+
+            if (isApiOnline && apiKey && navigator.onLine) {
+                document.getElementById("loading-title").innerText = "Groq AIが30問を作成中...";
+                document.getElementById("loading-desc").innerText = "難易度とボス配置を計算してオリジナル問題を作成しています。";
+
+                try {
+                    let prompt = `あなたは漢字バトルゲームの出題専門AIです。
+ユーザーが選択した「${mode}」コース用の全30問の漢字クイズを出題してください。
+
+【ルール】
+- 1〜30問にかけて難易度を上げてください。
+- 5問ごと（5, 10, 15, 20, 25, 30問目）はBOSSとし、"isBoss": true、"category": "${mode}【BOSS】"としてください。
+
+【出力形式】
+以下のJSONオブジェクト構造のみを出力してください。
+{
+  "questions": [
+    {"id":1, "kanji":"川", "reading":"かわ", "category":"${mode}", "meaning":"水が流れる川のこと。", "isBoss":false},
+    ... 30問目まで
+  ]
+}`;
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                        body: JSON.stringify({
+                            model: "llama-3.3-70b-versatile",
+                            messages: [{ role: "user", content: prompt }],
+                            temperature: 0.6,
+                            max_tokens: 4096,
+                            response_format: { type: "json_object" }
+                        }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        const jsonContent = JSON.parse(data.choices[0].message.content);
+                        if (jsonContent && jsonContent.questions && jsonContent.questions.length > 0) {
+                            currentList = jsonContent.questions;
+                            initGameScreen();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.log("AI生成スキップ（内蔵データを使用します）:", e);
+                }
+            }
+
+            document.getElementById("loading-title").innerText = "オフラインモードで起動中...";
+            document.getElementById("loading-desc").innerText = "内蔵データベースからランダム30問を構成中...";
+            
+            setTimeout(() => {
+                currentList = generateFallbackData(mode);
+                initGameScreen();
+            }, 500);
+        }
+
+        function initGameScreen() {
+            document.getElementById("screen-loading").classList.add("hidden");
+            document.getElementById("screen-game").classList.remove("hidden");
+            changeInputMode(inputMode);
+            loadQuestion();
+        }
+
+        async function testApiKey() {
+            initAudio();
+            playSound('click');
+            const key = document.getElementById("api-key-input").value.trim();
+            const resResult = document.getElementById("auth-result");
+            if (!key) {
+                resResult.innerHTML = "<span style='color:#ef4444;'>⚠️ APIキーを入力してください</span>";
+                return;
+            }
+            resResult.innerHTML = "<span style='color:#facc15;'>🔄 認証テスト中...</span>";
+            try {
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "test" }], max_tokens: 5 })
+                });
+                if (res.ok) {
+                    resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！正常に動作します</span>";
+                    playSound('correct');
+                    isApiOnline = true;
+                    document.getElementById("status-dot").className = "status-dot dot-green";
+                } else {
+                    resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証失敗：キーが無効です</span>";
+                    playSound('wrong');
+                    isApiOnline = false;
+                    document.getElementById("status-dot").className = "status-dot dot-red";
+                }
+            } catch (e) {
+                resResult.innerHTML = "<span style='color:#ef4444;'>❌ 通信エラー（オフライン）</span>";
+                playSound('wrong');
+                isApiOnline = false;
+                document.getElementById("status-dot").className = "status-dot dot-red";
+            }
+        }
+
+        function loadQuestion() {
+            if (currentIndex >= currentList.length) {
+                document.getElementById("screen-game").classList.add("hidden");
+                document.getElementById("screen-clear").classList.remove("hidden");
+                return;
+            }
+            const q = currentList[currentIndex];
+            document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
+            document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
+            document.getElementById("kanji-display").innerText = q.kanji;
+            document.getElementById("user-input").value = "";
+            document.getElementById("ai-message").innerText = `AI「第${currentIndex + 1}問！制限時間30秒！」`;
+
+            const bossBadge = document.getElementById("boss-badge");
+            const enemyEmoji = document.getElementById("enemy-emoji");
+            if (q.isBoss) {
+                bossBadge.classList.remove("hidden");
+                enemyEmoji.innerText = "👹";
+                playSound('boss');
+            } else {
+                bossBadge.classList.add("hidden");
+                enemyEmoji.innerText = "👾";
+            }
+
+            updateLives();
+            resetTimer();
+        }
+
+        function updateLives() {
+            document.getElementById("lives-container").innerText = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeRemaining = 30;
+            document.getElementById("timer-text").innerText = timeRemaining;
+            timer = setInterval(() => {
+                if (isPaused) return;
+                timeRemaining--;
+                document.getElementById("timer-text").innerText = timeRemaining;
+                if (timeRemaining <= 0) {
+                    clearInterval(timer);
+                    triggerTimeUp();
+                }
+            }, 1000);
+        }
+
+        function triggerTimeUp() {
+            playSound('wrong');
+            const q = currentList[currentIndex];
+            showExplanationModal(q, 'timeup');
+        }
+
+        function addKey(char) {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            input.value += char;
+            input.focus();
+        }
+
+        function delKey() {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            input.value = input.value.slice(0, -1);
+            input.focus();
+        }
+
+        function addDakuten() {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            let str = input.value;
+            if(!str) return;
+            const last = str.slice(-1);
+            const map = { "か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ","う":"ゔ" };
+            if (map[last]) {
+                input.value = str.slice(0, -1) + map[last];
+            }
+            input.focus();
+        }
+
+        function addHandakuten() {
+            initAudio();
+            playSound('click');
+            const input = document.getElementById("user-input");
+            let str = input.value;
+            if(!str) return;
+            const last = str.slice(-1);
+            const map = { "は":"ぱ","ひ":"ぴ","ふ":"ぷ","へ":"ぺ","ほ":"ぽ" };
+            if (map[last]) {
+                input.value = str.slice(0, -1) + map[last];
+            }
+            input.focus();
+        }
+
+        function normalizeText(str) {
+            if (!str) return "";
+            let text = str.normalize('NFKC');
+            text = text.replace(/\s+/g, '');
+            text = text.replace(/[\u30a1-\u30f6]/g, function(match) {
+                return String.fromCharCode(match.charCodeAt(0) - 0x60);
+            });
+            return text.trim();
+        }
+
+        function submitAnswer() {
+            initAudio();
+            const inputField = document.getElementById("user-input");
+            inputField.blur();
+
+            const rawVal = inputField.value;
+            const normalizedInput = normalizeText(rawVal);
+            
+            if (!normalizedInput) {
+                document.getElementById("ai-message").innerText = "AI「文字が入力されていません！」";
+                playSound('click');
+                inputField.focus();
+                return;
+            }
+
+            playSound('click');
+            const q = currentList[currentIndex];
+            const normalizedAnswer = normalizeText(q.reading);
+            
+            if (normalizedInput === normalizedAnswer) {
+                clearInterval(timer);
+                playSound('correct');
+                showExplanationModal(q, 'correct');
+            } else {
+                loseLife();
+            }
+        }
+
+        function loseLife() {
+            playSound('wrong');
+            lives--;
+            updateLives();
+            const box = document.getElementById("enemy-box");
+            box.classList.add("shake");
+            setTimeout(() => box.classList.remove("shake"), 300);
+
+            if (lives <= 0) {
+                clearInterval(timer);
+                const q = currentList[currentIndex];
+                showExplanationModal(q, 'gameover');
+            } else {
+                document.getElementById("ai-message").innerText = `AI「不正解！残りライフ ${lives}」`;
+                document.getElementById("user-input").value = "";
+            }
+        }
+
+        // 解説モーダル表示ロジック（正解・タイムアップ・ゲームオーバー状態対応）
+        function showExplanationModal(q, status) {
+            const titleEl = document.getElementById("modal-title");
+            const nextBtn = document.getElementById("modal-next-btn");
+            
+            if (status === 'correct') {
+                titleEl.innerText = q.isBoss ? "👹 BOSS K.O.!" : "🎉 正解！";
+                titleEl.style.color = "#4ade80";
+                nextBtn.innerText = "次のステージへ ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'timeup') {
+                titleEl.innerText = "⏰ タイムアップ！";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "メニューに戻る ➔";
+                nextBtn.onclick = goToTitle;
+            } else if (status === 'gameover') {
+                titleEl.innerText = "❌ 残念！不正解";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "結果画面へ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `突破ステージ: ${currentIndex} / ${currentList.length}`;
+                };
+            }
+
+            document.getElementById("modal-kanji").innerText = q.kanji;
+            document.getElementById("modal-reading").innerText = `読み：${q.reading}`;
+            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報はありません。";
+            document.getElementById("modal-explanation").classList.remove("hidden");
+        }
+
+        function nextStage() {
+            initAudio();
+            playSound('click');
+            document.getElementById("modal-explanation").classList.add("hidden");
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function openSettings() {
+            initAudio();
+            playSound('click');
+            isPaused = true;
+            document.getElementById("modal-settings").classList.remove("hidden");
+        }
+
+        function closeSettings() {
+            initAudio();
+            playSound('click');
+            apiKey = document.getElementById("api-key-input").value.trim();
+            localStorage.setItem("groq_api_key", apiKey);
+            isPaused = false;
+            document.getElementById("modal-settings").classList.add("hidden");
+            changeInputMode(inputMode);
+            checkApiStatusBackground();
+        }
+
+        function goToTitle() {
+            initAudio();
+            clearInterval(timer);
+            stopBGM();
+            isPaused = false;
+            document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
+            ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => document.getElementById(id).classList.add("hidden"));
+            document.getElementById("screen-title").classList.remove("hidden");
+            
+            checkApiStatusBackground();
         }
     </script>
 </body>
