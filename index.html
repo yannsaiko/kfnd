@@ -3,180 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI - Complete Edition</title>
+    <title>ネプリーグ風 漢字ツアーズ AI - Real Animation Edition</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
             height: 100%; margin: 0; padding: 0;
-            background: #050b14; color: white;
+            background: #020617; color: white;
             font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-            overflow-x: hidden; user-select: none;
+            overflow-x: hidden; overflow-y: auto; user-select: none;
         }
         body { 
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100dvh; padding: 10px 0;
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 90%);
+            position: relative;
         }
+
+        /* 全画面＆敵・攻撃エフェクト描画用 Canvas */
+        #fx-canvas {
+            position: absolute; inset: 0; pointer-events: none; z-index: 5;
+        }
+
+        /* 画面ダメージ / カメラ衝撃フラッシュ */
+        #damage-overlay {
+            position: absolute; inset: 0; background: rgba(239, 68, 68, 0.4);
+            pointer-events: none; z-index: 40; opacity: 0; transition: opacity 0.1s ease-out;
+        }
+
         .container {
             width: 100%; max-width: 480px; padding: 0 12px; text-align: center;
-            display: flex; flex-direction: column; align-items: center; position: relative;
+            display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10;
         }
         .hidden { display: none !important; }
 
-        .show-title-badge {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000; font-weight: 900; font-size: 11px; padding: 3px 10px;
-            border-radius: 4px; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+        @keyframes badgePulse {
+            0% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+            100% { box-shadow: 0 0 18px rgba(245, 158, 11, 0.9); }
         }
 
+        /* 立体3Dネオンボタン */
         .btn { 
             background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); 
-            color: white; padding: 12px; margin: 5px 0; border: 2px solid #60a5fa; border-radius: 12px; 
+            color: white; padding: 13px; margin: 6px 0; border: 2px solid #60a5fa; border-radius: 12px; 
             font-size: 15px; font-weight: bold; width: 100%; cursor: pointer; 
-            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-            touch-action: manipulation; transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 6px 0 #1e3a8a, 0 8px 15px rgba(0,0,0,0.6);
+            touch-action: manipulation; transition: transform 0.08s ease, filter 0.15s, box-shadow 0.08s;
+            position: relative; overflow: hidden;
         }
-        .btn:active { transform: scale(0.97); }
-        .btn:hover { filter: brightness(1.15); }
+        .btn::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: rotate(45deg); transition: 0.5s; pointer-events: none;
+        }
+        .btn:hover::after { left: 100%; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1e3a8a, 0 4px 8px rgba(0,0,0,0.6); }
+        .btn:disabled { cursor: not-allowed; filter: grayscale(0.8); opacity: 0.55; }
 
-        /* アーケードキーボード */
+        /* キーボタン */
         .key-btn { 
             background: linear-gradient(180deg, #334155 0%, #1e293b 100%); 
-            color: white; padding: 9px 0; margin: 2px; border: 1px solid #475569; border-radius: 6px; 
+            color: white; padding: 10px 0; margin: 2px; border: 1px solid #475569; border-radius: 8px; 
             font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); touch-action: manipulation;
+            box-shadow: 0 3px 0 #0f172a; touch-action: manipulation;
+            transition: transform 0.05s, background 0.1s;
         }
-        .key-btn:active { background: #0f172a; transform: scale(0.93); }
-        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 1px; }
+        .key-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0f172a; background: #0284c7; }
+        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 2px; }
 
-        /* フリックキーボードスタイル */
+        /* フリックキーボード */
         .flick-container {
-            width: 100%; max-width: 380px; margin: 0 auto; background: rgba(0,0,0,0.5);
-            padding: 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            position: relative; touch-action: none;
+            width: 100%; max-width: 380px; margin: 0 auto; background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px); padding: 8px; border-radius: 16px; border: 1px solid rgba(56, 189, 248, 0.3);
+            position: relative; touch-action: none; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-        .flick-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%;
-        }
+        .flick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; }
         .flick-key {
             position: relative; background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
-            border: 1px solid #475569; border-radius: 10px; height: 50px;
+            border: 1px solid #475569; border-radius: 10px; height: 52px;
             color: #fff; font-size: 20px; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; user-select: none; box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-            touch-action: none;
+            cursor: pointer; user-select: none; box-shadow: 0 4px 0 #0f172a;
+            touch-action: none; transition: transform 0.08s, background-color 0.1s;
         }
-        .flick-key:active, .flick-key.active { background: #0284c7; border-color: #38bdf8; }
+        .flick-key:active, .flick-key.active { 
+            background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%); 
+            border-color: #38bdf8; transform: translateY(2px); box-shadow: 0 2px 0 #082f49;
+        }
         .flick-key .sub-text {
             position: absolute; font-size: 9px; color: #94a3b8; pointer-events: none; font-weight: normal;
         }
-        .flick-key .sub-left { left: 4px; top: 50%; transform: translateY(-50%); }
-        .flick-key .sub-top { top: 2px; left: 50%; transform: translateX(-50%); }
-        .flick-key .sub-right { right: 4px; top: 50%; transform: translateY(-50%); }
-        .flick-key .sub-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .flick-key .sub-left { left: 5px; top: 50%; transform: translateY(-50%); }
+        .flick-key .sub-top { top: 3px; left: 50%; transform: translateX(-50%); }
+        .flick-key .sub-right { right: 5px; top: 50%; transform: translateY(-50%); }
+        .flick-key .sub-bottom { bottom: 3px; left: 50%; transform: translateX(-50%); }
 
-        /* フリックポップアップガイド */
+        /* ポップアップガイド */
         .flick-popover {
-            position: fixed; z-index: 1000; width: 120px; height: 120px;
+            position: absolute; z-index: 1000; width: 130px; height: 130px;
             pointer-events: none; display: none; transform: translate(-50%, -50%);
+            animation: popIn 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        
         .flick-popover-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
             width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #38bdf8; border-radius: 16px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+            border: 2px solid #38bdf8; border-radius: 18px; box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
             padding: 4px;
         }
         .flick-popover-cell {
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-weight: bold; color: #94a3b8; border-radius: 6px;
+            font-size: 16px; font-weight: bold; color: #94a3b8; border-radius: 8px; transition: all 0.08s;
         }
         .flick-popover-cell.active {
-            background: #2563eb; color: #ffffff; font-size: 22px; font-weight: 900;
-            box-shadow: 0 0 10px #60a5fa;
+            background: #2563eb; color: #ffffff; font-size: 24px; font-weight: 900;
+            box-shadow: 0 0 12px #60a5fa; transform: scale(1.1);
         }
 
         input, select { 
-            width: 100%; padding: 10px; font-size: 18px; text-align: center; border-radius: 10px; 
-            border: 2px solid #38bdf8; margin-bottom: 6px; background: #0f172a; color: #fff; font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6); outline: none;
+            width: 100%; padding: 12px; font-size: 20px; text-align: center; border-radius: 12px; 
+            border: 2px solid #38bdf8; margin-bottom: 8px; background: rgba(15, 23, 42, 0.9); color: #fff; font-weight: bold;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), 0 0 12px rgba(56, 189, 248, 0.2); outline: none;
+            letter-spacing: 2px; transition: border-color 0.2s, box-shadow 0.2s;
         }
+        input:focus { border-color: #facc15; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), 0 0 18px rgba(250, 204, 21, 0.5); }
         
+        /* メインステージ背景 */
         .stage-view { 
-            background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); 
-            border: 3px solid #f59e0b; border-radius: 16px; padding: 16px 10px; margin: 6px 0; width: 100%; 
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(0,0,0,0.9); 
-            position: relative; overflow: hidden; flex-shrink: 0;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            background: rgba(15, 23, 42, 0.6); 
+            border: 3px solid #f59e0b; border-radius: 20px; padding: 15px 10px; margin: 8px 0; width: 100%; 
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3), inset 0 0 35px rgba(0,0,0,0.9); 
+            position: relative; overflow: hidden; flex-shrink: 0; min-height: 210px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
         }
-        .stage-view::before {
-            content: ''; position: absolute; inset: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(56, 189, 248, 0.05) 2px, rgba(56, 189, 248, 0.05) 4px);
-            pointer-events: none;
+
+        /* 敵キャラ用描画キャンバス領域 */
+        .enemy-canvas-wrap {
+            width: 130px; height: 130px; position: relative; margin-bottom: 5px;
         }
 
         .kanji-text {
-            font-size: 52px; font-weight: 900; line-height: 1.1; color: #ffffff;
-            text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8, 0 0 30px #0284c7;
-            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            word-break: break-all;
+            font-size: 60px; font-weight: 900; line-height: 1.1; color: #ffffff;
+            text-shadow: 0 0 10px #38bdf8, 0 0 25px #38bdf8, 0 0 40px #0284c7;
+            position: relative; display: inline-block; z-index: 10;
+        }
+        .kanji-spawn {
+            animation: kanjiImpact 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes kanjiImpact {
+            0% { transform: scale(3) rotate(-10deg); opacity: 0; filter: blur(10px); }
+            70% { transform: scale(0.9) rotate(2deg); opacity: 1; filter: blur(0); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
-        /* 警告演出スタイル */
         .timer-warning {
             color: #ef4444 !important; border-color: #ef4444 !important;
-            background: rgba(239, 68, 68, 0.2) !important;
-            animation: pulse 0.3s infinite alternate !important;
+            background: rgba(239, 68, 68, 0.25) !important;
+            animation: timerPulse 0.4s infinite alternate !important;
+        }
+        @keyframes timerPulse {
+            from { transform: scale(1); box-shadow: 0 0 5px #ef4444; }
+            to { transform: scale(1.1); box-shadow: 0 0 20px #ef4444; }
         }
 
         .danger-border {
             border-color: #ef4444 !important;
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.7), inset 0 0 25px rgba(239, 68, 68, 0.4) !important;
-            animation: shake 0.3s infinite alternate;
+            box-shadow: 0 0 35px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.5) !important;
+            animation: dangerShake 0.25s infinite alternate;
+        }
+        @keyframes dangerShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            100% { transform: translate(-1px, -1px) rotate(-0.5deg); }
         }
 
         .modal {
-            position: fixed; inset: 0; background: rgba(5, 11, 20, 0.92); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(12px);
             display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 100;
-            animation: fadeIn 0.2s ease-out;
+            animation: modalFade 0.25s ease-out;
         }
+        @keyframes modalFade { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
         .modal-content {
-            background: #1e293b; border: 2px solid #f59e0b; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); max-height: 90vh; overflow-y: auto;
+            background: #1e293b; border: 2px solid #f59e0b; border-radius: 24px; padding: 24px; width: 100%; max-width: 420px; text-align: center;
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); max-height: 90vh; overflow-y: auto;
         }
 
         .status-dot {
             display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px; vertical-align: middle;
             transition: background-color 0.3s, box-shadow 0.3s;
         }
-        .dot-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-        .dot-green { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+        .dot-green { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes zoomIn {
-            from { transform: scale(0.3); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        .shake-hard { animation: shakeHard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shakeHard {
+            10%, 90% { transform: translate3d(-4px, -2px, 0); }
+            20%, 80% { transform: translate3d(6px, 4px, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, -4px, 0); }
+            40%, 60% { transform: translate3d(8px, 4px, 0); }
         }
-        @keyframes pulse {
-            from { transform: scale(1); opacity: 1; }
-            to { transform: scale(1.15); opacity: 0.8; }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-4px); }
-            40%, 80% { transform: translateX(4px); }
-        }
-        .shake { animation: shake 0.4s ease-in-out; }
 
-        @keyframes destroy {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.3); filter: brightness(3) drop-shadow(0 0 20px #ef4444); }
-            100% { transform: scale(0); opacity: 0; }
-        }
-        .destroy-anim { animation: destroy 0.4s forwards; }
+        .rocket-life { display: inline-block; animation: rocketHover 1.5s ease-in-out infinite alternate; }
+        @keyframes rocketHover { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
     </style>
 </head>
 <body>
+
+    <canvas id="fx-canvas"></canvas>
+    <div id="damage-overlay"></div>
 
     <div class="container">
         <!-- フリック用ポップアップガイド -->
@@ -195,13 +230,12 @@
         </div>
 
         <!-- ヘッダー -->
-        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <div class="show-title-badge">フジテレビ風 クイズ番組</div>
+        <div style="width: 100%; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px;">
             <div style="display: flex; gap: 6px;">
-                <button type="button" id="header-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="header-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
                     🔊 音声ON
                 </button>
-                <button type="button" onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                <button type="button" onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
                     ⚙️ 設定 / PAUSE
                 </button>
             </div>
@@ -210,64 +244,76 @@
         <!-- タイトル画面 -->
         <div id="screen-title" style="width: 100%;">
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
-            <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
+            <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 6px 0; text-shadow: 0 0 20px rgba(250, 204, 21, 0.8); display: flex; align-items: center; justify-content: center;">
                 漢字ツアーズ AI
                 <span id="status-dot" class="status-dot dot-red" title="AI API接続状態"></span>
             </h1>
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
-                🚀 ツアーズバギー発進！制限時間10秒で漢字を撃破せよ！
+            <div id="json-status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
+                📁 kanji_data.json 確認中...
             </div>
             
-            <button type="button" class="btn" onclick="startGame('小学生')">LEVEL 1 🎒 小学生ステージ</button>
-            <button type="button" class="btn" onclick="startGame('中学生')">LEVEL 2 ✏️ 中学生ステージ</button>
-            <button type="button" class="btn" onclick="startGame('高校生')">LEVEL 3 🏫 高校生ステージ</button>
-            <button type="button" class="btn" onclick="startGame('一般常識')">LEVEL 4 💼 一般常識ステージ</button>
-            <button type="button" class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
+            <button type="button" class="btn" onclick="startGame('小学1年')">LEVEL 1 🎒 小学1年ステージ</button>
+            <button type="button" class="btn" onclick="startGame('小学2年')">LEVEL 2 🎒 小学2年ステージ</button>
+            <button type="button" class="btn" onclick="startGame('小学3年')">LEVEL 3 🎒 小学3年ステージ</button>
+            <button type="button" class="btn" onclick="startGame('小学4年')">LEVEL 4 🎒 小学4年ステージ</button>
+            <button type="button" class="btn" onclick="startGame('小学5年')">LEVEL 5 🎒 小学5年ステージ</button>
+            <button type="button" class="btn" onclick="startGame('小学6年')">LEVEL 6 🎒 小学6年ステージ</button>
+            <button type="button" class="btn" onclick="startGame('中学生')">LEVEL 7 ✏️ 中学生ステージ</button>
+            <button type="button" class="btn" onclick="startGame('高校生')">LEVEL 8 🏫 高校生ステージ</button>
+            <button type="button" class="btn" onclick="startGame('一般常識')">LEVEL 9 💼 一般常識ステージ</button>
+            <button type="button" class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171; box-shadow: 0 6px 0 #7f1d1d;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
         </div>
 
         <!-- ローディング画面 -->
-        <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
-            <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
-            <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
-            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">出題問題をロードしています</p>
+        <div id="screen-loading" class="hidden" style="width: 100%; padding: 50px 0;">
+            <div style="font-size: 60px; margin-bottom: 15px; animation: rocketHover 0.8s infinite alternate;">🚀</div>
+            <h2 style="color: #facc15; font-size: 24px; margin-bottom: 8px; text-shadow: 0 0 15px #facc15;" id="loading-title">ツアーズジェット 発進準備中...</h2>
+            <p style="color: #94a3b8; font-size: 14px;" id="loading-desc">出題問題をロードしています</p>
         </div>
 
         <!-- ゲーム画面 -->
         <div id="screen-game" class="hidden" style="width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);">
                 <div style="text-align: left;">
-                    <div id="stage-text" style="font-size: 13px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
-                    <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
+                    <div id="stage-text" style="font-size: 14px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
+                    <div id="category-text" style="font-size: 11px; font-weight: bold; color: #38bdf8;">【小学1年】</div>
                 </div>
-                <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
-                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #38bdf8; transition: all 0.3s;" id="timer-box">
+                <div id="lives-container" class="rocket-life" style="font-size: 20px; letter-spacing: 2px;">🚀🚀🚀</div>
+                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 4px 12px; border-radius: 10px; font-weight: 900; font-size: 18px; color: #38bdf8; transition: all 0.3s; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);" id="timer-box">
                     ⏱ <span id="timer-text">10</span>
                 </div>
             </div>
 
-            <div style="background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 4px solid #38bdf8; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left; color: #e2e8f0;">
-                🎙️ <span id="ai-message">「さあ、漢字ツアーズ スタートです！」</span>
+            <div style="background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 4px solid #38bdf8; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left; color: #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <span id="ai-message">🎙️「さあ、漢字ツアーズ スタートです！」</span>
             </div>
 
             <div class="stage-view" id="enemy-box">
-                <div id="boss-badge" class="hidden" style="position: absolute; top: 8px; right: 10px; background: #dc2626; color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 4px; box-shadow: 0 0 8px #dc2626; letter-spacing: 1px;">⚠️ BOSS</div>
-                <div id="enemy-emoji" style="font-size: 32px; margin-bottom: 4px; transition: transform 0.2s;">👾</div>
-                <div id="kanji-display" class="kanji-text">川</div>
+                <div id="boss-badge" class="hidden" style="position: absolute; top: 10px; right: 12px; background: #dc2626; color: white; font-size: 12px; font-weight: 900; padding: 3px 10px; border-radius: 6px; box-shadow: 0 0 12px #dc2626; letter-spacing: 1px; animation: badgePulse 0.8s infinite alternate; z-index: 15;">⚠️ BOSS</div>
+                
+                <!-- リアル敵描画領域 -->
+                <div class="enemy-canvas-wrap" id="enemy-anchor"></div>
+                
+                <div id="kanji-display" class="kanji-text kanji-spawn">川</div>
             </div>
 
-            <!-- 解答入力用テキストボックス -->
             <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off" autocapitalize="none" inputmode="none" readonly>
 
-            <!-- 直接入力（端末キーボード）モード用発射ボタン -->
+            <div id="arcade-action-container" class="hidden" style="width: 100%; margin-bottom: 6px; display: flex; gap: 6px;">
+                <button type="button" class="btn" style="background: #d97706; border-color: #f59e0b; box-shadow: 0 4px 0 #92400e; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="toggleDakutenSmall()">小/濁/半</button>
+                <button type="button" class="btn" style="background: #dc2626; border-color: #f87171; box-shadow: 0 4px 0 #991b1b; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="delKey()">⌫ 消す</button>
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; box-shadow: 0 4px 0 #166534; margin: 0; padding: 10px; font-size: 16px; flex: 1.5;" onclick="submitAnswer()">🚀 発射（決定）</button>
+            </div>
+
             <div id="direct-submit-container" class="hidden" style="width: 100%; margin-bottom: 6px;">
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin: 0; padding: 12px; font-size: 18px;" onclick="submitAnswer()">🚀 発射（決定）</button>
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; box-shadow: 0 5px 0 #166534; margin: 0; padding: 12px; font-size: 18px;" onclick="submitAnswer()">🚀 発射（決定）</button>
             </div>
 
             <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 6px;">
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color: #f59e0b; width: 100%; margin: 0; padding: 10px; font-size: 14px;" onclick="passQuestion()">⏭️ パス (-1 LIFE)</button>
+                <button type="button" id="pass-btn" class="btn" style="background: linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color: #f59e0b; box-shadow: 0 4px 0 #78350f; width: 100%; margin: 0; padding: 10px; font-size: 14px;" onclick="passQuestion()">⏭️ パス (-1 LIFE)</button>
             </div>
             
-            <!-- ① WEB自作フリックキーボード UI -->
+            <!-- ① Web自作フリックキーボード UI -->
             <div id="flick-keyboard" class="flick-container hidden">
                 <div class="flick-grid">
                     <div class="flick-key" data-key="あ">あ<span class="sub-text sub-left">い</span><span class="sub-text sub-top">う</span><span class="sub-text sub-right">え</span><span class="sub-text sub-bottom">お</span></div>
@@ -283,11 +329,10 @@
                     <div class="flick-key" data-key="わ">わ<span class="sub-text sub-left">を</span><span class="sub-text sub-top">ん</span><span class="sub-text sub-right">ー</span><span class="sub-text sub-bottom">っ</span></div>
                     <button type="button" class="flick-key" style="background:#dc2626; font-size:14px;" onclick="delKey()">⌫ 消す</button>
                 </div>
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin-top: 6px; padding: 10px; font-size: 16px;" onclick="submitAnswer()">発射（決定）</button>
             </div>
 
             <!-- ② アーケード五十音パネル UI -->
-            <div id="custom-keyboard" style="width: 100%; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="custom-keyboard" style="width: 100%; background: rgba(15,23,42,0.8); backdrop-filter: blur(6px); padding: 6px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);">
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('あ')">あ</button><button type="button" class="key-btn" onclick="addKey('い')">い</button><button type="button" class="key-btn" onclick="addKey('う')">う</button><button type="button" class="key-btn" onclick="addKey('え')">え</button><button type="button" class="key-btn" onclick="addKey('お')">お</button></div>
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('か')">か</button><button type="button" class="key-btn" onclick="addKey('き')">き</button><button type="button" class="key-btn" onclick="addKey('く')">く</button><button type="button" class="key-btn" onclick="addKey('け')">け</button><button type="button" class="key-btn" onclick="addKey('こ')">こ</button></div>
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('さ')">さ</button><button type="button" class="key-btn" onclick="addKey('し')">し</button><button type="button" class="key-btn" onclick="addKey('す')">す</button><button type="button" class="key-btn" onclick="addKey('せ')">せ</button><button type="button" class="key-btn" onclick="addKey('そ')">そ</button></div>
@@ -300,44 +345,38 @@
                 <div class="key-row">
                     <button type="button" class="key-btn" onclick="addKey('わ')">わ</button><button type="button" class="key-btn" onclick="addKey('を')">を</button><button type="button" class="key-btn" onclick="addKey('ん')">ん</button><button type="button" class="key-btn" onclick="addKey('っ')">っ</button><button type="button" class="key-btn" onclick="addKey('ー')">ー</button>
                 </div>
-                <div class="key-row" style="margin-top: 3px;">
-                    <button type="button" class="key-btn" style="background:#d97706; font-size:12px;" onclick="toggleDakutenSmall()">小/濁/半 変換</button>
-                    <button type="button" class="key-btn" style="background:#dc2626;" onclick="delKey()">1文字消す</button>
-                    <button type="button" class="key-btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; flex: 1.5; font-size: 16px;" onclick="submitAnswer()">発射（決定）</button>
-                </div>
             </div>
         </div>
 
         <!-- 解説モーダル -->
         <div id="modal-explanation" class="modal hidden">
             <div class="modal-content">
-                <h2 id="modal-title" style="font-size: 26px; margin-bottom: 5px; font-weight: 900;">💥 CLEAR!</h2>
-                <div id="modal-kanji" style="font-size: 48px; font-weight: 900; margin: 6px 0; color: #facc15; text-shadow: 0 0 10px #facc15;">漢字</div>
-                <div id="modal-reading" style="font-size: 20px; color: #4ade80; font-weight: bold; margin-bottom: 12px;">【読み】よみ</div>
-                <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; text-align: left; font-size: 13px; margin-bottom: 15px; border: 1px solid #475569;">
+                <h2 id="modal-title" style="font-size: 28px; margin-bottom: 5px; font-weight: 900;">💥 CLEAR!</h2>
+                <div id="modal-kanji" style="font-size: 52px; font-weight: 900; margin: 6px 0; color: #facc15; text-shadow: 0 0 15px #facc15;">漢字</div>
+                <div id="modal-reading" style="font-size: 22px; color: #4ade80; font-weight: bold; margin-bottom: 12px;">【読み】よみ</div>
+                <div style="background: rgba(0,0,0,0.5); padding: 14px; border-radius: 12px; text-align: left; font-size: 14px; margin-bottom: 15px; border: 1px solid #475569;">
                     <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【辞書・意味解説】</div>
                     <div id="modal-meaning" style="line-height: 1.5; color: #e2e8f0;">解説文</div>
                 </div>
-                <button type="button" id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="nextStage()">次のステージへ進む ➔</button>
+                <button type="button" id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80; box-shadow: 0 5px 0 #166534;" onclick="nextStage()">次のステージへ進む ➔</button>
             </div>
         </div>
 
         <!-- 設定モーダル -->
         <div id="modal-settings" class="modal hidden">
             <div class="modal-content" style="text-align: left;">
-                <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ システム設定</h2>
+                <h2 style="color: #facc15; font-size: 22px; margin-bottom: 12px; text-align: center; text-shadow: 0 0 10px #facc15;">⚙️ システム設定</h2>
                 
-                <!-- Hugging Face 認証 -->
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Hugging Face Access Token (hf_...)：</label>
-                    <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 3px; font-size: 14px; padding: 8px;">
-                    <button type="button" class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
+                    <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 4px; font-size: 14px; padding: 8px;">
+                    <button type="button" class="btn" style="background: #0284c7; border-color: #38bdf8; box-shadow: 0 4px 0 #0369a1; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
                 <div style="margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 10px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">解答操作スタイル：</label>
-                    <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 3px; padding: 8px; font-size: 14px;">
+                    <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 4px; padding: 8px; font-size: 14px;">
                         <option value="flick">Web自作フリックキーボード（NEW）</option>
                         <option value="keyboard">アーケード五十音パネル</option>
                         <option value="direct">端末標準キーボード（直接入力）</option>
@@ -347,47 +386,369 @@
                 <div style="margin-bottom: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                         <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">BGM/効果音: <span id="volume-val">50</span>%</label>
-                        <button type="button" id="setting-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s;">
+                        <button type="button" id="setting-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; cursor: pointer;">
                             🔊 音声ON
                         </button>
                     </div>
-                    <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 3px; width: 100%; cursor: pointer;">
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 4px; width: 100%; cursor: pointer;">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn" style="background: #22c55e; border-color:#4ade80; flex: 1; padding: 10px;" onclick="closeSettings()">再開する</button>
-                    <button type="button" class="btn" style="background: #dc2626; border-color:#f87171; flex: 1; padding: 10px;" onclick="goToTitle()">リタイア</button>
+                    <button type="button" class="btn" style="background: #22c55e; border-color:#4ade80; box-shadow: 0 4px 0 #166534; flex: 1; padding: 10px;" onclick="closeSettings()">再開する</button>
+                    <button type="button" class="btn" style="background: #dc2626; border-color:#f87171; box-shadow: 0 4px 0 #991b1b; flex: 1; padding: 10px;" onclick="goToTitle()">リタイヤ</button>
                 </div>
             </div>
         </div>
 
         <!-- ゲームオーバー -->
         <div id="screen-gameover" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 36px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 15px #ef4444;">GAME OVER</h2>
+            <h2 style="font-size: 38px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 20px #ef4444;">GAME OVER</h2>
             <p style="color: #cbd5e1; font-size: 16px; margin-bottom: 5px;">ツアーズバギー 大破！</p>
             <p id="gameover-stats" style="color: #facc15; font-weight: bold; margin-bottom: 20px;">到達: STAGE 0 / 30 (正解撃破数: 0)</p>
-            <button type="button" class="btn" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #fbbf24; color: black; font-size: 18px;" onclick="startGame(activeMode)">コンティニュー 🔄</button>
-            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
+            <button type="button" class="btn" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #fbbf24; box-shadow: 0 5px 0 #b45309; color: black; font-size: 18px;" onclick="restartWithContinue()">コンティニュー 🔄</button>
+            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
         </div>
 
         <!-- 完全制覇クリア -->
         <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 32px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 20px #facc15;">🏆 全30ステージ完走！ 🏆</h2>
+            <h2 style="font-size: 34px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 25px #facc15;">🏆 全30ステージ完走！ 🏆</h2>
             <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 20px;">漢字ツアーズ 制覇達成！</p>
-            <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="startGame(activeMode)">もう一度挑戦する</button>
-            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
+            <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80; box-shadow: 0 5px 0 #166534;" onclick="restartWithContinue()">もう一度挑戦する</button>
+            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
         </div>
     </div>
 
     <script>
+        // --- 超リアル 3Dエフェクト ＆ 敵アセット Canvas エンジン ---
+        const canvas = document.getElementById('fx-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        let shockwaves = [];
+        let lasers = [];
+        let tunnelSpeed = 1;
+        let tunnelOffset = 0;
+        let enemyHitAnimation = 0; // 敵が攻撃を受けたときの揺れ/赤フラッシュ
+        let currentEnemyType = 'normal'; // 'normal' | 'boss'
+        let currentEnemyColor = '#38bdf8';
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // 3D背景トンネル（疾走感のある背景グリッド）
+        function draw3DTunnel(time) {
+            ctx.save();
+            const cx = canvas.width / 2;
+            const cy = canvas.height * 0.35;
+            tunnelOffset = (tunnelOffset + 0.8) % 40;
+
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+            ctx.lineWidth = 1.5;
+
+            // 放射状ライン
+            const lines = 16;
+            for (let i = 0; i < lines; i++) {
+                const angle = (i / lines) * Math.PI * 2;
+                const ex = cx + Math.cos(angle) * canvas.width * 0.8;
+                const ey = cy + Math.sin(angle) * canvas.height * 0.8;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(ex, ey);
+                ctx.stroke();
+            }
+
+            // 奥から広がる四角フレーム
+            for (let r = tunnelOffset; r < canvas.width * 0.8; r += 40) {
+                const scale = r / (canvas.width * 0.8);
+                const w = canvas.width * scale;
+                const h = canvas.height * 0.6 * scale;
+                ctx.strokeStyle = `rgba(56, 189, 248, ${0.05 + scale * 0.15})`;
+                ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+            }
+            ctx.restore();
+        }
+
+        // リアル敵キャラクターの描画（オーラ、回転メカリング、サイバーコア）
+        function drawRealEnemy(x, y, isBoss, time) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // 被弾時シェイク
+            if (enemyHitAnimation > 0) {
+                ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
+                enemyHitAnimation--;
+            }
+
+            const size = isBoss ? 65 : 45;
+            const mainColor = isBoss ? '#ef4444' : (currentEnemyColor || '#38bdf8');
+            const secondaryColor = isBoss ? '#facc15' : '#818cf8';
+
+            // 1. 脈動するエネルギーオーラ
+            const auraScale = 1 + Math.sin(time * 0.005) * 0.15;
+            const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, size * 1.8 * auraScale);
+            grad.addColorStop(0, isBoss ? 'rgba(239, 68, 68, 0.6)' : 'rgba(56, 189, 248, 0.5)');
+            grad.addColorStop(0.5, isBoss ? 'rgba(245, 158, 11, 0.2)' : 'rgba(99, 102, 241, 0.2)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 1.8 * auraScale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. 外側回転メカリング（反時計回り）
+            ctx.save();
+            ctx.rotate(-time * 0.002);
+            ctx.strokeStyle = mainColor;
+            ctx.lineWidth = isBoss ? 4 : 2.5;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = mainColor;
+            ctx.beginPath();
+            const segments = isBoss ? 6 : 4;
+            for (let i = 0; i < segments; i++) {
+                const start = (i * Math.PI * 2) / segments;
+                ctx.arc(0, 0, size * 1.2, start, start + Math.PI / (segments * 1.2));
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // 3. 内側高速回転リング（時計回り）
+            ctx.save();
+            ctx.rotate(time * 0.004);
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = secondaryColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.85, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // 突起パターン
+            for (let i = 0; i < 8; i++) {
+                const a = (i * Math.PI) / 4;
+                ctx.fillRect(Math.cos(a) * size * 0.85 - 3, Math.sin(a) * size * 0.85 - 3, 6, 6);
+            }
+            ctx.restore();
+
+            // 4. 中央サイバーエナジーコア（脈動＆発光）
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = mainColor;
+            const coreGrad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, 2, 0, 0, size * 0.6);
+            coreGrad.addColorStop(0, '#ffffff');
+            coreGrad.addColorStop(0.4, mainColor);
+            coreGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = coreGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 5. ボス専用：稲妻（Lightning Spark）
+            if (isBoss) {
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < 3; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r1 = size * 0.5;
+                    const r2 = size * 1.4;
+                    ctx.moveTo(Math.cos(angle) * r1, Math.sin(angle) * r1);
+                    ctx.lineTo(Math.cos(angle) * (r1 + r2) / 2 + (Math.random() - 0.5) * 15, Math.sin(angle) * (r1 + r2) / 2 + (Math.random() - 0.5) * 15);
+                    ctx.lineTo(Math.cos(angle) * r2, Math.sin(angle) * r2);
+                }
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // パーティクルクラス（爆発・光の破片）
+        class Particle {
+            constructor(x, y, color, speed, size, decay) {
+                this.x = x; this.y = y; this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * (Math.random() * speed + 1);
+                this.vy = Math.sin(angle) * (Math.random() * speed + 1);
+                this.size = Math.random() * size + 2;
+                this.alpha = 1;
+                this.decay = decay || (Math.random() * 0.02 + 0.015);
+                this.gravity = 0.08;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vy += this.gravity;
+                this.alpha -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 12; ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // ショックウェーブ（衝撃波リング）
+        class Shockwave {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.radius = 10;
+                this.maxRadius = 160;
+                this.alpha = 1;
+            }
+            update() {
+                this.radius += 8;
+                this.alpha = 1 - (this.radius / this.maxRadius);
+            }
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 6;
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // レーザービーム攻撃エフェクト（プレイヤー→敵への射撃）
+        class LaserBeam {
+            constructor(startX, startY, targetX, targetY) {
+                this.startX = startX; this.startY = startY;
+                this.targetX = targetX; this.targetY = targetY;
+                this.progress = 0;
+                this.finished = false;
+            }
+            update() {
+                this.progress += 0.18;
+                if (this.progress >= 1) {
+                    this.progress = 1;
+                    this.finished = true;
+                }
+            }
+            draw() {
+                ctx.save();
+                const curX = this.startX + (this.targetX - this.startX) * this.progress;
+                const curY = this.startY + (this.targetY - this.startY) * this.progress;
+
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 12;
+                ctx.shadowBlur = 25; ctx.shadowColor = '#0284c7';
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.startY);
+                ctx.lineTo(curX, curY);
+                ctx.stroke();
+
+                // コア白光
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function createExplosion(x, y, count = 60) {
+            const colors = ['#ef4444', '#facc15', '#38bdf8', '#4ade80', '#ffffff'];
+            for (let i = 0; i < count; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new Particle(x, y, color, 12, 7, 0.018));
+            }
+            shockwaves.push(new Shockwave(x, y, '#38bdf8'));
+            shockwaves.push(new Shockwave(x, y, '#facc15'));
+            enemyHitAnimation = 15;
+        }
+
+        function createConfetti() {
+            const colors = ['#f43f5e', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+            for (let i = 0; i < 90; i++) {
+                const p = new Particle(Math.random() * canvas.width, -10, colors[Math.floor(Math.random() * colors.length)], 4, 6, 0.005);
+                p.gravity = 0.05;
+                particles.push(p);
+            }
+        }
+
+        function triggerLaserAttack(targetX, targetY, onHit) {
+            const startX = canvas.width / 2;
+            const startY = canvas.height - 40;
+            const laser = new LaserBeam(startX, startY, targetX, targetY);
+            lasers.push(laser);
+
+            const checkHit = setInterval(() => {
+                if (laser.finished) {
+                    clearInterval(checkHit);
+                    if (onHit) onHit();
+                }
+            }, 16);
+        }
+
+        function fxLoop(time) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 3D背景トンネル描画
+            draw3DTunnel(time);
+
+            // 2. ゲーム中であれば敵キャラクターをリアル描画
+            const gameScreen = document.getElementById('screen-game');
+            if (gameScreen && !gameScreen.classList.contains('hidden')) {
+                const enemyAnchor = document.getElementById('enemy-anchor');
+                if (enemyAnchor) {
+                    const rect = enemyAnchor.getBoundingClientRect();
+                    const ex = rect.left + rect.width / 2;
+                    const ey = rect.top + rect.height / 2;
+                    drawRealEnemy(ex, ey, currentEnemyType === 'boss', time);
+                }
+            }
+
+            // 3. レーザー描画・更新
+            for (let i = lasers.length - 1; i >= 0; i--) {
+                lasers[i].update();
+                lasers[i].draw();
+                if (lasers[i].finished) lasers.splice(i, 1);
+            }
+
+            // 4. 衝撃波描画・更新
+            for (let i = shockwaves.length - 1; i >= 0; i--) {
+                shockwaves[i].update();
+                shockwaves[i].draw();
+                if (shockwaves[i].alpha <= 0) shockwaves.splice(i, 1);
+            }
+
+            // 5. パーティクル描画・更新
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(fxLoop);
+        }
+        requestAnimationFrame(fxLoop);
+
+        function flashDamage() {
+            const overlay = document.getElementById('damage-overlay');
+            if (!overlay) return;
+            overlay.style.opacity = '1';
+            setTimeout(() => { overlay.style.opacity = '0'; }, 200);
+        }
+
+        // ------------------ ゲーム本体のJSロジック ------------------
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
         let audioCtx = null;
         let soundVolume = 0.5;
         let previousVolume = 50;
         let bgmTimer = null;
         let isApiOnline = false;
+        let localKanjiData = null;
 
-        // フリックキーボード用データ構造
+        let usedKanjiSet = new Set();
+
         const FLICK_MAP = {
             'あ': { center: 'あ', left: 'い', top: 'う', right: 'え', bottom: 'お' },
             'か': { center: 'か', left: 'き', top: 'く', right: 'け', bottom: 'こ' },
@@ -409,9 +770,7 @@
             try { 
                 const val = localStorage.getItem(key);
                 return val !== null ? val : defaultVal;
-            } catch(e) { 
-                return defaultVal; 
-            }
+            } catch(e) { return defaultVal; }
         }
 
         function setStorage(key, val) {
@@ -422,9 +781,7 @@
             try {
                 if (!audioCtx) {
                     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContextClass) {
-                        audioCtx = new AudioContextClass();
-                    }
+                    if (AudioContextClass) audioCtx = new AudioContextClass();
                 }
                 if (audioCtx && audioCtx.state === 'suspended') {
                     audioCtx.resume().catch(() => {});
@@ -455,12 +812,10 @@
             if (headerMuteBtn) {
                 headerMuteBtn.innerText = text;
                 headerMuteBtn.style.background = isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255,255,255,0.1)";
-                headerMuteBtn.style.borderColor = isMuted ? "#ef4444" : "rgba(255,255,255,0.2)";
             }
             if (settingMuteBtn) {
                 settingMuteBtn.innerText = text;
                 settingMuteBtn.style.background = isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255,255,255,0.1)";
-                settingMuteBtn.style.borderColor = isMuted ? "#ef4444" : "rgba(255,255,255,0.2)";
             }
         }
 
@@ -534,6 +889,13 @@
                     gain.gain.setValueAtTime(baseVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                     osc.start(now); osc.stop(now + 0.45);
+                } else if (type === 'laser') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+                    gain.gain.setValueAtTime(baseVolume * 1.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now); osc.stop(now + 0.25);
                 } else if (type === 'wrong') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(180, now);
@@ -560,72 +922,170 @@
 
         const KANJI_DATABASE = {
             "小学生": [
-                ["川","かわ","絶えず水が流れている大きなすじ。"],
-                ["山","やま","周囲より高く盛り上がった土地。"],
-                ["木","き","地面から生える植物の一種。"],
-                ["車","くるま","車輪で移動する乗り物。"],
-                ["花","はな","植物の咲かせるきれいな部分。"],
-                ["学校","がっこう","勉強や学問を学ぶ場所。"],
-                ["友達","ともだち","親しく付き合っている人。"],
-                ["勉強","べんきょう","知識や技術を身につけること。"],
-                ["太陽","たいよう","地球に光と熱を届ける星。"],
-                ["漢字","かんじ","中国から伝わった文字。"]
+                ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],
+                ["車","くるま","車輪で移動する乗り物。"],["花","はな","植物の咲かせるきれいな部分。"],["学校","がっこう","勉強や学問を学ぶ場所。"],
+                ["友達","ともだち","親しく付き合っている人。"],["勉強","べんきょう","知識や技術を身につけること。"],["太陽","たいよう","地球に光と熱を届ける星。"],
+                ["漢字","かんじ","中国から伝わった文字。"],["雨","あめ","空から降ってくる水滴。"],["空","そら","頭上に広がる空間。"],
+                ["海","うみ","地球上の塩水が集まった広い所。"],["犬","いぬ","人に親しい身近な動物。"],["猫","ねこ","しなやかで可愛い身近な動物。"],
+                ["音","おと","耳で聞こえる振動。"],["赤","あか","鮮やかな血のような色。"],["青","あお","晴れた空のような色。"],
+                ["白","しろ","雪や雲のような色。"],["黒","くろ","夜の闇のような色。"],["森","もり","木がたくさん生い茂っている場所。"],
+                ["石","いし","かたくて小さな岩のかたまり。"],["草","くさ","地面に生える小さな植物。"],["竹","たけ","節があってまっすぐ伸びる植物。"],
+                ["虫","むし","小さくうごめく生き物。"],["魚","さかな","水の中で泳ぐ生き物。"],["鳥","とり","羽があって空を飛ぶ生き物。"],
+                ["風","かぜ","空気の流れ。"],["星","ほし","夜空に光る天体。"],["春","はる","四季の最初の季節。"]
             ],
             "中学生": [
-                ["笑顔","えがお","にこにこと笑った顔。"],
-                ["挨拶","あいさつ","人に会った時や別れる時の言葉。"],
-                ["故郷","ふるさと","自分が生まれ育った土地。"],
-                ["感謝","かんしゃ","ありがたいと思う気持ち。"],
-                ["努力","どりょく","目標のために力を尽くすこと。"],
-                ["複雑","ふくざつ","事情や形が入り組んでいること。"],
-                ["矛盾","むじゅん","つじつまが合わないこと。"],
-                ["謙遜","けんそん","控えめな態度をとること。"],
-                ["把握","はあく","しっかり理解してつかむこと。"],
-                ["克服","こくふく","困難に打ち勝つこと。"]
+                ["笑顔","えがお","にこにこと笑った顔。"],["挨拶","あいさつ","人に会った時や別れる時の言葉。"],["故郷","ふるさと","自分が生まれ育った土地。"],
+                ["感謝","かんしゃ","ありがたいと思う気持ち。"],["努力","どりょく","目標のために力を尽くすこと。"],["複雑","ふくざつ","事情や形が入り組んでいること。"],
+                ["矛盾","むじゅん","つじつまが合わないこと。"],["謙遜","けんそん","控えめな態度をとること。"],["把握","はあく","しっかり理解してつかむこと。"],
+                ["克服","こくふく","困難に打ち勝つこと。"],["観察","かんさつ","物事の様子を注意深く見ること。"],["証明","しょうめい","事実であることを明らかにすること。"],
+                ["挑戦","ちょうせん","困難なことに立ち向かうこと。"],["尊重","そんちょう","価値を認めて大切にすること。"],["貢献","こうけん","社会や人のために役立つこと。"],
+                ["比較","ひかく","二つ以上のものを比べること。"],["維持","いじ","そのままの状態を保ち続けること。"],["提案","ていあん","意見や案を出すこと。"],
+                ["誠意","せいい","嘘偽りのない真面目な心。"],["批判","ひはん","物事の良し悪しを吟味すること。"],["創造","そうぞう","新しいものを新しく作り出すこと。"],
+                ["妥協","だきょう","歩み寄って折り合いをつけること。"],["柔軟","じゅうなん","柔らかく臨機応変なさま。"],["慎重","しんちょう","注意深く軽はずみでないさま。"],
+                ["刺激","しげき","変化を起こさせるよう働きかけること。"],["推測","すいそく","ある事柄からおしはかること。"],["探求","たんきゅう","物事の深みを探り求めること。"],["効率","こうりつ","かけた労力に対する果実の割合。"],["反映","はんえい","光や影響が他に現れること。"],["模索","もさく","手探りで方法を探すこと。"]
             ],
             "高校生": [
-                ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],
-                ["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],
-                ["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],
-                ["概念","がいねん","物事の大まかな意味や内容。"],
-                ["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"],
-                ["脆弱","ぜいじゃく","脆くて弱いこと。"],
-                ["破綻","はたん","物事が立ち行かなくなること。"],
-                ["矛盾","むじゅん","前後の辻褄が合わないこと。"],
-                ["洞察","どうさつ","見えない部分を見抜くこと。"],
-                ["歪曲","わいきょく","事実をねじ曲げること。"]
+                ["明瞭","めいりょう","はっきりしていて分かりやすいこと。"],["躊躇","ちゅうちょ","ためらうこと。決断が鈍ること。"],["隠蔽","いんぺい","都合の悪いことを覆い隠すこと。"],
+                ["概念","がいねん","物事の大まかな意味や内容。"],["抽象","ちゅうしょう","具体的な形を排して共通要素を抜き出すこと。"],["脆弱","ぜいじゃく","脆くて弱いこと。"],
+                ["破綻","はたん","物事が立ち行かなくなること。"],["洞察","どうさつ","見えない部分を見抜くこと。"],["歪曲","わいきょく","事実をねじ曲げること。"],
+                ["矛盾","むじゅん","前後の辻褄が合わないこと。"],["変革","へんかく","すみずみまで改革すること。"],["顕著","けんちょ","際立って目立つさま。"],
+                ["糾弾","きゅうだん","罪や責任を問いただして責めること。"],["危惧","きぐ","悪くなるのではと心配すること。"],["洗練","せんれん","あかぬけた優雅なものにすること。"],
+                ["驚愕","きょうがく","非常に驚きあきれ返ること。"],["緻密","ちみつ","細かいところまで注意が行き届くさま。"],["便宜","べんぎ","その場に合った都合の良い扱い。"],["普遍","ふへん","全ての事物に広く共通すること。"],["希薄","きはく","思いや濃度が薄いこと。"],
+                ["享受","きょうじゅ","受け入れて自分のものとして楽しむこと。"],["阻害","そがい","邪魔をして妨げること。"],["啓発","けいはつ","気づきを与えて高めること。"],
+                ["暫定","ざんてい","確定するまでの仮の扱い。"],["淘汰","とうた","不適切なものを除外すること。"],["懸念","けねん","気にかかって不安になること。"],
+                ["示唆","しさ","それとなく提案して知らせること。"],["摩擦","まさつ","意見の食い違いで生じるいざこざ。"],["凌駕","りょうが","他を追い抜いて上に出ること。"],
+                ["拘束","こうそく","行動の自由を制限すること。"]
             ],
             "一般常識": [
-                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],
-                ["流石","さすが","期待通りで素晴らしい様子。"],
-                ["相殺","そうさい","互いの貸し借りを消し分けること。"],
-                ["重複","ちょうふく","同じことが重なること。"],
-                ["代替","だいたい","他のものと取り替えること。"],
-                ["固執","こしゅう","自分の意見を譲らないこと。"],
-                ["脆弱","ぜいじゃく","もろく弱いこと。"],
-                ["情緒","じょうちょ","感情や情趣のこと。"],
-                ["刷新","さっしん","悪習を改めて新しくすること。"],
-                ["破天荒","はてんこう","誰も成し得なかったことを行うこと。"]
+                ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],
+                ["重複","ちょうふく","同じことが重なること。"],["代替","だいたい","他のものと取り替えること。"],["固執","こしゅう","自分の意見を譲らないこと。"],
+                ["情緒","じょうちょ","感情や情趣のこと。"],["刷新","さっしん","悪習を改めて新しくすること。"],["破天荒","はてんこう","誰も成し得なかったことを行うこと。"],
+                ["貼付","ちょうふ","ペタリと貼り付けること。"],["漸く","ようやく","苦労の末にやっと実現するさま。"],["堪能","たんのう","十分に味わって満足すること。"],
+                ["一段落","いちだんらく","ひとまず区切りがつくこと。"],["汎用","はんよう","広く色々な用途に使えること。"],["依存","いぞん","他のものに頼りきること。"],
+                ["殺陣","たて","演劇などで刀を使って殺し合う所作。"],["続柄","つづきがら","親族としての関係・血縁。"],["脆弱","ぜいじゃく","脆くて弱いこと。"],
+                ["捏造","ねつぞう","ありもしない事実をでっち上げること。"],["割愛","かつあい","惜しいと思いながら省略すること。"],["早急","さっきゅう","非常に急いでいること。"],
+                ["老舗","しにせ","代々長く続いている古い店。"],["参酌","さんしゃく","他を照らし合わせて参考にすること。"],["遵守","じゅんしゅ","法律や規則をしっかりと守ること。"],
+                ["世論","よろん","社会一般の人々の意見。"],["健気","けなげ","健やかで感心なさま。"],["稟議","りんぎ","会議を開かず書類を回して承認を得ること。"],
+                ["恣意","しい","自分勝手な思いつき。"],["刷新","さっしん","状態をガラリと新しくすること。"],["間髪","かんぱつ","髪の毛一本挟む隙もないほど間を置かない。"]
             ],
             "漢字王": [
-                ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],
-                ["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],
-                ["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],
-                ["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],
-                ["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"],
-                ["海老","えび","甲殻類の一種。"],
-                ["向日葵","ひまわり","夏に大きな黄色い花を咲かせる植物。"],
-                ["無花果","いちじく","果実として食用にするクワ科の植物。"],
-                ["心太","ところてん","テングサから作る食品。"],
-                ["微塵","みじん","ごく僅かなこと。"]
+                ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],
+                ["紫陽花","あじさい","梅雨の時期に美しい花を咲かせる植物。"],["杜鵑","ほととぎす","初夏に飛来する鳴き声が特徴的な鳥。"],["海老","えび","甲殻類の一種。"],
+                ["向日葵","ひまわり","夏に大きな黄色い花を咲かせる植物。"],["無花果","いちじく","果実として食用にするクワ科の植物。"],["心太","ところてん","テングサから作る食品。"],
+                ["微塵","みじん","ごく僅かなこと。"],["烏賊","いか","10本の足を持つ頭足類の生物。"],["海豚","いるか","知能の高い海洋哺乳類。"],
+                ["甘楽","かんら","甘い味わいを楽しむこと。"],["仙人掌","さぼてん","茎に水分を蓄える多肉植物。"],["土竜","もぐら","地中で生活する小型の哺乳類。"],
+                ["蜻蛉","とんぼ","大きな複眼を持つ昆虫。"],["紫苑","しおん","秋に薄紫の花を咲かせる植物。"],["玉蜀黍","とうもろこし","黄色の粒が実る穀物。"],
+                ["翡翠","ひすい","深緑色の美しい宝石。"],["啄木鳥","きつつき","木をつついて穴をあける鳥。"],["海月","くらげ","水中に漂う刺胞動物。"],
+                ["金雀枝","えにしだ","黄色の小さな花を咲かせる低木。"],["無患子","むくろじ","種子が羽子の玉に使われる樹木。"],["紫陽花","あじさい","紫や青の花をつける植物。"],
+                ["羊歯","しだ","胞子で増える非種子植物。"],["山車","だし","祭りで引いて練り歩く車。"],["鱏","えい","平たい体を持つ海水魚。"],["心太","ところてん","海藻からつくる透明な食品。"],["獺","かわうそ","水辺で暮らすイタチ科の動物。"],["鸚鵡","おうむ","人の言葉を真似る鳥。"]
             ]
         };
 
+        async function fetchKanjiJson() {
+            const badge = document.getElementById("json-status-badge");
+            try {
+                const res = await fetch('kanji_data.json');
+                if (!res.ok) throw new Error("JSON not found");
+                const loadedData = await res.json();
+                const isValidData = loadedData && typeof loadedData === "object" &&
+                    Object.values(loadedData).length > 0 &&
+                    Object.values(loadedData).every(items => Array.isArray(items) && items.every(item =>
+                        item && typeof item.kanji === "string" && typeof item.reading === "string"
+                    ));
+                if (!isValidData) throw new Error("Invalid kanji data format");
+
+                const hasInvalidCompound = Object.values(loadedData).some(items =>
+                    items.some(item => /^(.+)\1\1$/.test(item.kanji) || /^(.+)\1\1$/.test(item.reading))
+                );
+                localKanjiData = hasInvalidCompound ? null : loadedData;
+                
+                let totalCount = 0;
+                Object.keys(localKanjiData).forEach(cat => {
+                    totalCount += localKanjiData[cat].length;
+                });
+
+                if (badge) {
+                    badge.style.background = hasInvalidCompound ? "rgba(245, 158, 11, 0.15)" : "rgba(34, 197, 94, 0.15)";
+                    badge.style.borderColor = hasInvalidCompound ? "#f59e0b" : "#22c55e";
+                    badge.style.color = hasInvalidCompound ? "#fbbf24" : "#4ade80";
+                    badge.innerHTML = hasInvalidCompound
+                        ? `⚠️ <b>内蔵問題を使用</b> (${totalCount.toLocaleString()}問の不正データを除外)`
+                        : `✨ <b>接続完了！</b> (${totalCount.toLocaleString()}問収録)`;
+                }
+                if (hasInvalidCompound) throw new Error("Invalid repeated compound data");
+            } catch (e) {
+                // file:// で開いた場合はブラウザの制限で fetch が失敗するため、内蔵データを使う。
+                localKanjiData = Object.fromEntries(
+                    Object.entries(KANJI_DATABASE).map(([category, items]) => [
+                        category,
+                        items.map(([kanji, reading, meaning]) => ({ kanji, reading, meaning }))
+                    ])
+                );
+
+                if (badge) {
+                    let totalCount = 0;
+                    Object.values(localKanjiData).forEach(items => {
+                        totalCount += items.length;
+                    });
+                    badge.style.background = "rgba(245, 158, 11, 0.15)";
+                    badge.style.borderColor = "#f59e0b";
+                    badge.style.color = "#fbbf24";
+                    badge.innerHTML = `⚠️ <b>内蔵データで接続</b> (${totalCount.toLocaleString()}問)`;
+                }
+            }
+        }
+
+        function generateFromLocalJson(mode) {
+            if (!localKanjiData || !localKanjiData[mode] || localKanjiData[mode].length === 0) return null;
+            
+            let pool = localKanjiData[mode].filter(item => !usedKanjiSet.has(item.kanji));
+            if (pool.length < 30) {
+                usedKanjiSet.clear();
+                pool = [...localKanjiData[mode]];
+            }
+            
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            const count = Math.min(30, pool.length);
+            const selected = pool.slice(0, count);
+
+            return selected.map((item, index) => {
+                usedKanjiSet.add(item.kanji);
+                const isBoss = (index + 1) % 5 === 0;
+                return {
+                    id: index + 1,
+                    kanji: item.kanji,
+                    reading: item.reading,
+                    schoolGrade: item.schoolGrade,
+                    category: isBoss ? `${mode}【BOSS】` : mode,
+                    meaning: item.meaning || `【STAGE ${index + 1}】${mode}レベルの漢字です。`,
+                    isBoss: isBoss
+                };
+            });
+        }
+
         function generateFallbackData(mode) {
             const rawPool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
+            let pool = rawPool.filter(item => !usedKanjiSet.has(item[0]));
+            if (pool.length < 30) {
+                usedKanjiSet.clear();
+                pool = [...rawPool];
+            }
+            
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            const count = Math.min(30, pool.length);
             const result = [];
-            for (let i = 0; i < 30; i++) {
-                const item = rawPool[i % rawPool.length];
+
+            for (let i = 0; i < count; i++) {
+                const item = pool[i];
+                usedKanjiSet.add(item[0]);
                 const isBoss = (i + 1) % 5 === 0;
                 result.push({
                     id: i + 1,
@@ -640,13 +1100,14 @@
         }
 
         let currentList = [];
+        let kanjiDataPromise = null;
         let currentIndex = 0;
         let clearedCount = 0;
         let lives = 3;
         let timer = null;
         let timeRemaining = 10;
         let isPaused = false;
-        let activeMode = "小学生";
+        let activeMode = "小学1年";
         let inputMode = getStorage("input_mode", "flick");
         let apiKey = getStorage("hf_api_key", "");
 
@@ -679,6 +1140,7 @@
 
                 changeInputMode(inputMode);
                 setupFlickEvents();
+                kanjiDataPromise = fetchKanjiJson();
                 checkApiStatusBackground();
             } catch(e) {}
         }
@@ -689,7 +1151,6 @@
             initApp();
         }
 
-        // --- フリック入力処理 ---
         function setupFlickEvents() {
             const flickKeys = document.querySelectorAll(".flick-key[data-key]");
             flickKeys.forEach(keyEl => {
@@ -739,9 +1200,7 @@
                 const mapData = FLICK_MAP[activeFlickKey];
                 if (mapData) {
                     const selectedChar = mapData[currentDirection] || mapData['center'];
-                    if (selectedChar) {
-                        addKey(selectedChar);
-                    }
+                    if (selectedChar) addKey(selectedChar);
                 }
 
                 document.querySelectorAll(".flick-key").forEach(k => k.classList.remove("active"));
@@ -791,11 +1250,8 @@
 
             Object.keys(cells).forEach(k => {
                 if (cells[k]) {
-                    if (k === dir) {
-                        cells[k].classList.add("active");
-                    } else {
-                        cells[k].classList.remove("active");
-                    }
+                    if (k === dir) cells[k].classList.add("active");
+                    else cells[k].classList.remove("active");
                 }
             });
         }
@@ -857,12 +1313,14 @@
             const flickKey = document.getElementById("flick-keyboard");
             const customKey = document.getElementById("custom-keyboard");
             const directSubmit = document.getElementById("direct-submit-container");
+            const arcadeActions = document.getElementById("arcade-action-container");
             const inputField = document.getElementById("user-input");
             
             if (inputMode === "flick") {
                 if (flickKey) flickKey.classList.remove("hidden");
                 if (customKey) customKey.classList.add("hidden");
-                if (directSubmit) directSubmit.classList.add("hidden");
+                if (directSubmit) directSubmit.classList.remove("hidden");
+                if (arcadeActions) arcadeActions.classList.add("hidden");
                 if (inputField) {
                     inputField.placeholder = "画面下のフリックキーで入力";
                     inputField.setAttribute("readonly", "true");
@@ -872,8 +1330,9 @@
                 if (flickKey) flickKey.classList.add("hidden");
                 if (customKey) customKey.classList.remove("hidden");
                 if (directSubmit) directSubmit.classList.add("hidden");
+                if (arcadeActions) arcadeActions.classList.remove("hidden");
                 if (inputField) {
-                    inputField.placeholder = "画面の五十音ボタンで入力";
+                    inputField.placeholder = "画面の五十音パネルで入力";
                     inputField.setAttribute("readonly", "true");
                     inputField.setAttribute("inputmode", "none");
                 }
@@ -881,12 +1340,18 @@
                 if (flickKey) flickKey.classList.add("hidden");
                 if (customKey) customKey.classList.add("hidden");
                 if (directSubmit) directSubmit.classList.remove("hidden");
+                if (arcadeActions) arcadeActions.classList.add("hidden");
                 if (inputField) {
                     inputField.placeholder = "キーボードで入力（Enterで発射）";
                     inputField.removeAttribute("readonly");
                     inputField.removeAttribute("inputmode");
                 }
             }
+        }
+
+        function restartWithContinue() {
+            usedKanjiSet.clear();
+            startGame(activeMode);
         }
 
         async function startGame(mode) {
@@ -896,6 +1361,7 @@
             } catch(e){}
 
             activeMode = mode;
+            isPaused = false;
             currentIndex = 0;
             clearedCount = 0;
             lives = 3;
@@ -910,17 +1376,29 @@
             if (clearEl) clearEl.classList.add("hidden");
             if (loadEl) loadEl.classList.remove("hidden");
 
-            apiKey = getStorage("hf_api_key", "");
-            let loadedFromApi = false;
+            let loadedQuestions = null;
 
-            if (isApiOnline && apiKey && navigator.onLine) {
+            if (!localKanjiData && kanjiDataPromise) {
+                await kanjiDataPromise;
+            }
+
+            if (localKanjiData) {
+                const lTitle = document.getElementById("loading-title");
+                const lDesc = document.getElementById("loading-desc");
+                if (lTitle) lTitle.innerText = "データロード中...";
+                if (lDesc) lDesc.innerText = `kanji_data.json から「${mode}」問題を選択中`;
+                loadedQuestions = generateFromLocalJson(mode);
+            }
+
+            if (!loadedQuestions && isApiOnline && apiKey && navigator.onLine) {
                 try {
                     const lTitle = document.getElementById("loading-title");
                     const lDesc = document.getElementById("loading-desc");
                     if (lTitle) lTitle.innerText = "ツアーズジェット 30問生成中...";
                     if (lDesc) lDesc.innerText = "AIが問題を生成しています";
 
-                    let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
+                    const excludeList = Array.from(usedKanjiSet).join("、");
+                    let prompt = `「${mode}」コース用の全30問の漢字クイズを出題してください。1〜30問にかけて段階的に難易度をアップしてください。5, 10, 15, 20, 25, 30問目は"isBoss": trueとしてください。${excludeList ? `【除外漢字】以下の漢字は絶対に使わないでください: ${excludeList}。` : ''} JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
 
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 3500);
@@ -950,17 +1428,19 @@
                             if (jsonMatch) textContent = jsonMatch[0];
                             const jsonContent = JSON.parse(textContent);
                             if (jsonContent && jsonContent.questions && Array.isArray(jsonContent.questions) && jsonContent.questions.length > 0) {
-                                currentList = jsonContent.questions;
-                                loadedFromApi = true;
+                                loadedQuestions = jsonContent.questions;
+                                loadedQuestions.forEach(q => usedKanjiSet.add(q.kanji));
                             }
                         }
                     }
                 } catch (e) {}
             }
 
-            if (!loadedFromApi) {
-                currentList = generateFallbackData(mode);
+            if (!loadedQuestions) {
+                loadedQuestions = generateFallbackData(mode);
             }
+
+            currentList = loadedQuestions;
 
             const lTitle = document.getElementById("loading-title");
             const lDesc = document.getElementById("loading-desc");
@@ -1038,6 +1518,7 @@
         function loadQuestion() {
             if (currentIndex >= currentList.length) {
                 stopBGM();
+                createConfetti();
                 document.getElementById("screen-game").classList.add("hidden");
                 document.getElementById("screen-clear").classList.remove("hidden");
                 document.getElementById("clear-stats").innerText = `正解撃破数: ${clearedCount} / 30問`;
@@ -1046,33 +1527,38 @@
             const q = currentList[currentIndex];
             document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
             document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
+            const passButton = document.getElementById("pass-btn");
+            if (passButton) {
+                passButton.disabled = Boolean(q.isBoss);
+                passButton.innerText = q.isBoss ? "⛔ ボスはパス不可" : "⏭️ パス (-1 LIFE)";
+            }
             
             const kanjiDisplay = document.getElementById("kanji-display");
-            kanjiDisplay.classList.remove("destroy-anim");
             kanjiDisplay.innerText = q.kanji;
-            
+            kanjiDisplay.classList.remove("kanji-spawn");
             void kanjiDisplay.offsetWidth;
-            kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            kanjiDisplay.classList.add("kanji-spawn");
 
             const inputField = document.getElementById("user-input");
             inputField.value = "";
 
             if (inputMode === "direct") {
-                setTimeout(() => {
-                    inputField.focus();
-                }, 100);
+                setTimeout(() => { inputField.focus(); }, 100);
             }
 
             const bossBadge = document.getElementById("boss-badge");
-            const enemyEmoji = document.getElementById("enemy-emoji");
+            
+            // 敵キャラクター設定の適用（Canvasレンダラーへ連動）
             if (q.isBoss) {
                 bossBadge.classList.remove("hidden");
-                enemyEmoji.innerText = "👹";
+                currentEnemyType = 'boss';
                 document.getElementById("ai-message").innerText = `🎙️「⚠️ BOSS出現！第${currentIndex + 1}問！正解して粉砕せよ！」`;
                 playSound('boss');
             } else {
                 bossBadge.classList.add("hidden");
-                enemyEmoji.innerText = "👾";
+                currentEnemyType = 'normal';
+                const colors = ['#38bdf8', '#4ade80', '#c084fc', '#facc15', '#fb7185'];
+                currentEnemyColor = colors[currentIndex % colors.length];
                 document.getElementById("ai-message").innerText = `🎙️「第${currentIndex + 1}問！この漢字の読みを入力してください！」`;
             }
 
@@ -1102,9 +1588,7 @@
                 timeRemaining--;
                 timerText.innerText = timeRemaining;
 
-                if (timeRemaining === 5) {
-                    startBGM();
-                }
+                if (timeRemaining === 5) startBGM();
 
                 if (timeRemaining <= 5) {
                     timerBox.classList.add("timer-warning");
@@ -1120,10 +1604,12 @@
         }
 
         function triggerTimeUp() {
+            flashDamage();
             playSound('wrong');
             lives--;
             updateLives();
             const q = currentList[currentIndex];
+
             if (lives <= 0) {
                 stopBGM();
                 showExplanationModal(q, 'timeup_gameover');
@@ -1178,6 +1664,8 @@
         }
 
         function submitAnswer() {
+            if (isPaused || !timer) return;
+
             const inputField = document.getElementById("user-input");
             const rawVal = inputField.value;
             const normalizedInput = normalizeText(rawVal);
@@ -1193,15 +1681,24 @@
             
             if (normalizedInput === normalizedAnswer) {
                 clearInterval(timer);
+                timer = null;
                 clearedCount++;
-                playSound('correct');
                 
-                const kanjiDisplay = document.getElementById("kanji-display");
-                kanjiDisplay.classList.add("destroy-anim");
+                // 攻撃アニメーション＆爆発演出
+                const enemyAnchor = document.getElementById("enemy-anchor");
+                const rect = enemyAnchor.getBoundingClientRect();
+                const targetX = rect.left + rect.width / 2;
+                const targetY = rect.top + rect.height / 2;
 
-                setTimeout(() => {
-                    showExplanationModal(q, 'correct');
-                }, 400);
+                playSound('laser');
+                triggerLaserAttack(targetX, targetY, () => {
+                    playSound('correct');
+                    createExplosion(targetX, targetY, q.isBoss ? 110 : 60);
+
+                    setTimeout(() => {
+                        showExplanationModal(q, 'correct');
+                    }, 350);
+                });
 
             } else {
                 loseLife();
@@ -1211,12 +1708,19 @@
         function passQuestion() {
             if (isPaused) return;
 
+            const q = currentList[currentIndex];
+            if (q && q.isBoss) {
+                document.getElementById("ai-message").innerText = "🎙️「BOSS戦ではパスできません！」";
+                playSound('wrong');
+                return;
+            }
+
             clearInterval(timer);
+            timer = null;
+            flashDamage();
             playSound('wrong');
             lives--;
             updateLives();
-
-            const q = currentList[currentIndex];
 
             if (lives <= 0) {
                 stopBGM();
@@ -1227,30 +1731,29 @@
         }
 
         function loseLife() {
+            flashDamage();
             playSound('wrong');
             lives--;
             updateLives();
-            const box = document.getElementById("enemy-box");
-            box.classList.add("shake");
-            setTimeout(() => box.classList.remove("shake"), 400);
+            clearInterval(timer);
+            timer = null;
+            const container = document.querySelector(".container");
+            container.classList.add("shake-hard");
+            setTimeout(() => container.classList.remove("shake-hard"), 400);
 
+            const q = currentList[currentIndex];
             if (lives <= 0) {
-                clearInterval(timer);
                 stopBGM();
-                const q = currentList[currentIndex];
                 showExplanationModal(q, 'gameover');
             } else {
-                document.getElementById("ai-message").innerText = `🎙️「違う！残りライフ ${lives}！」`;
-                document.getElementById("user-input").value = "";
-                if (inputMode === "direct") {
-                    document.getElementById("user-input").focus();
-                }
+                showExplanationModal(q, 'wrong');
             }
         }
 
         function showExplanationModal(q, status) {
             const titleEl = document.getElementById("modal-title");
             const nextBtn = document.getElementById("modal-next-btn");
+            isPaused = true;
             
             if (status === 'correct') {
                 titleEl.innerText = q.isBoss ? "💥 BOSS K.O.! 撃破！" : "💥 CLEAR! 撃破！";
@@ -1262,8 +1765,23 @@
                 titleEl.style.color = "#f59e0b";
                 nextBtn.innerText = "次の問題へ進む ➔";
                 nextBtn.onclick = nextStage;
+            } else if (status === 'wrong') {
+                titleEl.innerText = "❌ 不正解 (LIFE -1)";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "次の問題へ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'pass_gameover') {
+                titleEl.innerText = "💥 ライフゼロ！パス（ゲームオーバー）";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "リザルトへ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
+                };
             } else if (status === 'timeup') {
-                titleEl.innerText = "⏰ TIME UP! 時間切れ (LIFE -1)";
+                titleEl.innerText = "⏰ TIME UP! (LIFE -1)";
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "次の問題へ進む ➔";
                 nextBtn.onclick = nextStage;
@@ -1277,18 +1795,8 @@
                     document.getElementById("screen-gameover").classList.remove("hidden");
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
                 };
-            } else if (status === 'pass_gameover') {
-                titleEl.innerText = "💥 ライフゼロ！パス（ゲームオーバー）";
-                titleEl.style.color = "#ef4444";
-                nextBtn.innerText = "リザルトへ ➔";
-                nextBtn.onclick = () => {
-                    document.getElementById("modal-explanation").classList.add("hidden");
-                    document.getElementById("screen-game").classList.add("hidden");
-                    document.getElementById("screen-gameover").classList.remove("hidden");
-                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
-                };
             } else if (status === 'gameover') {
-                titleEl.innerText = "💥 バギー大破！不正解";
+                titleEl.innerText = "💥 GAME OVER (LIFE 0)";
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "リザルトへ ➔";
                 nextBtn.onclick = () => {
@@ -1301,50 +1809,51 @@
 
             document.getElementById("modal-kanji").innerText = q.kanji;
             document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
-            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報が登録されていません。";
+            document.getElementById("modal-meaning").innerText = q.meaning || "解説はありません。";
             document.getElementById("modal-explanation").classList.remove("hidden");
         }
 
         function nextStage() {
-            playSound('click');
             document.getElementById("modal-explanation").classList.add("hidden");
+            isPaused = false;
             currentIndex++;
             loadQuestion();
         }
 
         function openSettings() {
-            playSound('click');
             isPaused = true;
             document.getElementById("modal-settings").classList.remove("hidden");
-            testApiKey();
         }
 
         function closeSettings() {
-            playSound('click');
-
-            const keyEl = document.getElementById("api-key-input");
-            apiKey = keyEl ? keyEl.value.trim() : "";
-            setStorage("hf_api_key", apiKey);
-
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
-            changeInputMode(inputMode);
-            checkApiStatusBackground();
         }
 
         function goToTitle() {
-            playSound('click');
-            clearInterval(timer);
             stopBGM();
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
             isPaused = false;
-            document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
-            ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.add("hidden");
-            });
-            const titleEl = document.getElementById("screen-title");
-            if (titleEl) titleEl.classList.remove("hidden");
-            checkApiStatusBackground();
+            currentList = [];
+            currentIndex = 0;
+            clearedCount = 0;
+            lives = 3;
+            timeRemaining = 10;
+            const inputField = document.getElementById("user-input");
+            if (inputField) {
+                inputField.value = "";
+                inputField.blur();
+            }
+            hideFlickPopover();
+            document.getElementById("modal-settings").classList.add("hidden");
+            document.getElementById("modal-explanation").classList.add("hidden");
+            document.getElementById("screen-game").classList.add("hidden");
+            document.getElementById("screen-gameover").classList.add("hidden");
+            document.getElementById("screen-clear").classList.add("hidden");
+            document.getElementById("screen-title").classList.remove("hidden");
         }
     </script>
 </body>
