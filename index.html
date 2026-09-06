@@ -644,7 +644,7 @@
         let clearedCount = 0;
         let lives = 3;
         let timer = null;
-        let timeRemaining = 10; // 制限時間を10秒に変更
+        let timeRemaining = 10; // 制限時間10秒
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = getStorage("input_mode", "flick");
@@ -1087,7 +1087,7 @@
 
         function resetTimer() {
             clearInterval(timer);
-            timeRemaining = 10; // 制限時間 10秒にセット
+            timeRemaining = 10; // 制限時間 10秒
             const timerText = document.getElementById("timer-text");
             const timerBox = document.getElementById("timer-box");
             const enemyBox = document.getElementById("enemy-box");
@@ -1121,10 +1121,19 @@
             }, 1000);
         }
 
+        /* タイムアップ処理（ライフ減算・分岐を追加） */
         function triggerTimeUp() {
             playSound('wrong');
+            lives--;
+            updateLives();
             const q = currentList[currentIndex];
-            showExplanationModal(q, 'timeup');
+
+            if (lives <= 0) {
+                stopBGM();
+                showExplanationModal(q, 'timeup_gameover');
+            } else {
+                showExplanationModal(q, 'timeup');
+            }
         }
 
         function addKey(char) {
@@ -1244,6 +1253,7 @@
             }
         }
 
+        /* 解説モーダル表示（timeupおよびtimeup_gameoverの処理を更新） */
         function showExplanationModal(q, status) {
             const titleEl = document.getElementById("modal-title");
             const nextBtn = document.getElementById("modal-next-btn");
@@ -1269,10 +1279,20 @@
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
                 };
             } else if (status === 'timeup') {
-                titleEl.innerText = "⏰ TIME UP! タイムアップ";
+                titleEl.innerText = "⏰ TIME UP! (LIFE -1)";
                 titleEl.style.color = "#ef4444";
-                nextBtn.innerText = "タイトルに戻る ➔";
-                nextBtn.onclick = goToTitle;
+                nextBtn.innerText = "次の問題へ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'timeup_gameover') {
+                titleEl.innerText = "⏰ TIME UP! ライフゼロ（ゲームオーバー）";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "リザルトへ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
+                };
             } else if (status === 'gameover') {
                 titleEl.innerText = "💥 バギー大破！不正解";
                 titleEl.style.color = "#ef4444";
