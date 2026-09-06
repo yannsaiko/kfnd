@@ -19,9 +19,13 @@
             position: relative;
         }
 
+        @media (min-width: 769px) {
+            body:has(#screen-game:not(.hidden)) { overflow-y: hidden; }
+        }
+
         /* 全画面＆敵・攻撃エフェクト描画用 Canvas */
         #fx-canvas {
-            position: absolute; inset: 0; pointer-events: none; z-index: 5;
+            position: fixed; inset: 0; pointer-events: none; z-index: 5;
         }
 
         /* 画面ダメージ / カメラ衝撃フラッシュ */
