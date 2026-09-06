@@ -1748,7 +1748,7 @@
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
                 };
             } else if (status === 'gameover') {
-                titleEl.innerText = "💥 バギー大破！不正解";
+                titleEl.innerText = "💥 不正解！ゲームオーバー";
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "リザルトへ ➔";
                 nextBtn.onclick = () => {
@@ -1761,53 +1761,37 @@
 
             document.getElementById("modal-kanji").innerText = q.kanji;
             document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
-            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報が登録されていません。";
+            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報はありません。";
             document.getElementById("modal-explanation").classList.remove("hidden");
         }
 
         function nextStage() {
-            playSound('click');
             document.getElementById("modal-explanation").classList.add("hidden");
             currentIndex++;
             loadQuestion();
         }
 
         function openSettings() {
-            playSound('click');
             isPaused = true;
             document.getElementById("modal-settings").classList.remove("hidden");
-            testApiKey();
         }
 
         function closeSettings() {
-            playSound('click');
-
-            const keyEl = document.getElementById("api-key-input");
-            apiKey = keyEl ? keyEl.value.trim() : "";
-            setStorage("hf_api_key", apiKey);
-
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
-            changeInputMode(inputMode);
-            checkApiStatusBackground();
         }
 
         function goToTitle() {
-            playSound('click');
-            clearInterval(timer);
             stopBGM();
+            clearInterval(timer);
             isPaused = false;
-            
-            usedKanjiSet.clear();
-
-            document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
-            ["screen-loading", "screen-game", "screen-gameover", "screen-clear"].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.add("hidden");
-            });
-            const titleEl = document.getElementById("screen-title");
-            if (titleEl) titleEl.classList.remove("hidden");
-            checkApiStatusBackground();
+            document.getElementById("modal-settings").classList.add("hidden");
+            document.getElementById("modal-explanation").classList.add("hidden");
+            document.getElementById("screen-game").classList.add("hidden");
+            document.getElementById("screen-gameover").classList.add("hidden");
+            document.getElementById("screen-clear").classList.add("hidden");
+            document.getElementById("screen-loading").classList.add("hidden");
+            document.getElementById("screen-title").classList.remove("hidden");
         }
     </script>
 </body>
