@@ -3,179 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ネプリーグ風 漢字ツアーズ AI - Fixed & Flick Edition</title>
+    <title>ネプリーグ風 漢字ツアーズ AI - Real Animation Edition</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
             height: 100%; margin: 0; padding: 0;
-            background: #050b14; color: white;
+            background: #030712; color: white;
             font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-            overflow-x: hidden; user-select: none;
+            overflow: hidden; user-select: none;
         }
         body { 
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100dvh; padding: 10px 0;
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #030712 80%);
+            position: relative;
         }
+
+        /* 全画面エフェクトキャンバス */
+        #fx-canvas {
+            position: absolute; inset: 0; pointer-events: none; z-index: 50;
+        }
+
+        /* 画面赤フラッシュ（ダメージ時） */
+        #damage-overlay {
+            position: absolute; inset: 0; background: rgba(239, 68, 68, 0.4);
+            pointer-events: none; z-index: 40; opacity: 0; transition: opacity 0.1s ease-out;
+        }
+
         .container {
             width: 100%; max-width: 480px; padding: 0 12px; text-align: center;
-            display: flex; flex-direction: column; align-items: center; position: relative;
+            display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10;
         }
         .hidden { display: none !important; }
 
         .show-title-badge {
             background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000; font-weight: 900; font-size: 11px; padding: 3px 10px;
-            border-radius: 4px; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            color: #000; font-weight: 900; font-size: 11px; padding: 4px 12px;
+            border-radius: 6px; letter-spacing: 2px; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+            animation: badgePulse 2s infinite alternate;
+        }
+        @keyframes badgePulse {
+            0% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+            100% { box-shadow: 0 0 18px rgba(245, 158, 11, 0.9); }
         }
 
+        /* 立体3Dネオンボタン */
         .btn { 
             background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); 
-            color: white; padding: 12px; margin: 5px 0; border: 2px solid #60a5fa; border-radius: 12px; 
+            color: white; padding: 13px; margin: 6px 0; border: 2px solid #60a5fa; border-radius: 12px; 
             font-size: 15px; font-weight: bold; width: 100%; cursor: pointer; 
-            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-            touch-action: manipulation; transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 6px 0 #1e3a8a, 0 8px 15px rgba(0,0,0,0.6);
+            touch-action: manipulation; transition: transform 0.08s ease, filter 0.15s, box-shadow 0.08s;
+            position: relative; overflow: hidden;
         }
-        .btn:active { transform: scale(0.97); }
-        .btn:hover { filter: brightness(1.15); }
+        .btn::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: rotate(45deg); transition: 0.5s; pointer-events: none;
+        }
+        .btn:hover::after { left: 100%; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1e3a8a, 0 4px 8px rgba(0,0,0,0.6); }
 
-        /* アーケードキーボード */
+        /* キーボタン */
         .key-btn { 
             background: linear-gradient(180deg, #334155 0%, #1e293b 100%); 
-            color: white; padding: 9px 0; margin: 2px; border: 1px solid #475569; border-radius: 6px; 
+            color: white; padding: 10px 0; margin: 2px; border: 1px solid #475569; border-radius: 8px; 
             font-size: 14px; font-weight: bold; cursor: pointer; flex: 1; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); touch-action: manipulation;
+            box-shadow: 0 3px 0 #0f172a; touch-action: manipulation;
+            transition: transform 0.05s, background 0.1s;
         }
-        .key-btn:active { background: #0f172a; transform: scale(0.93); }
-        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 1px; }
+        .key-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0f172a; background: #0284c7; }
+        .key-row { display: flex; width: 100%; justify-content: space-between; margin-bottom: 2px; }
 
-        /* 自作フリックキーボードスタイル */
+        /* フリックキーボード */
         .flick-container {
-            width: 100%; max-width: 380px; margin: 0 auto; background: rgba(0,0,0,0.5);
-            padding: 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            position: relative; touch-action: none;
+            width: 100%; max-width: 380px; margin: 0 auto; background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px); padding: 8px; border-radius: 16px; border: 1px solid rgba(56, 189, 248, 0.3);
+            position: relative; touch-action: none; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-        .flick-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%;
-        }
+        .flick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; }
         .flick-key {
             position: relative; background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
-            border: 1px solid #475569; border-radius: 10px; height: 50px;
+            border: 1px solid #475569; border-radius: 10px; height: 52px;
             color: #fff; font-size: 20px; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; user-select: none; box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-            touch-action: none;
+            cursor: pointer; user-select: none; box-shadow: 0 4px 0 #0f172a;
+            touch-action: none; transition: transform 0.08s, background-color 0.1s;
         }
-        .flick-key:active, .flick-key.active { background: #0284c7; border-color: #38bdf8; }
+        .flick-key:active, .flick-key.active { 
+            background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%); 
+            border-color: #38bdf8; transform: translateY(2px); box-shadow: 0 2px 0 #082f49;
+        }
         .flick-key .sub-text {
             position: absolute; font-size: 9px; color: #94a3b8; pointer-events: none; font-weight: normal;
         }
-        .flick-key .sub-left { left: 4px; top: 50%; transform: translateY(-50%); }
-        .flick-key .sub-top { top: 2px; left: 50%; transform: translateX(-50%); }
-        .flick-key .sub-right { right: 4px; top: 50%; transform: translateY(-50%); }
-        .flick-key .sub-bottom { bottom: 2px; left: 50%; transform: translateY(-50%); }
+        .flick-key .sub-left { left: 5px; top: 50%; transform: translateY(-50%); }
+        .flick-key .sub-top { top: 3px; left: 50%; transform: translateX(-50%); }
+        .flick-key .sub-right { right: 5px; top: 50%; transform: translateY(-50%); }
+        .flick-key .sub-bottom { bottom: 3px; left: 50%; transform: translateX(-50%); }
 
-        /* フリックポップアップガイド */
+        /* ポップアップガイド */
         .flick-popover {
-            position: absolute; z-index: 1000; width: 120px; height: 120px;
+            position: absolute; z-index: 1000; width: 130px; height: 130px;
             pointer-events: none; display: none; transform: translate(-50%, -50%);
+            animation: popIn 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        
         .flick-popover-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
             width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #38bdf8; border-radius: 16px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+            border: 2px solid #38bdf8; border-radius: 18px; box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
             padding: 4px;
         }
         .flick-popover-cell {
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-weight: bold; color: #94a3b8; border-radius: 6px;
+            font-size: 16px; font-weight: bold; color: #94a3b8; border-radius: 8px; transition: all 0.08s;
         }
         .flick-popover-cell.active {
-            background: #2563eb; color: #ffffff; font-size: 22px; font-weight: 900;
-            box-shadow: 0 0 10px #60a5fa;
+            background: #2563eb; color: #ffffff; font-size: 24px; font-weight: 900;
+            box-shadow: 0 0 12px #60a5fa; transform: scale(1.1);
         }
 
         input, select { 
-            width: 100%; padding: 10px; font-size: 18px; text-align: center; border-radius: 10px; 
-            border: 2px solid #38bdf8; margin-bottom: 6px; background: #0f172a; color: #fff; font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6); outline: none;
+            width: 100%; padding: 12px; font-size: 20px; text-align: center; border-radius: 12px; 
+            border: 2px solid #38bdf8; margin-bottom: 8px; background: rgba(15, 23, 42, 0.9); color: #fff; font-weight: bold;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), 0 0 12px rgba(56, 189, 248, 0.2); outline: none;
+            letter-spacing: 2px; transition: border-color 0.2s, box-shadow 0.2s;
         }
+        input:focus { border-color: #facc15; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), 0 0 18px rgba(250, 204, 21, 0.5); }
         
+        /* メインステージ背景 */
         .stage-view { 
             background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); 
-            border: 3px solid #f59e0b; border-radius: 16px; padding: 16px 10px; margin: 6px 0; width: 100%; 
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(0,0,0,0.9); 
+            border: 3px solid #f59e0b; border-radius: 20px; padding: 20px 10px; margin: 8px 0; width: 100%; 
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), inset 0 0 30px rgba(0,0,0,0.9); 
             position: relative; overflow: hidden; flex-shrink: 0;
             transition: border-color 0.3s, box-shadow 0.3s;
         }
+        /* サイバーグリッド背景風 */
         .stage-view::before {
             content: ''; position: absolute; inset: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(56, 189, 248, 0.05) 2px, rgba(56, 189, 248, 0.05) 4px);
-            pointer-events: none;
+            background: linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px; pointer-events: none;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove { 0% { background-position: 0 0; } 100% { background-position: 0 400px; } }
+
+        /* 敵・モンスター浮遊モーション */
+        .enemy-float {
+            animation: floatAnim 2.5s ease-in-out infinite alternate;
+        }
+        @keyframes floatAnim {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-10px) scale(1.05); }
         }
 
+        /* ボス用怒り・威嚇アニメーション */
+        .boss-pulsate {
+            animation: bossAnim 1.2s ease-in-out infinite alternate !important;
+        }
+        @keyframes bossAnim {
+            0% { transform: translateY(0) scale(1.1); filter: drop-shadow(0 0 10px #dc2626); }
+            100% { transform: translateY(-12px) scale(1.25); filter: drop-shadow(0 0 25px #ef4444); }
+        }
+
+        /* 漢字テキスト表示 & ド派手登場 */
         .kanji-text {
-            font-size: 56px; font-weight: 900; line-height: 1.1; color: #ffffff;
-            text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8, 0 0 30px #0284c7;
-            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            word-break: break-all;
+            font-size: 60px; font-weight: 900; line-height: 1.1; color: #ffffff;
+            text-shadow: 0 0 10px #38bdf8, 0 0 25px #38bdf8, 0 0 40px #0284c7;
+            position: relative; display: inline-block;
+        }
+        .kanji-spawn {
+            animation: kanjiImpact 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes kanjiImpact {
+            0% { transform: scale(3) rotate(-10deg); opacity: 0; filter: blur(10px); }
+            70% { transform: scale(0.9) rotate(2deg); opacity: 1; filter: blur(0); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
+        /* タイマー警告 */
         .timer-warning {
             color: #ef4444 !important; border-color: #ef4444 !important;
-            background: rgba(239, 68, 68, 0.2) !important;
-            animation: pulse 0.3s infinite alternate !important;
+            background: rgba(239, 68, 68, 0.25) !important;
+            animation: timerPulse 0.4s infinite alternate !important;
+        }
+        @keyframes timerPulse {
+            from { transform: scale(1); box-shadow: 0 0 5px #ef4444; }
+            to { transform: scale(1.1); box-shadow: 0 0 20px #ef4444; }
         }
 
+        /* ステージデンジャー（ピンチ） */
         .danger-border {
             border-color: #ef4444 !important;
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.7), inset 0 0 25px rgba(239, 68, 68, 0.4) !important;
-            animation: shake 0.3s infinite alternate;
+            box-shadow: 0 0 35px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.5) !important;
+            animation: dangerShake 0.25s infinite alternate;
+        }
+        @keyframes dangerShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            100% { transform: translate(-1px, -1px) rotate(-0.5deg); }
         }
 
         .modal {
-            position: fixed; inset: 0; background: rgba(5, 11, 20, 0.92); backdrop-filter: blur(8px);
+            position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(12px);
             display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 100;
-            animation: fadeIn 0.2s ease-out;
+            animation: modalFade 0.25s ease-out;
         }
+        @keyframes modalFade { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
         .modal-content {
-            background: #1e293b; border: 2px solid #f59e0b; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); max-height: 90vh; overflow-y: auto;
+            background: #1e293b; border: 2px solid #f59e0b; border-radius: 24px; padding: 24px; width: 100%; max-width: 420px; text-align: center;
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); max-height: 90vh; overflow-y: auto;
         }
 
         .status-dot {
             display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px; vertical-align: middle;
             transition: background-color 0.3s, box-shadow 0.3s;
         }
-        .dot-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
-        .dot-green { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+        .dot-green { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes zoomIn {
-            from { transform: scale(0.3); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        /* 画面シェイクエフェクト */
+        .shake-hard { animation: shakeHard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shakeHard {
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+            20%, 80% { transform: translate3d(5px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-7px, 0, 0); }
+            40%, 60% { transform: translate3d(7px, 0, 0); }
         }
-        @keyframes pulse {
-            from { transform: scale(1); opacity: 1; }
-            to { transform: scale(1.15); opacity: 0.8; }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-4px); }
-            40%, 80% { transform: translateX(4px); }
-        }
-        .shake { animation: shake 0.4s ease-in-out; }
 
-        @keyframes destroy {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.3); filter: brightness(3) drop-shadow(0 0 20px #ef4444); }
-            100% { transform: scale(0); opacity: 0; }
-        }
-        .destroy-anim { animation: destroy 0.4s forwards; }
+        /* ロケットライフの微振動 */
+        .rocket-life { display: inline-block; animation: rocketHover 1.5s ease-in-out infinite alternate; }
+        @keyframes rocketHover { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
     </style>
 </head>
 <body>
+
+    <!-- エフェクト描画用キャンバス -->
+    <canvas id="fx-canvas"></canvas>
+    <!-- 赤フラッシュオーバーレイ -->
+    <div id="damage-overlay"></div>
 
     <div class="container">
         <!-- フリック用ポップアップガイド -->
@@ -194,13 +264,13 @@
         </div>
 
         <!-- ヘッダー -->
-        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div class="show-title-badge">フジテレビ風 クイズ番組</div>
             <div style="display: flex; gap: 6px;">
-                <button type="button" id="header-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s;">
+                <button type="button" id="header-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
                     🔊 音声ON
                 </button>
-                <button type="button" onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                <button type="button" onclick="openSettings()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer;">
                     ⚙️ 設定 / PAUSE
                 </button>
             </div>
@@ -209,11 +279,11 @@
         <!-- タイトル画面 -->
         <div id="screen-title" style="width: 100%;">
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
-            <h1 style="font-size: 32px; font-weight: 900; color: #facc15; margin: 5px 0; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); display: flex; align-items: center; justify-content: center;">
+            <h1 style="font-size: 34px; font-weight: 900; color: #facc15; margin: 6px 0; text-shadow: 0 0 20px rgba(250, 204, 21, 0.8); display: flex; align-items: center; justify-content: center;">
                 漢字ツアーズ AI
                 <span id="status-dot" class="status-dot dot-red" title="AI API接続状態"></span>
             </h1>
-            <div id="json-status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
+            <div id="json-status-badge" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; margin-bottom: 15px; font-size: 12px; color: #cbd5e1;">
                 📁 kanji_data.json 確認中...
             </div>
             
@@ -221,53 +291,54 @@
             <button type="button" class="btn" onclick="startGame('中学生')">LEVEL 2 ✏️ 中学生ステージ</button>
             <button type="button" class="btn" onclick="startGame('高校生')">LEVEL 3 🏫 高校生ステージ</button>
             <button type="button" class="btn" onclick="startGame('一般常識')">LEVEL 4 💼 一般常識ステージ</button>
-            <button type="button" class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
+            <button type="button" class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171; box-shadow: 0 6px 0 #7f1d1d;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
         </div>
 
         <!-- ローディング画面 -->
-        <div id="screen-loading" class="hidden" style="width: 100%; padding: 40px 0;">
-            <div style="font-size: 50px; margin-bottom: 15px; animation: pulse 0.8s infinite alternate;">🚀</div>
-            <h2 style="color: #facc15; font-size: 22px; margin-bottom: 8px;" id="loading-title">ツアーズジェット 発進準備中...</h2>
-            <p style="color: #94a3b8; font-size: 13px;" id="loading-desc">出題問題をロードしています</p>
+        <div id="screen-loading" class="hidden" style="width: 100%; padding: 50px 0;">
+            <div style="font-size: 60px; margin-bottom: 15px; animation: rocketHover 0.8s infinite alternate;">🚀</div>
+            <h2 style="color: #facc15; font-size: 24px; margin-bottom: 8px; text-shadow: 0 0 15px #facc15;" id="loading-title">ツアーズジェット 発進準備中...</h2>
+            <p style="color: #94a3b8; font-size: 14px;" id="loading-desc">出題問題をロードしています</p>
         </div>
 
         <!-- ゲーム画面 -->
         <div id="screen-game" class="hidden" style="width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);">
                 <div style="text-align: left;">
-                    <div id="stage-text" style="font-size: 13px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
-                    <div id="category-text" style="font-size: 10px; font-weight: bold; color: #38bdf8;">【小学生】</div>
+                    <div id="stage-text" style="font-size: 14px; font-weight: 900; color: #facc15; letter-spacing: 1px;">STAGE 1 / 30</div>
+                    <div id="category-text" style="font-size: 11px; font-weight: bold; color: #38bdf8;">【小学生】</div>
                 </div>
-                <div id="lives-container" style="font-size: 18px; letter-spacing: 2px;">🚀🚀🚀</div>
-                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 2px 10px; border-radius: 8px; font-weight: 900; font-size: 16px; color: #38bdf8; transition: all 0.3s;" id="timer-box">
+                <div id="lives-container" class="rocket-life" style="font-size: 20px; letter-spacing: 2px;">🚀🚀🚀</div>
+                <div style="background: #0f172a; border: 2px solid #38bdf8; padding: 4px 12px; border-radius: 10px; font-weight: 900; font-size: 18px; color: #38bdf8; transition: all 0.3s; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);" id="timer-box">
                     ⏱ <span id="timer-text">10</span>
                 </div>
             </div>
 
-            <div style="background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 4px solid #38bdf8; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left; color: #e2e8f0;">
-                🎙️ <span id="ai-message">「さあ、漢字ツアーズ スタートです！」</span>
+            <div style="background: linear-gradient(90deg, #1e293b, #0f172a); border-left: 4px solid #38bdf8; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; width: 100%; margin-bottom: 6px; text-align: left; color: #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <span id="ai-message">🎙️「さあ、漢字ツアーズ スタートです！」</span>
             </div>
 
             <div class="stage-view" id="enemy-box">
-                <div id="boss-badge" class="hidden" style="position: absolute; top: 8px; right: 10px; background: #dc2626; color: white; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 4px; box-shadow: 0 0 8px #dc2626; letter-spacing: 1px;">⚠️ BOSS</div>
-                <div id="enemy-emoji" style="font-size: 32px; margin-bottom: 4px; transition: transform 0.2s;">👾</div>
-                <div id="kanji-display" class="kanji-text">川</div>
+                <div id="boss-badge" class="hidden" style="position: absolute; top: 10px; right: 12px; background: #dc2626; color: white; font-size: 12px; font-weight: 900; padding: 3px 10px; border-radius: 6px; box-shadow: 0 0 12px #dc2626; letter-spacing: 1px; animation: pulse 0.8s infinite alternate;">⚠️ BOSS</div>
+                <div id="enemy-emoji" class="enemy-float" style="font-size: 42px; margin-bottom: 6px; display: inline-block; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));">👾</div>
+                <br>
+                <div id="kanji-display" class="kanji-text kanji-spawn">川</div>
             </div>
 
             <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off" autocapitalize="none" inputmode="none" readonly>
 
             <div id="arcade-action-container" class="hidden" style="width: 100%; margin-bottom: 6px; display: flex; gap: 6px;">
-                <button type="button" class="btn" style="background: #d97706; border-color: #f59e0b; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="toggleDakutenSmall()">小/濁/半</button>
-                <button type="button" class="btn" style="background: #dc2626; border-color: #f87171; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="delKey()">⌫ 消す</button>
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin: 0; padding: 10px; font-size: 16px; flex: 1.5;" onclick="submitAnswer()">🚀 発射（決定）</button>
+                <button type="button" class="btn" style="background: #d97706; border-color: #f59e0b; box-shadow: 0 4px 0 #92400e; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="toggleDakutenSmall()">小/濁/半</button>
+                <button type="button" class="btn" style="background: #dc2626; border-color: #f87171; box-shadow: 0 4px 0 #991b1b; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="delKey()">⌫ 消す</button>
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; box-shadow: 0 4px 0 #166534; margin: 0; padding: 10px; font-size: 16px; flex: 1.5;" onclick="submitAnswer()">🚀 発射（決定）</button>
             </div>
 
             <div id="direct-submit-container" class="hidden" style="width: 100%; margin-bottom: 6px;">
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin: 0; padding: 12px; font-size: 18px;" onclick="submitAnswer()">🚀 発射（決定）</button>
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; box-shadow: 0 5px 0 #166534; margin: 0; padding: 12px; font-size: 18px;" onclick="submitAnswer()">🚀 発射（決定）</button>
             </div>
 
             <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 6px;">
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color: #f59e0b; width: 100%; margin: 0; padding: 10px; font-size: 14px;" onclick="passQuestion()">⏭️ パス (-1 LIFE)</button>
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color: #f59e0b; box-shadow: 0 4px 0 #78350f; width: 100%; margin: 0; padding: 10px; font-size: 14px;" onclick="passQuestion()">⏭️ パス (-1 LIFE)</button>
             </div>
             
             <!-- ① Web自作フリックキーボード UI -->
@@ -289,7 +360,7 @@
             </div>
 
             <!-- ② アーケード五十音パネル UI -->
-            <div id="custom-keyboard" style="width: 100%; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="custom-keyboard" style="width: 100%; background: rgba(15,23,42,0.8); backdrop-filter: blur(6px); padding: 6px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);">
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('あ')">あ</button><button type="button" class="key-btn" onclick="addKey('い')">い</button><button type="button" class="key-btn" onclick="addKey('う')">う</button><button type="button" class="key-btn" onclick="addKey('え')">え</button><button type="button" class="key-btn" onclick="addKey('お')">お</button></div>
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('か')">か</button><button type="button" class="key-btn" onclick="addKey('き')">き</button><button type="button" class="key-btn" onclick="addKey('く')">く</button><button type="button" class="key-btn" onclick="addKey('け')">け</button><button type="button" class="key-btn" onclick="addKey('こ')">こ</button></div>
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('さ')">さ</button><button type="button" class="key-btn" onclick="addKey('し')">し</button><button type="button" class="key-btn" onclick="addKey('す')">す</button><button type="button" class="key-btn" onclick="addKey('せ')">せ</button><button type="button" class="key-btn" onclick="addKey('そ')">そ</button></div>
@@ -308,32 +379,32 @@
         <!-- 解説モーダル -->
         <div id="modal-explanation" class="modal hidden">
             <div class="modal-content">
-                <h2 id="modal-title" style="font-size: 26px; margin-bottom: 5px; font-weight: 900;">💥 CLEAR!</h2>
-                <div id="modal-kanji" style="font-size: 48px; font-weight: 900; margin: 6px 0; color: #facc15; text-shadow: 0 0 10px #facc15;">漢字</div>
-                <div id="modal-reading" style="font-size: 20px; color: #4ade80; font-weight: bold; margin-bottom: 12px;">【読み】よみ</div>
-                <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; text-align: left; font-size: 13px; margin-bottom: 15px; border: 1px solid #475569;">
+                <h2 id="modal-title" style="font-size: 28px; margin-bottom: 5px; font-weight: 900;">💥 CLEAR!</h2>
+                <div id="modal-kanji" style="font-size: 52px; font-weight: 900; margin: 6px 0; color: #facc15; text-shadow: 0 0 15px #facc15;">漢字</div>
+                <div id="modal-reading" style="font-size: 22px; color: #4ade80; font-weight: bold; margin-bottom: 12px;">【読み】よみ</div>
+                <div style="background: rgba(0,0,0,0.5); padding: 14px; border-radius: 12px; text-align: left; font-size: 14px; margin-bottom: 15px; border: 1px solid #475569;">
                     <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">【辞書・意味解説】</div>
                     <div id="modal-meaning" style="line-height: 1.5; color: #e2e8f0;">解説文</div>
                 </div>
-                <button type="button" id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="nextStage()">次のステージへ進む ➔</button>
+                <button type="button" id="modal-next-btn" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80; box-shadow: 0 5px 0 #166534;" onclick="nextStage()">次のステージへ進む ➔</button>
             </div>
         </div>
 
         <!-- 設定モーダル -->
         <div id="modal-settings" class="modal hidden">
             <div class="modal-content" style="text-align: left;">
-                <h2 style="color: #facc15; font-size: 20px; margin-bottom: 12px; text-align: center;">⚙️ システム設定</h2>
+                <h2 style="color: #facc15; font-size: 22px; margin-bottom: 12px; text-align: center; text-shadow: 0 0 10px #facc15;">⚙️ システム設定</h2>
                 
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">Hugging Face Access Token (hf_...)：</label>
-                    <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 3px; font-size: 14px; padding: 8px;">
-                    <button type="button" class="btn" style="background: #0284c7; border-color: #38bdf8; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
+                    <input type="password" id="api-key-input" placeholder="hf_xxxxxxxxxxxx" style="margin-top: 4px; font-size: 14px; padding: 8px;">
+                    <button type="button" class="btn" style="background: #0284c7; border-color: #38bdf8; box-shadow: 0 4px 0 #0369a1; padding: 8px; font-size: 13px; margin-top: 4px;" onclick="testApiKey()">🔑 接続の再テスト</button>
                     <div id="auth-result" style="font-size: 11px; font-weight: bold; margin-top: 3px;"></div>
                 </div>
 
                 <div style="margin-bottom: 12px; border-top: 1px solid #334155; padding-top: 10px;">
                     <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">解答操作スタイル：</label>
-                    <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 3px; padding: 8px; font-size: 14px;">
+                    <select id="settings-input-mode" onchange="changeInputMode(this.value)" style="margin-top: 4px; padding: 8px; font-size: 14px;">
                         <option value="flick">Web自作フリックキーボード（NEW）</option>
                         <option value="keyboard">アーケード五十音パネル</option>
                         <option value="direct">端末標準キーボード（直接入力）</option>
@@ -343,47 +414,131 @@
                 <div style="margin-bottom: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                         <label style="font-size: 11px; color: #94a3b8; font-weight: bold;">BGM/効果音: <span id="volume-val">50</span>%</label>
-                        <button type="button" id="setting-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s;">
+                        <button type="button" id="setting-mute-btn" onclick="toggleMute()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; cursor: pointer;">
                             🔊 音声ON
                         </button>
                     </div>
-                    <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 3px; width: 100%; cursor: pointer;">
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 4px; width: 100%; cursor: pointer;">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn" style="background: #22c55e; border-color:#4ade80; flex: 1; padding: 10px;" onclick="closeSettings()">再開する</button>
-                    <button type="button" class="btn" style="background: #dc2626; border-color:#f87171; flex: 1; padding: 10px;" onclick="goToTitle()">リタイア</button>
+                    <button type="button" class="btn" style="background: #22c55e; border-color:#4ade80; box-shadow: 0 4px 0 #166534; flex: 1; padding: 10px;" onclick="closeSettings()">再開する</button>
+                    <button type="button" class="btn" style="background: #dc2626; border-color:#f87171; box-shadow: 0 4px 0 #991b1b; flex: 1; padding: 10px;" onclick="goToTitle()">リタイア</button>
                 </div>
             </div>
         </div>
 
         <!-- ゲームオーバー -->
         <div id="screen-gameover" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 36px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 15px #ef4444;">GAME OVER</h2>
+            <h2 style="font-size: 38px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 20px #ef4444;">GAME OVER</h2>
             <p style="color: #cbd5e1; font-size: 16px; margin-bottom: 5px;">ツアーズバギー 大破！</p>
             <p id="gameover-stats" style="color: #facc15; font-weight: bold; margin-bottom: 20px;">到達: STAGE 0 / 30 (正解撃破数: 0)</p>
-            <button type="button" class="btn" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #fbbf24; color: black; font-size: 18px;" onclick="startGame(activeMode)">コンティニュー 🔄</button>
-            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
+            <button type="button" class="btn" style="background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); border-color: #fbbf24; box-shadow: 0 5px 0 #b45309; color: black; font-size: 18px;" onclick="startGame(activeMode)">コンティニュー 🔄</button>
+            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
         </div>
 
         <!-- 完全制覇クリア -->
         <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 32px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 20px #facc15;">🏆 全30ステージ完走！ 🏆</h2>
+            <h2 style="font-size: 34px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 25px #facc15;">🏆 全30ステージ完走！ 🏆</h2>
             <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 20px;">漢字ツアーズ 制覇達成！</p>
-            <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80;" onclick="startGame(activeMode)">もう一度挑戦する</button>
-            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8;" onclick="goToTitle()">タイトルへ</button>
+            <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80; box-shadow: 0 5px 0 #166534;" onclick="startGame(activeMode)">もう一度挑戦する</button>
+            <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
         </div>
     </div>
 
     <script>
+        // --- リアルアニメーション用 Canvas パーティクルシステム ---
+        const canvas = document.getElementById('fx-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, color, speed, size, decay) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * (Math.random() * speed + 1);
+                this.vy = Math.sin(angle) * (Math.random() * speed + 1);
+                this.size = Math.random() * size + 2;
+                this.alpha = 1;
+                this.decay = decay || (Math.random() * 0.02 + 0.015);
+                this.gravity = 0.1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.alpha -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 爆発エフェクトの発生
+        function createExplosion(x, y, count = 50) {
+            const colors = ['#f87171', '#facc15', '#38bdf8', '#4ade80', '#ffffff'];
+            for (let i = 0; i < count; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new Particle(x, y, color, 8, 6, 0.02));
+            }
+        }
+
+        // 紙吹雪エフェクト (クリア時)
+        function createConfetti() {
+            const colors = ['#f43f5e', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+            for (let i = 0; i < 80; i++) {
+                const p = new Particle(Math.random() * canvas.width, -10, colors[Math.floor(Math.random() * colors.length)], 3, 5, 0.005);
+                p.gravity = 0.05;
+                particles.push(p);
+            }
+        }
+
+        // アニメーションループ
+        function fxLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(fxLoop);
+        }
+        fxLoop();
+
+        // ダメージ時の画面赤フラッシュ
+        function flashDamage() {
+            const overlay = document.getElementById('damage-overlay');
+            if (!overlay) return;
+            overlay.style.opacity = '1';
+            setTimeout(() => { overlay.style.opacity = '0'; }, 200);
+        }
+
+        // ------------------ ゲーム本体のJSロジック ------------------
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
         let audioCtx = null;
         let soundVolume = 0.5;
         let previousVolume = 50;
         let bgmTimer = null;
         let isApiOnline = false;
-        
-        // 外部JSONデータ保持用変数
         let localKanjiData = null;
 
         const FLICK_MAP = {
@@ -407,9 +562,7 @@
             try { 
                 const val = localStorage.getItem(key);
                 return val !== null ? val : defaultVal;
-            } catch(e) { 
-                return defaultVal; 
-            }
+            } catch(e) { return defaultVal; }
         }
 
         function setStorage(key, val) {
@@ -420,9 +573,7 @@
             try {
                 if (!audioCtx) {
                     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContextClass) {
-                        audioCtx = new AudioContextClass();
-                    }
+                    if (AudioContextClass) audioCtx = new AudioContextClass();
                 }
                 if (audioCtx && audioCtx.state === 'suspended') {
                     audioCtx.resume().catch(() => {});
@@ -453,12 +604,10 @@
             if (headerMuteBtn) {
                 headerMuteBtn.innerText = text;
                 headerMuteBtn.style.background = isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255,255,255,0.1)";
-                headerMuteBtn.style.borderColor = isMuted ? "#ef4444" : "rgba(255,255,255,0.2)";
             }
             if (settingMuteBtn) {
                 settingMuteBtn.innerText = text;
                 settingMuteBtn.style.background = isMuted ? "rgba(239, 68, 68, 0.3)" : "rgba(255,255,255,0.1)";
-                settingMuteBtn.style.borderColor = isMuted ? "#ef4444" : "rgba(255,255,255,0.2)";
             }
         }
 
@@ -570,7 +719,7 @@
                 ["漢字","かんじ","中国から伝わった文字。"]
             ],
             "中学生": [
-                ["笑顔","えがぉ","にこにこと笑った顔。"],
+                ["笑顔","えがお","にこにこと笑った顔。"],
                 ["挨拶","あいさつ","人に会った時や別れる時の言葉。"],
                 ["故郷","ふるさと","自分が生まれ育った土地。"],
                 ["感謝","かんしゃ","ありがたいと思う気持ち。"],
@@ -619,7 +768,6 @@
             ]
         };
 
-        // kanji_data.jsonの読み込み処理
         async function fetchKanjiJson() {
             const badge = document.getElementById("json-status-badge");
             try {
@@ -648,19 +796,13 @@
             }
         }
 
-        // jsonデータから30問をランダム抽出
         function generateFromLocalJson(mode) {
-            if (!localKanjiData || !localKanjiData[mode] || localKanjiData[mode].length === 0) {
-                return null;
-            }
-
+            if (!localKanjiData || !localKanjiData[mode] || localKanjiData[mode].length === 0) return null;
             const pool = [...localKanjiData[mode]];
-            // Fisher-Yates シャッフル
             for (let i = pool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [pool[i], pool[j]] = [pool[j], pool[i]];
             }
-
             const selected = pool.slice(0, 30);
             return selected.map((item, index) => {
                 const isBoss = (index + 1) % 5 === 0;
@@ -744,7 +886,6 @@
             initApp();
         }
 
-        /* フリック処理 */
         function setupFlickEvents() {
             const flickKeys = document.querySelectorAll(".flick-key[data-key]");
             flickKeys.forEach(keyEl => {
@@ -794,9 +935,7 @@
                 const mapData = FLICK_MAP[activeFlickKey];
                 if (mapData) {
                     const selectedChar = mapData[currentDirection] || mapData['center'];
-                    if (selectedChar) {
-                        addKey(selectedChar);
-                    }
+                    if (selectedChar) addKey(selectedChar);
                 }
 
                 document.querySelectorAll(".flick-key").forEach(k => k.classList.remove("active"));
@@ -846,11 +985,8 @@
 
             Object.keys(cells).forEach(k => {
                 if (cells[k]) {
-                    if (k === dir) {
-                        cells[k].classList.add("active");
-                    } else {
-                        cells[k].classList.remove("active");
-                    }
+                    if (k === dir) cells[k].classList.add("active");
+                    else cells[k].classList.remove("active");
                 }
             });
         }
@@ -971,17 +1107,14 @@
 
             let loadedQuestions = null;
 
-            // Priority 1: kanji_data.json から取得
             if (localKanjiData) {
                 const lTitle = document.getElementById("loading-title");
                 const lDesc = document.getElementById("loading-desc");
                 if (lTitle) lTitle.innerText = "データロード中...";
                 if (lDesc) lDesc.innerText = `kanji_data.json から「${mode}」問題を選択中`;
-                
                 loadedQuestions = generateFromLocalJson(mode);
             }
 
-            // Priority 2: Hugging Face APIから取得
             if (!loadedQuestions && isApiOnline && apiKey && navigator.onLine) {
                 try {
                     const lTitle = document.getElementById("loading-title");
@@ -1026,7 +1159,6 @@
                 } catch (e) {}
             }
 
-            // Priority 3: 標準フォールバック問題
             if (!loadedQuestions) {
                 loadedQuestions = generateFallbackData(mode);
             }
@@ -1109,6 +1241,7 @@
         function loadQuestion() {
             if (currentIndex >= currentList.length) {
                 stopBGM();
+                createConfetti();
                 document.getElementById("screen-game").classList.add("hidden");
                 document.getElementById("screen-clear").classList.remove("hidden");
                 document.getElementById("clear-stats").innerText = `正解撃破数: ${clearedCount} / 30問`;
@@ -1119,19 +1252,16 @@
             document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
             
             const kanjiDisplay = document.getElementById("kanji-display");
-            kanjiDisplay.classList.remove("destroy-anim");
             kanjiDisplay.innerText = q.kanji;
-            
-            void kanjiDisplay.offsetWidth;
-            kanjiDisplay.style.animation = 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            kanjiDisplay.classList.remove("kanji-spawn");
+            void kanjiDisplay.offsetWidth; // リフロー発生
+            kanjiDisplay.classList.add("kanji-spawn");
 
             const inputField = document.getElementById("user-input");
             inputField.value = "";
 
             if (inputMode === "direct") {
-                setTimeout(() => {
-                    inputField.focus();
-                }, 100);
+                setTimeout(() => { inputField.focus(); }, 100);
             }
 
             const bossBadge = document.getElementById("boss-badge");
@@ -1139,11 +1269,13 @@
             if (q.isBoss) {
                 bossBadge.classList.remove("hidden");
                 enemyEmoji.innerText = "👹";
+                enemyEmoji.className = "boss-pulsate";
                 document.getElementById("ai-message").innerText = `🎙️「⚠️ BOSS出現！第${currentIndex + 1}問！正解して粉砕せよ！」`;
                 playSound('boss');
             } else {
                 bossBadge.classList.add("hidden");
                 enemyEmoji.innerText = "👾";
+                enemyEmoji.className = "enemy-float";
                 document.getElementById("ai-message").innerText = `🎙️「第${currentIndex + 1}問！この漢字の読みを入力してください！」`;
             }
 
@@ -1173,9 +1305,7 @@
                 timeRemaining--;
                 timerText.innerText = timeRemaining;
 
-                if (timeRemaining === 5) {
-                    startBGM();
-                }
+                if (timeRemaining === 5) startBGM();
 
                 if (timeRemaining <= 5) {
                     timerBox.classList.add("timer-warning");
@@ -1191,6 +1321,7 @@
         }
 
         function triggerTimeUp() {
+            flashDamage();
             playSound('wrong');
             lives--;
             updateLives();
@@ -1268,12 +1399,14 @@
                 clearedCount++;
                 playSound('correct');
                 
-                const kanjiDisplay = document.getElementById("kanji-display");
-                kanjiDisplay.classList.add("destroy-anim");
+                // 撃破爆発エフェクトを発生
+                const enemyBox = document.getElementById("enemy-box");
+                const rect = enemyBox.getBoundingClientRect();
+                createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2, q.isBoss ? 100 : 50);
 
                 setTimeout(() => {
                     showExplanationModal(q, 'correct');
-                }, 400);
+                }, 300);
 
             } else {
                 loseLife();
@@ -1284,6 +1417,7 @@
             if (isPaused) return;
 
             clearInterval(timer);
+            flashDamage();
             playSound('wrong');
             lives--;
             updateLives();
@@ -1299,12 +1433,13 @@
         }
 
         function loseLife() {
+            flashDamage();
             playSound('wrong');
             lives--;
             updateLives();
-            const box = document.getElementById("enemy-box");
-            box.classList.add("shake");
-            setTimeout(() => box.classList.remove("shake"), 400);
+            const container = document.querySelector(".container");
+            container.classList.add("shake-hard");
+            setTimeout(() => container.classList.remove("shake-hard"), 400);
 
             if (lives <= 0) {
                 clearInterval(timer);
@@ -1399,7 +1534,6 @@
             setStorage("hf_api_key", apiKey);
 
             isPaused = false;
-            document.getElementById("modal-settings").classList.hidden = true;
             document.getElementById("modal-settings").classList.add("hidden");
             changeInputMode(inputMode);
             checkApiStatusBackground();
