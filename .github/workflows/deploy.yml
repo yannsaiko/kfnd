@@ -1,0 +1,52 @@
+name: 自動ビルドとWeb公開
+
+on:
+  push:
+    branches: ["main"]  # mainブランチに更新があったら自動実行
+  workflow_dispatch:   # 手動でボタンを押して実行することも許可する設定
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. GitHubのリポジトリからコードを取り出す
+      - name: コードの取得
+        uses: actions/checkout@v4
+
+      # 2. Pythonの環境を用意する
+      - name: Pythonのセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 3. Pythonスクリプトを実行してJSONを作る
+      - name: Pythonスクリプトの実行
+        run: |
+          python -m pip install --upgrade pip
+          # もしrequestsなどの外部ライブラリを使っている場合は下の行の「#」を消してください
+          # pip install requests
+          python generate_json.py
+
+      # 4. Webサイト公開用の準備
+      - name: Pagesのセットアップ
+        uses: actions/configure-pages@v5
+
+      # 5. 出来上がったファイル（index.htmlやJSON）をアップロード準備
+      - name: アートファクトのアップロード
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      # 6. Webサイトとしてインターネット上に公開する
+      - name: GitHub Pagesへデプロイ
+        id: deployment
+        uses: actions/deploy-pages@v4
