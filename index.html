@@ -1748,7 +1748,7 @@
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
                 };
             } else if (status === 'gameover') {
-                titleEl.innerText = "💥 不正解！ゲームオーバー";
+                titleEl.innerText = "💥 ライフゼロ（ゲームオーバー）";
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "リザルトへ ➔";
                 nextBtn.onclick = () => {
@@ -1782,9 +1782,9 @@
         }
 
         function goToTitle() {
+            isPaused = false;
             stopBGM();
             clearInterval(timer);
-            isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
             document.getElementById("modal-explanation").classList.add("hidden");
             document.getElementById("screen-game").classList.add("hidden");
