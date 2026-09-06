@@ -1470,6 +1470,8 @@
                     playSound('correct');
                     isApiOnline = true;
                     if (dot) dot.className = "status-dot dot-green";
+                    setStorage("hf_api_key", key);
+                    apiKey = key;
                 } else {
                     if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークン）</span>";
                     playSound('wrong');
@@ -1709,8 +1711,17 @@
         }
 
         function showExplanationModal(q, status) {
+            stopBGM();
+            const modal = document.getElementById("modal-explanation");
             const titleEl = document.getElementById("modal-title");
+            const kanjiEl = document.getElementById("modal-kanji");
+            const readingEl = document.getElementById("modal-reading");
+            const meaningEl = document.getElementById("modal-meaning");
             const nextBtn = document.getElementById("modal-next-btn");
+
+            kanjiEl.innerText = q.kanji;
+            readingEl.innerText = `【読み】${q.reading}`;
+            meaningEl.innerText = q.meaning || "解説情報はありません。";
             
             if (status === 'correct') {
                 titleEl.innerText = q.isBoss ? "💥 BOSS K.O.! 撃破！" : "💥 CLEAR! 撃破！";
@@ -1727,7 +1738,7 @@
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "リザルトへ ➔";
                 nextBtn.onclick = () => {
-                    document.getElementById("modal-explanation").classList.add("hidden");
+                    modal.classList.add("hidden");
                     document.getElementById("screen-game").classList.add("hidden");
                     document.getElementById("screen-gameover").classList.remove("hidden");
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
@@ -1742,55 +1753,58 @@
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "リザルトへ ➔";
                 nextBtn.onclick = () => {
-                    document.getElementById("modal-explanation").classList.add("hidden");
+                    modal.classList.add("hidden");
                     document.getElementById("screen-game").classList.add("hidden");
                     document.getElementById("screen-gameover").classList.remove("hidden");
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
                 };
             } else if (status === 'gameover') {
-                titleEl.innerText = "💥 ライフゼロ（ゲームオーバー）";
+                titleEl.innerText = "💥 ツアーズバギー 大破！";
                 titleEl.style.color = "#ef4444";
                 nextBtn.innerText = "リザルトへ ➔";
                 nextBtn.onclick = () => {
-                    document.getElementById("modal-explanation").classList.add("hidden");
+                    modal.classList.add("hidden");
                     document.getElementById("screen-game").classList.add("hidden");
                     document.getElementById("screen-gameover").classList.remove("hidden");
                     document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
                 };
             }
 
-            document.getElementById("modal-kanji").innerText = q.kanji;
-            document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
-            document.getElementById("modal-meaning").innerText = q.meaning || "解説情報はありません。";
-            document.getElementById("modal-explanation").classList.remove("hidden");
+            modal.classList.remove("hidden");
         }
 
         function nextStage() {
+            playSound('click');
             document.getElementById("modal-explanation").classList.add("hidden");
             currentIndex++;
             loadQuestion();
         }
 
         function openSettings() {
+            playSound('click');
             isPaused = true;
             document.getElementById("modal-settings").classList.remove("hidden");
         }
 
         function closeSettings() {
+            playSound('click');
             isPaused = false;
             document.getElementById("modal-settings").classList.add("hidden");
         }
 
         function goToTitle() {
-            isPaused = false;
+            playSound('click');
             stopBGM();
             clearInterval(timer);
-            document.getElementById("modal-settings").classList.add("hidden");
+            isPaused = false;
+
             document.getElementById("modal-explanation").classList.add("hidden");
+            document.getElementById("modal-settings").classList.add("hidden");
             document.getElementById("screen-game").classList.add("hidden");
             document.getElementById("screen-gameover").classList.add("hidden");
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-loading").classList.add("hidden");
+
             document.getElementById("screen-title").classList.remove("hidden");
         }
     </script>
