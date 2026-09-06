@@ -258,11 +258,19 @@
             <!-- 解答入力用テキストボックス -->
             <input type="text" id="user-input" placeholder="ひらがなで入力" autocomplete="off" autocapitalize="none" inputmode="none" readonly>
 
-            <!-- 直接入力（端末キーボード）モード用発射ボタン -->
+            <!-- アーケード用操作ボタン（パスボタンの上に配置） -->
+            <div id="arcade-action-container" class="hidden" style="width: 100%; margin-bottom: 6px; display: flex; gap: 6px;">
+                <button type="button" class="btn" style="background: #d97706; border-color: #f59e0b; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="toggleDakutenSmall()">小/濁/半</button>
+                <button type="button" class="btn" style="background: #dc2626; border-color: #f87171; margin: 0; padding: 10px; font-size: 13px; flex: 1;" onclick="delKey()">⌫ 消す</button>
+                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin: 0; padding: 10px; font-size: 16px; flex: 1.5;" onclick="submitAnswer()">🚀 発射（決定）</button>
+            </div>
+
+            <!-- パスボタンの上の単独発射（決定）ボタン（フリック・直接入力用） -->
             <div id="direct-submit-container" class="hidden" style="width: 100%; margin-bottom: 6px;">
                 <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin: 0; padding: 12px; font-size: 18px;" onclick="submitAnswer()">🚀 発射（決定）</button>
             </div>
 
+            <!-- パスボタン -->
             <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 6px;">
                 <button type="button" class="btn" style="background: linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color: #f59e0b; width: 100%; margin: 0; padding: 10px; font-size: 14px;" onclick="passQuestion()">⏭️ パス (-1 LIFE)</button>
             </div>
@@ -283,7 +291,6 @@
                     <div class="flick-key" data-key="わ">わ<span class="sub-text sub-left">を</span><span class="sub-text sub-top">ん</span><span class="sub-text sub-right">ー</span><span class="sub-text sub-bottom">っ</span></div>
                     <button type="button" class="flick-key" style="background:#dc2626; font-size:14px;" onclick="delKey()">⌫ 消す</button>
                 </div>
-                <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; margin-top: 6px; padding: 10px; font-size: 16px;" onclick="submitAnswer()">発射（決定）</button>
             </div>
 
             <!-- ② アーケード五十音パネル UI -->
@@ -299,11 +306,6 @@
                 <div class="key-row"><button type="button" class="key-btn" onclick="addKey('ら')">ら</button><button type="button" class="key-btn" onclick="addKey('り')">り</button><button type="button" class="key-btn" onclick="addKey('る')">る</button><button type="button" class="key-btn" onclick="addKey('れ')">れ</button><button type="button" class="key-btn" onclick="addKey('ろ')">ろ</button></div>
                 <div class="key-row">
                     <button type="button" class="key-btn" onclick="addKey('わ')">わ</button><button type="button" class="key-btn" onclick="addKey('を')">を</button><button type="button" class="key-btn" onclick="addKey('ん')">ん</button><button type="button" class="key-btn" onclick="addKey('っ')">っ</button><button type="button" class="key-btn" onclick="addKey('ー')">ー</button>
-                </div>
-                <div class="key-row" style="margin-top: 3px;">
-                    <button type="button" class="key-btn" style="background:#d97706; font-size:12px;" onclick="toggleDakutenSmall()">小/濁/半 変換</button>
-                    <button type="button" class="key-btn" style="background:#dc2626;" onclick="delKey()">1文字消す</button>
-                    <button type="button" class="key-btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #4ade80; flex: 1.5; font-size: 16px;" onclick="submitAnswer()">発射（決定）</button>
                 </div>
             </div>
         </div>
@@ -477,7 +479,7 @@
             stopBGM();
             let notes = [130.81, 146.83, 164.81, 174.61];
             let step = 0;
-            const intervalTime = timeRemaining <= 5 ? 200 : 400; // 残り5秒以下でBGMテンポが倍速に
+            const intervalTime = timeRemaining <= 5 ? 200 : 400;
 
             bgmTimer = setInterval(() => {
                 if (soundVolume <= 0 || isPaused || !audioCtx) return;
@@ -491,7 +493,7 @@
 
                     osc.type = 'sawtooth';
                     let freq = notes[step % notes.length];
-                    if (timeRemaining <= 5) freq *= 1.5; // 残り5秒以下でピッチ上昇
+                    if (timeRemaining <= 5) freq *= 1.5;
 
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime((timeRemaining <= 5 ? 0.05 : 0.03) * soundVolume, now);
@@ -644,7 +646,7 @@
         let clearedCount = 0;
         let lives = 3;
         let timer = null;
-        let timeRemaining = 10; // 制限時間10秒
+        let timeRemaining = 10;
         let isPaused = false;
         let activeMode = "小学生";
         let inputMode = getStorage("input_mode", "flick");
@@ -667,7 +669,6 @@
                 const apiKeyInput = document.getElementById("api-key-input");
                 if (apiKeyInput) apiKeyInput.value = apiKey;
 
-                // Enterキーで正解判定を送信するイベントを追加
                 const userInputEl = document.getElementById("user-input");
                 if (userInputEl) {
                     userInputEl.addEventListener("keydown", function(e) {
@@ -849,6 +850,7 @@
             }
         }
 
+        /* 入力モード切替処理 */
         function changeInputMode(mode) {
             inputMode = mode;
             setStorage("input_mode", mode);
@@ -858,12 +860,14 @@
             const flickKey = document.getElementById("flick-keyboard");
             const customKey = document.getElementById("custom-keyboard");
             const directSubmit = document.getElementById("direct-submit-container");
+            const arcadeActions = document.getElementById("arcade-action-container");
             const inputField = document.getElementById("user-input");
             
             if (inputMode === "flick") {
                 if (flickKey) flickKey.classList.remove("hidden");
                 if (customKey) customKey.classList.add("hidden");
-                if (directSubmit) directSubmit.classList.add("hidden");
+                if (directSubmit) directSubmit.classList.remove("hidden");
+                if (arcadeActions) arcadeActions.classList.add("hidden");
                 if (inputField) {
                     inputField.placeholder = "画面下のフリックキーで入力";
                     inputField.setAttribute("readonly", "true");
@@ -873,6 +877,7 @@
                 if (flickKey) flickKey.classList.add("hidden");
                 if (customKey) customKey.classList.remove("hidden");
                 if (directSubmit) directSubmit.classList.add("hidden");
+                if (arcadeActions) arcadeActions.classList.remove("hidden");
                 if (inputField) {
                     inputField.placeholder = "画面の五十音ボタンで入力";
                     inputField.setAttribute("readonly", "true");
@@ -882,6 +887,7 @@
                 if (flickKey) flickKey.classList.add("hidden");
                 if (customKey) customKey.classList.add("hidden");
                 if (directSubmit) directSubmit.classList.remove("hidden");
+                if (arcadeActions) arcadeActions.classList.add("hidden");
                 if (inputField) {
                     inputField.placeholder = "キーボードで入力（Enterで発射）";
                     inputField.removeAttribute("readonly");
@@ -1087,7 +1093,7 @@
 
         function resetTimer() {
             clearInterval(timer);
-            timeRemaining = 10; // 制限時間 10秒
+            timeRemaining = 10;
             const timerText = document.getElementById("timer-text");
             const timerBox = document.getElementById("timer-box");
             const enemyBox = document.getElementById("enemy-box");
@@ -1096,16 +1102,15 @@
             timerBox.classList.remove("timer-warning");
             if (enemyBox) enemyBox.classList.remove("danger-border");
 
-            startBGM(); // 通常テンポでBGM開始
+            startBGM();
 
             timer = setInterval(() => {
                 if (isPaused) return;
                 timeRemaining--;
                 timerText.innerText = timeRemaining;
 
-                // 5秒前に到達したときの変化（視覚演出・BGMの加速・警告音）
                 if (timeRemaining === 5) {
-                    startBGM(); // 残り5秒でBGMを加速して再スタート
+                    startBGM();
                 }
 
                 if (timeRemaining <= 5) {
@@ -1121,7 +1126,6 @@
             }, 1000);
         }
 
-        /* タイムアップ処理（ライフ減算・分岐を追加） */
         function triggerTimeUp() {
             playSound('wrong');
             lives--;
@@ -1148,7 +1152,6 @@
             input.value = input.value.slice(0, -1);
         }
 
-        // 小文字・濁点・半濁点スマートトグル変換機能
         function toggleDakutenSmall() {
             playSound('click');
             const input = document.getElementById("user-input");
@@ -1253,7 +1256,6 @@
             }
         }
 
-        /* 解説モーダル表示（timeupおよびtimeup_gameoverの処理を更新） */
         function showExplanationModal(q, status) {
             const titleEl = document.getElementById("modal-title");
             const nextBtn = document.getElementById("modal-next-btn");
