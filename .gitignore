@@ -1,0 +1,4 @@
+supabase/.env
+supabase/.temp/
+.DS_Store
+oracleJdk-26.jdk/
