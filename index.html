@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ネプリーグ風 漢字ツアーズ AI - Real Animation Edition</title>
     <style>
+        /* =========================================================
+           CSS: 画面全体の見た目
+           - 色、余白、ボタン、入力パネル、アニメーションを編集
+           ========================================================= */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body {
             height: 100%; margin: 0; padding: 0;
@@ -233,6 +237,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: 共通ヘッダー
+             - 音声ON/OFF、設定・一時停止ボタン
+             ======================================================= -->
         <!-- ヘッダー -->
         <div style="width: 100%; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px;">
             <div style="display: flex; gap: 6px;">
@@ -245,6 +253,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: タイトル画面
+             - レベル選択ボタンを編集
+             ======================================================= -->
         <!-- タイトル画面 -->
         <div id="screen-title" style="width: 100%;">
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
@@ -275,6 +287,10 @@
             <p style="color: #94a3b8; font-size: 14px;" id="loading-desc">出題問題をロードしています</p>
         </div>
 
+        <!-- =======================================================
+             HTML: ゲーム画面
+             - 問題、タイマー、ライフ、解答入力を編集
+             ======================================================= -->
         <!-- ゲーム画面 -->
         <div id="screen-game" class="hidden" style="width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);">
@@ -352,6 +368,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: 正解・不正解の解説モーダル
+             - 結果表示と「次へ」ボタンを編集
+             ======================================================= -->
         <!-- 解説モーダル -->
         <div id="modal-explanation" class="modal hidden">
             <div class="modal-content">
@@ -397,6 +417,15 @@
                     <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 4px; width: 100%; cursor: pointer;">
                 </div>
 
+                <!-- DEBUG機能: URLに ?deb を付けたときだけ表示。不要ならこのブロックを削除。 -->
+                <div id="debug-panel" class="hidden" style="margin-bottom: 15px; border: 1px dashed #facc15; padding: 10px; border-radius: 10px;">
+                    <div style="color: #facc15; font-weight: bold; font-size: 13px; margin-bottom: 6px;">🛠 デバッグメニュー</div>
+                    <div id="debug-state" style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px;">状態を読み込み中...</div>
+                    <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugSolveCurrent()">現在の問題を正解にする</button>
+                    <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugAddLife()">ライフを1回復</button>
+                    <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugClearStage()">このステージをクリア</button>
+                </div>
+
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn" style="background: #22c55e; border-color:#4ade80; box-shadow: 0 4px 0 #166534; flex: 1; padding: 10px;" onclick="closeSettings()">再開する</button>
                     <button type="button" class="btn" style="background: #dc2626; border-color:#f87171; box-shadow: 0 4px 0 #991b1b; flex: 1; padding: 10px;" onclick="goToTitle()">リタイヤ</button>
@@ -404,6 +433,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: ゲームオーバー画面・全クリア画面
+             - クリア後ランキングの表示もここ
+             ======================================================= -->
         <!-- ゲームオーバー -->
         <div id="screen-gameover" class="hidden" style="width: 100%; padding: 20px 0;">
             <h2 style="font-size: 38px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 20px #ef4444;">GAME OVER</h2>
@@ -416,14 +449,41 @@
         <!-- 完全制覇クリア -->
         <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
             <h2 style="font-size: 34px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 25px #facc15;">🏆 全30ステージ完走！ 🏆</h2>
-            <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 20px;">漢字ツアーズ 制覇達成！</p>
+            <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 12px;">漢字ツアーズ 制覇達成！</p>
+            <div style="background: rgba(15,23,42,0.85); border: 2px solid #facc15; border-radius: 14px; padding: 12px; margin-bottom: 16px; text-align: left;">
+                <div id="clear-rank" style="color: #facc15; font-size: 20px; font-weight: 900; text-align: center; margin-bottom: 8px;">あなたの順位: -</div>
+                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                    <input id="ranking-name" type="text" maxlength="12" value="あなた" placeholder="名前" style="margin: 0; padding: 8px; font-size: 16px;" oninput="saveRankingName(this.value)">
+                    <button type="button" class="btn" style="width: auto; margin: 0; padding: 8px 12px; font-size: 13px; white-space: nowrap;" onclick="registerRanking()">登録</button>
+                </div>
+                <div id="ranking-list" style="font-size: 14px; line-height: 1.8;">ランキングを読み込み中...</div>
+            </div>
             <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80; box-shadow: 0 5px 0 #166534;" onclick="restartWithContinue()">もう一度挑戦する</button>
             <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
         </div>
     </div>
 
     <script>
-        // --- 超リアル 3Dエフェクト ＆ 敵アセット Canvas エンジン ---
+        /* =========================================================
+           編集ガイド（このページのJavaScript）
+
+           問題を増やす・答えを変える       → 「内蔵問題データ」
+           30問の作り方を変える             → 「問題データの読み込み」
+           制限時間やライフを変える         → 「問題表示・タイマー」
+           正解時の点数を変える             → submitAnswer() の score
+           画面の入力方法を変える           → 「入力モード」
+           クリア後のランキングを変える     → 「クリア結果・ランキング」
+           背景や敵の見た目を変える         → 「背景・敵・攻撃エフェクト」
+           音やBGMを変える                  → 「音声・BGM・効果音」
+
+           VS Codeで Cmd/Ctrl + F を押して、上の見出しを検索できます。
+
+           デバッグ機能を消す場合：
+           1. 「DEBUG機能」と書かれたHTMLブロックを削除
+           2. 「DEBUG機能」と書かれたJavaScriptブロックを削除
+           ========================================================= */
+
+        // --- 1. 背景・敵キャラクター・攻撃アニメーション ---
         const canvas = document.getElementById('fx-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -743,7 +803,11 @@
         }
 
         // ------------------ ゲーム本体のJSロジック ------------------
+        // --- 2. AI設定・ブラウザ保存・入力状態 ---
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
+        // Supabaseの共有ランキング設定（anonキーはRLSで保護された公開用キー）。
+        const SUPABASE_REST_URL = "https://rtqgeaftfkjlgadniwxg.supabase.co/rest/v1";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0cWdlYWZ0ZmtqbGdhZG5pd3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3Mjc2ODAsImV4cCI6MjEwNDMwMzY4MH0._s3_de16x_fvx3rvb2TWl7PXBXtROS9e-A_mpKTo84o";
         let audioCtx = null;
         let soundVolume = 0.5;
         let previousVolume = 50;
@@ -924,6 +988,7 @@
             } catch(e) {}
         }
 
+        // --- 3. 内蔵問題データ（問題文・読み方・意味） ---
         const KANJI_DATABASE = {
             "小学生": [
                 ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],
@@ -985,6 +1050,7 @@
             ]
         };
 
+        // --- 4. 問題データの読み込みと30問の準備 ---
         async function fetchKanjiJson() {
             const badge = document.getElementById("json-status-badge");
             try {
@@ -1039,6 +1105,7 @@
             }
         }
 
+        // JSONの問題から、選択したレベル用の30問をランダムに選ぶ。
         function generateFromLocalJson(mode) {
             if (!localKanjiData || !localKanjiData[mode] || localKanjiData[mode].length === 0) return null;
             
@@ -1071,6 +1138,7 @@
             });
         }
 
+        // JSONが読めないときに、内蔵データから30問を作る。
         function generateFallbackData(mode) {
             const rawPool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
             let pool = rawPool.filter(item => !usedKanjiSet.has(item[0]));
@@ -1103,10 +1171,15 @@
             return result;
         }
 
+        // --- 5. ゲームの状態（現在の問題・残りライフ・スコア） ---
         let currentList = [];
         let kanjiDataPromise = null;
         let currentIndex = 0;
         let clearedCount = 0;
+        let score = 0;
+        let totalTimeSeconds = 0;
+        let questionStartedAt = 0;
+        let currentRankingId = null;
         let lives = 3;
         let timer = null;
         let timeRemaining = 10;
@@ -1114,7 +1187,10 @@
         let activeMode = "小学1年";
         let inputMode = getStorage("input_mode", "flick");
         let apiKey = getStorage("hf_api_key", "");
+        // DEBUG機能: 通常は無効。http://localhost:8000/index.html?deb で有効化。
+        const DEBUG_MODE = new URLSearchParams(window.location.search).has("deb");
 
+        // --- 6. 起動時の準備・フリック入力・入力モード切り替え ---
         function initApp() {
             try {
                 const savedVol = getStorage("sound_volume", "50");
@@ -1143,6 +1219,15 @@
                 }
 
                 changeInputMode(inputMode);
+                const rankingNameInput = document.getElementById("ranking-name");
+                if (rankingNameInput) {
+                    rankingNameInput.value = getStorage("ranking_name", "あなた");
+                }
+                if (DEBUG_MODE) {
+                    const debugPanel = document.getElementById("debug-panel");
+                    if (debugPanel) debugPanel.classList.remove("hidden");
+                    updateDebugState();
+                }
                 setupFlickEvents();
                 kanjiDataPromise = fetchKanjiJson();
                 checkApiStatusBackground();
@@ -1265,6 +1350,7 @@
             if (popover) popover.style.display = "none";
         }
 
+        // --- 7. AIへの接続確認と入力方法の変更 ---
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
             try {
@@ -1358,6 +1444,8 @@
             startGame(activeMode);
         }
 
+        // --- 8. ステージ開始と問題画面の表示 ---
+        // タイトル画面からゲームを開始し、問題データを準備する。
         async function startGame(mode) {
             try {
                 initAudio();
@@ -1368,6 +1456,10 @@
             isPaused = false;
             currentIndex = 0;
             clearedCount = 0;
+            score = 0;
+            totalTimeSeconds = 0;
+            questionStartedAt = 0;
+            currentRankingId = null;
             lives = 3;
 
             const titleEl = document.getElementById("screen-title");
@@ -1519,16 +1611,23 @@
             }
         }
 
+        // --- 9. 問題の表示・制限時間・ライフの処理 ---
+        // 現在の問題を画面に表示する。30問終了ならクリア画面へ進む。
         function loadQuestion() {
             if (currentIndex >= currentList.length) {
                 stopBGM();
                 createConfetti();
                 document.getElementById("screen-game").classList.add("hidden");
                 document.getElementById("screen-clear").classList.remove("hidden");
-                document.getElementById("clear-stats").innerText = `正解撃破数: ${clearedCount} / 30問`;
+                document.getElementById("clear-stats").innerText = `正解撃破数: ${clearedCount} / 30問　総合時間: ${formatTotalTime(totalTimeSeconds)}`;
+                score += lives * 100;
+                saveRanking(getStorage("ranking_name", "あなた"));
+                renderRanking();
+                updateDebugState();
                 return;
             }
             const q = currentList[currentIndex];
+            questionStartedAt = Date.now();
             document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
             document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
             const passButton = document.getElementById("pass-btn");
@@ -1568,12 +1667,14 @@
 
             updateLives();
             resetTimer();
+            updateDebugState();
         }
 
         function updateLives() {
             document.getElementById("lives-container").innerText = "🚀".repeat(Math.max(0, lives)) + "💥".repeat(Math.max(0, 3 - lives));
         }
 
+        // 問題ごとの10秒タイマーを開始する。
         function resetTimer() {
             clearInterval(timer);
             timeRemaining = 10;
@@ -1607,7 +1708,16 @@
             }, 1000);
         }
 
+        // 現在の問題にかかった時間を合計時間へ加える（最大10秒）。
+        function recordQuestionTime() {
+            if (!questionStartedAt) return;
+            const elapsedSeconds = Math.min(10, Math.max(0, (Date.now() - questionStartedAt) / 1000));
+            totalTimeSeconds += elapsedSeconds;
+            questionStartedAt = 0;
+        }
+
         function triggerTimeUp() {
+            recordQuestionTime();
             flashDamage();
             playSound('wrong');
             lives--;
@@ -1667,6 +1777,8 @@
             return text.trim();
         }
 
+        // --- 10. 答え合わせ・正解/不正解・次の問題 ---
+        // 入力された読み方が正しいか判定し、スコアやライフを更新する。
         function submitAnswer() {
             if (isPaused || !timer) return;
 
@@ -1684,9 +1796,11 @@
             const normalizedAnswer = normalizeText(q.reading);
             
             if (normalizedInput === normalizedAnswer) {
+                recordQuestionTime();
                 clearInterval(timer);
                 timer = null;
                 clearedCount++;
+                score += 100 + (timeRemaining * 10) + (q.isBoss ? 100 : 0);
                 
                 // 攻撃アニメーション＆爆発演出
                 const enemyAnchor = document.getElementById("enemy-anchor");
@@ -1721,6 +1835,7 @@
 
             clearInterval(timer);
             timer = null;
+            recordQuestionTime();
             flashDamage();
             playSound('wrong');
             lives--;
@@ -1754,6 +1869,8 @@
             }
         }
 
+        // --- 10-1. 正解・不正解の結果画面 ---
+        // 正解・不正解・時間切れの結果と、漢字の解説を表示する。
         function showExplanationModal(q, status) {
             const titleEl = document.getElementById("modal-title");
             const nextBtn = document.getElementById("modal-next-btn");
@@ -1824,6 +1941,197 @@
             loadQuestion();
         }
 
+        // --- 11. 全クリア時のスコア計算・ランキング ---
+        function getRankingKey() {
+            return `kanji_tours_ranking_${activeMode}`;
+        }
+
+        function readRanking() {
+            try {
+                const saved = JSON.parse(getStorage(getRankingKey(), "[]"));
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        // 今回のクリア結果を、このブラウザのランキングへ保存する。
+        function saveRanking(defaultName) {
+            const rankings = readRanking();
+            const entry = {
+                id: currentRankingId || `${Date.now()}-${Math.random()}`,
+                name: defaultName,
+                score,
+                clearedCount,
+                lives,
+                totalTimeSeconds: Math.round(totalTimeSeconds * 10) / 10,
+                createdAt: Date.now()
+            };
+            currentRankingId = entry.id;
+            const existingIndex = rankings.findIndex(item => item.id === entry.id);
+            if (existingIndex >= 0) {
+                rankings[existingIndex] = entry;
+            } else {
+                rankings.push(entry);
+            }
+            rankings.sort((a, b) =>
+                b.score - a.score ||
+                b.clearedCount - a.clearedCount ||
+                (Number(a.totalTimeSeconds) || Number.MAX_SAFE_INTEGER) -
+                (Number(b.totalTimeSeconds) || Number.MAX_SAFE_INTEGER) ||
+                b.createdAt - a.createdAt
+            );
+            setStorage(getRankingKey(), JSON.stringify(rankings.slice(0, 20)));
+            submitOnlineRanking(entry);
+        }
+
+        async function submitOnlineRanking(entry) {
+            try {
+                const response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
+                    method: "POST",
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify({
+                        mode: activeMode,
+                        player_name: entry.name,
+                        score: entry.score,
+                        total_time_seconds: entry.totalTimeSeconds,
+                        cleared_count: entry.clearedCount
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`Supabase登録失敗: ${response.status}`);
+                }
+                renderRanking();
+            } catch (error) {
+                console.warn("オンラインランキングを登録できませんでした。ローカルランキングを表示します。", error);
+            }
+        }
+
+        // 一度登録した名前を保存し、次回からは登録ボタンなしで使う。
+        function saveRankingName(value) {
+            const name = String(value || "").trim().slice(0, 12);
+            if (name) setStorage("ranking_name", name);
+        }
+
+        function registerRanking() {
+            const nameInput = document.getElementById("ranking-name");
+            const name = nameInput ? nameInput.value.trim().slice(0, 12) : "";
+            const savedName = name || getStorage("ranking_name", "あなた");
+            setStorage("ranking_name", savedName);
+            saveRanking(savedName);
+            renderRanking();
+        }
+
+        // 保存済みランキングを順位順に画面へ表示する。
+        async function renderRanking() {
+            const localRankings = readRanking();
+            let rankings = localRankings;
+            let isOnline = false;
+            try {
+                const params = new URLSearchParams({
+                    select: "id,player_name,score,total_time_seconds,cleared_count,created_at",
+                    mode: `eq.${activeMode}`,
+                    order: "score.desc,total_time_seconds.asc,created_at.asc",
+                    limit: "20"
+                });
+                const response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                if (!response.ok) throw new Error(`Supabase取得失敗: ${response.status}`);
+                rankings = (await response.json()).map(item => ({
+                    id: item.id,
+                    name: item.player_name,
+                    score: Number(item.score),
+                    totalTimeSeconds: Number(item.total_time_seconds),
+                    clearedCount: Number(item.cleared_count),
+                    createdAt: Date.parse(item.created_at) || 0
+                }));
+                isOnline = true;
+            } catch (error) {
+                console.warn("オンラインランキングを取得できませんでした。ローカルランキングを表示します。", error);
+            }
+
+            const currentIndexInRanking = rankings.findIndex(item =>
+                item.score === score &&
+                item.name === getStorage("ranking_name", "あなた") &&
+                Math.round(Number(item.totalTimeSeconds) * 10) === Math.round(totalTimeSeconds * 10)
+            );
+            const rankEl = document.getElementById("clear-rank");
+            const listEl = document.getElementById("ranking-list");
+            if (rankEl) {
+                rankEl.innerText = currentIndexInRanking >= 0
+                    ? `あなたの順位: ${currentIndexInRanking + 1}位　スコア: ${score.toLocaleString()}　時間: ${formatTotalTime(totalTimeSeconds)}${isOnline ? "　🌐オンライン" : "　📱ローカル"}`
+                    : `スコア: ${score.toLocaleString()}　時間: ${formatTotalTime(totalTimeSeconds)}${isOnline ? "　🌐オンライン" : "　📱ローカル"}`;
+            }
+            if (listEl) {
+                listEl.innerHTML = rankings.slice(0, 5).map((item, index) => {
+                    const marker = item.score === score &&
+                        item.name === getStorage("ranking_name", "あなた") &&
+                        Math.round(Number(item.totalTimeSeconds) * 10) === Math.round(totalTimeSeconds * 10) ? "▶" : "";
+                    const time = formatTotalTime(item.totalTimeSeconds);
+                    return `<div>${marker} ${index + 1}位　${escapeHtml(item.name || "あなた")}　${Number(item.score || 0).toLocaleString()}点　${time}</div>`;
+                }).join("") || "まだランキングがありません。";
+            }
+        }
+
+        function formatTotalTime(seconds) {
+            if (!Number.isFinite(Number(seconds))) return "--:--";
+            const totalSeconds = Math.max(0, Math.round(Number(seconds)));
+            const minutes = Math.floor(totalSeconds / 60);
+            const remainingSeconds = String(totalSeconds % 60).padStart(2, "0");
+            return `${minutes}:${remainingSeconds}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
+        // DEBUG機能: テスト用ボタン。通常プレイではURLにdebがないため使えない。
+        function updateDebugState() {
+            if (!DEBUG_MODE) return;
+            const stateEl = document.getElementById("debug-state");
+            if (stateEl) {
+                stateEl.innerText = `ステージ: ${currentIndex + 1}/${currentList.length || 0}　ライフ: ${lives}　スコア: ${score}`;
+            }
+        }
+
+        function debugSolveCurrent() {
+            if (!DEBUG_MODE || !currentList[currentIndex]) return;
+            isPaused = false;
+            const inputField = document.getElementById("user-input");
+            inputField.value = currentList[currentIndex].reading;
+            submitAnswer();
+            updateDebugState();
+        }
+
+        function debugAddLife() {
+            if (!DEBUG_MODE) return;
+            lives = Math.min(3, lives + 1);
+            updateLives();
+            updateDebugState();
+        }
+
+        function debugClearStage() {
+            if (!DEBUG_MODE || !currentList.length) return;
+            clearInterval(timer);
+            timer = null;
+            isPaused = false;
+            document.getElementById("modal-explanation").classList.add("hidden");
+            currentIndex = currentList.length;
+            loadQuestion();
+        }
+
+        // --- 12. 設定・一時停止・タイトル画面へ戻る ---
         function openSettings() {
             isPaused = true;
             document.getElementById("modal-settings").classList.remove("hidden");
@@ -1844,6 +2152,10 @@
             currentList = [];
             currentIndex = 0;
             clearedCount = 0;
+            score = 0;
+            totalTimeSeconds = 0;
+            questionStartedAt = 0;
+            currentRankingId = null;
             lives = 3;
             timeRemaining = 10;
             const inputField = document.getElementById("user-input");
