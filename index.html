@@ -2285,21 +2285,24 @@
         // DEBUG機能: ローカルとSupabaseの現在コースの記録を削除する。
         async function debugDeleteRanking() {
             if (!DEBUG_MODE) return;
+            const password = document.getElementById("admin-password")?.value || "";
+            if (!password) {
+                const listEl = document.getElementById("debug-ranking-list");
+                if (listEl) listEl.innerText = "オンライン削除には管理者パスワードが必要です。";
+                return;
+            }
             if (!window.confirm(`「${activeMode}」のランキングをローカルとオンラインから全削除します。実行しますか？`)) return;
             setStorage(getRankingKey(), "[]");
             let message = "ローカルランキングを削除しました。";
             try {
-                const response = await fetch(`${SUPABASE_REST_URL}/rankings?mode=eq.${encodeURIComponent(activeMode)}`, {
+                const response = await fetch(`${ACCESS_TRACKER_URL}?mode=${encodeURIComponent(activeMode)}`, {
                     method: "DELETE",
-                    headers: {
-                        "apikey": SUPABASE_ANON_KEY,
-                        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-                    }
+                    headers: { "x-admin-password": password }
                 });
                 if (!response.ok) {
                     throw new Error(response.status === 401 || response.status === 403
-                        ? "SupabaseのDELETE権限またはRLSポリシーがありません。"
-                        : `Supabase削除失敗: ${response.status}`);
+                        ? "管理者パスワードが違います。"
+                        : `オンライン削除失敗: ${response.status}`);
                 }
                 message += " オンラインランキングも削除しました。";
             } catch (error) {

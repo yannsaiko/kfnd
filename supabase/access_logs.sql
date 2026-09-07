@@ -22,6 +22,9 @@ revoke all on public.access_logs from public;
 grant usage on schema public to service_role;
 grant select, insert, update, delete on table public.access_logs to service_role;
 
+grant usage on schema public to service_role;
+grant select, insert, update, delete on table public.rankings to service_role;
+
 alter table public.access_logs
     add column if not exists current_page text not null default 'title';
 

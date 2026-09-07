@@ -70,8 +70,15 @@ Deno.serve(async (request) => {
     return json(await response.json());
   }
   if (request.method === "DELETE") {
-    const response = await database("access_logs?expires_at=lt.now()", { method: "DELETE" });
-    if (!response.ok) return json({ error: "Cleanup failed" }, 502);
+    const mode = new URL(request.url).searchParams.get("mode");
+    const path = mode
+      ? `rankings?mode=eq.${encodeURIComponent(mode)}`
+      : "access_logs?expires_at=lt.now()";
+    const response = await database(path, { method: "DELETE" });
+    if (!response.ok) {
+      console.error("Delete failed:", response.status, await response.text());
+      return json({ error: "Delete failed" }, 502);
+    }
     return json({ ok: true });
   }
   return json({ error: "Method not allowed" }, 405);
