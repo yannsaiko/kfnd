@@ -424,6 +424,12 @@
                     <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugSolveCurrent()">現在の問題を正解にする</button>
                     <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugAddLife()">ライフを1回復</button>
                     <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugClearStage()">このステージをクリア</button>
+                    <div style="border-top: 1px solid rgba(250,204,21,0.35); margin-top: 8px; padding-top: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">📊 ランキング管理</div>
+                        <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugLoadRanking()">ランキングと端末情報を表示</button>
+                        <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0; background: #991b1b; border-color: #f87171;" onclick="debugDeleteRanking()">このコースのランキングを全削除</button>
+                        <div id="debug-ranking-list" style="font-size: 11px; line-height: 1.5; max-height: 220px; overflow: auto; margin-top: 6px;">「ランキングと端末情報を表示」を押してください。</div>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -1946,6 +1952,20 @@
             return `kanji_tours_ranking_${activeMode}`;
         }
 
+        // ランキングに記録する端末情報。IPアドレスや個人情報は取得しない。
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent || "";
+            const browser = userAgent.match(/Edg\/[\d.]+|Chrome\/[\d.]+|Firefox\/[\d.]+|Version\/[\d.]+.*Safari/)?.[0] || "Unknown";
+            return {
+                browser,
+                platform: navigator.platform || "Unknown",
+                language: navigator.language || "Unknown",
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown",
+                screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+                recordedAt: new Date().toISOString()
+            };
+        }
+
         function readRanking() {
             try {
                 const saved = JSON.parse(getStorage(getRankingKey(), "[]"));
@@ -1965,7 +1985,8 @@
                 clearedCount,
                 lives,
                 totalTimeSeconds: Math.round(totalTimeSeconds * 10) / 10,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                deviceInfo: getDeviceInfo()
             };
             currentRankingId = entry.id;
             const existingIndex = rankings.findIndex(item => item.id === entry.id);
@@ -1987,7 +2008,15 @@
 
         async function submitOnlineRanking(entry) {
             try {
-                const response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
+                const payload = {
+                    mode: activeMode,
+                    player_name: entry.name,
+                    score: entry.score,
+                    total_time_seconds: entry.totalTimeSeconds,
+                    cleared_count: entry.clearedCount,
+                    device_info: entry.deviceInfo
+                };
+                let response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
                     method: "POST",
                     headers: {
                         "apikey": SUPABASE_ANON_KEY,
@@ -1995,14 +2024,22 @@
                         "Content-Type": "application/json",
                         "Prefer": "return=minimal"
                     },
-                    body: JSON.stringify({
-                        mode: activeMode,
-                        player_name: entry.name,
-                        score: entry.score,
-                        total_time_seconds: entry.totalTimeSeconds,
-                        cleared_count: entry.clearedCount
-                    })
+                    body: JSON.stringify(payload)
                 });
+                // device_info列をまだ追加していない環境でも、既存の登録は継続する。
+                if (!response.ok && response.status === 400) {
+                    delete payload.device_info;
+                    response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
+                        method: "POST",
+                        headers: {
+                            "apikey": SUPABASE_ANON_KEY,
+                            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                            "Content-Type": "application/json",
+                            "Prefer": "return=minimal"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                }
                 if (!response.ok) {
                     throw new Error(`Supabase登録失敗: ${response.status}`);
                 }
@@ -2034,17 +2071,26 @@
             let isOnline = false;
             try {
                 const params = new URLSearchParams({
-                    select: "id,player_name,score,total_time_seconds,cleared_count,created_at",
+                    select: "id,player_name,score,total_time_seconds,cleared_count,created_at,device_info",
                     mode: `eq.${activeMode}`,
                     order: "score.desc,total_time_seconds.asc,created_at.asc",
                     limit: "20"
                 });
-                const response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                let response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
                     headers: {
                         "apikey": SUPABASE_ANON_KEY,
                         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
+                if (!response.ok && response.status === 400) {
+                    params.set("select", "id,player_name,score,total_time_seconds,cleared_count,created_at");
+                    response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                        headers: {
+                            "apikey": SUPABASE_ANON_KEY,
+                            "Authorization": "Bearer " + apiKey,
+                        }
+                    });
+                }
                 if (!response.ok) throw new Error(`Supabase取得失敗: ${response.status}`);
                 rankings = (await response.json()).map(item => ({
                     id: item.id,
@@ -2052,7 +2098,8 @@
                     score: Number(item.score),
                     totalTimeSeconds: Number(item.total_time_seconds),
                     clearedCount: Number(item.cleared_count),
-                    createdAt: Date.parse(item.created_at) || 0
+                    createdAt: Date.parse(item.created_at) || 0,
+                    deviceInfo: item.device_info || null
                 }));
                 isOnline = true;
             } catch (error) {
@@ -2097,6 +2144,90 @@
         }
 
         // DEBUG機能: テスト用ボタン。通常プレイではURLにdebがないため使えない。
+        function formatDeviceInfo(deviceInfo) {
+            if (!deviceInfo) return "端末情報なし（古い記録、またはdevice_info列未設定）";
+            return [
+                `ブラウザ: ${deviceInfo.browser || "不明"}`,
+                `OS: ${deviceInfo.platform || "不明"}`,
+                `言語: ${deviceInfo.language || "不明"}`,
+                `地域設定: ${deviceInfo.timezone || "不明"}`,
+                `画面: ${deviceInfo.screen || "不明"}`
+            ].map(escapeHtml).join(" / ");
+        }
+
+        // DEBUG機能: 設定画面からオンラインランキングと端末情報を確認する。
+        async function debugLoadRanking() {
+            if (!DEBUG_MODE) return;
+            const listEl = document.getElementById("debug-ranking-list");
+            if (!listEl) return;
+            listEl.innerText = "ランキングを読み込み中...";
+            try {
+                const params = new URLSearchParams({
+                    select: "id,player_name,score,total_time_seconds,cleared_count,created_at,device_info",
+                    mode: `eq.${activeMode}`,
+                    order: "score.desc,total_time_seconds.asc,created_at.asc",
+                    limit: "50"
+                });
+                let response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": "Bearer " + apiKey,
+                    }
+                });
+                if (!response.ok && response.status === 400) {
+                    params.set("select", "id,player_name,score,total_time_seconds,cleared_count,created_at");
+                    response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                        headers: {
+                            "apikey": SUPABASE_ANON_KEY,
+                            "Authorization": "Bearer " + apiKey,
+                        }
+                    });
+                }
+                if (!response.ok) throw new Error(`取得失敗: ${response.status}`);
+                const rankings = await response.json();
+                listEl.innerHTML = rankings.map((item, index) => {
+                    const date = item.created_at ? new Date(item.created_at).toLocaleString("ja-JP") : "日時不明";
+                    return `<div style="border-bottom:1px solid #475569; padding:4px 0;">
+                        <b>${index + 1}位 ${escapeHtml(item.player_name || "名前なし")}</b>
+                        / ${Number(item.score || 0).toLocaleString()}点
+                        / ${formatTotalTime(item.total_time_seconds)}
+                        / ${escapeHtml(date)}<br>
+                        <span style="color:#cbd5e1;">${formatDeviceInfo(item.device_info)}</span>
+                    </div>`;
+                }).join("") || "このコースのランキングはありません。";
+            } catch (error) {
+                listEl.innerText = `ランキングを取得できませんでした: ${error.message}`;
+            }
+        }
+
+        // DEBUG機能: ローカルとSupabaseの現在コースの記録を削除する。
+        async function debugDeleteRanking() {
+            if (!DEBUG_MODE) return;
+            if (!window.confirm(`「${activeMode}」のランキングをローカルとオンラインから全削除します。実行しますか？`)) return;
+            setStorage(getRankingKey(), "[]");
+            let message = "ローカルランキングを削除しました。";
+            try {
+                const response = await fetch(`${SUPABASE_REST_URL}/rankings?mode=eq.${encodeURIComponent(activeMode)}`, {
+                    method: "DELETE",
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(response.status === 401 || response.status === 403
+                        ? "SupabaseのDELETE権限またはRLSポリシーがありません。"
+                        : `Supabase削除失敗: ${response.status}`);
+                }
+                message += " オンラインランキングも削除しました。";
+            } catch (error) {
+                message += ` オンラインは削除できませんでした: ${error.message}`;
+            }
+            const listEl = document.getElementById("debug-ranking-list");
+            if (listEl) listEl.innerText = message;
+            renderRanking();
+        }
+
         function updateDebugState() {
             if (!DEBUG_MODE) return;
             const stateEl = document.getElementById("debug-state");
