@@ -2023,7 +2023,7 @@
 
         function requestAccessLogConsent() {
             if (getStorage("access_log_consent", "") === "yes") return true;
-            const accepted = window.confirm("アクセス状況の確認機能を使うため、IPアドレス・端末情報を最大90日保存します。利用目的は不正対策と管理者によるアクセス状況確認です。同意しますか？");
+            const accepted = window.confirm("BGMなどが流れるので注意してください。");
             if (accepted) setStorage("access_log_consent", "yes");
             return accepted;
         }
