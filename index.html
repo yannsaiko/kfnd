@@ -2190,13 +2190,9 @@
         // DEBUG機能: テスト用ボタン。通常プレイではURLにdebがないため使えない。
         function formatDeviceInfo(deviceInfo) {
             if (!deviceInfo) return "端末情報なし（古い記録、またはdevice_info列未設定）";
-            return [
-                `ブラウザ: ${deviceInfo.browser || "不明"}`,
-                `OS: ${deviceInfo.platform || "不明"}`,
-                `言語: ${deviceInfo.language || "不明"}`,
-                `地域設定: ${deviceInfo.timezone || "不明"}`,
-                `画面: ${deviceInfo.screen || "不明"}`
-            ].map(escapeHtml).join(" / ");
+            return Object.entries(deviceInfo)
+                .map(([key, value]) => `${escapeHtml(key)}: ${escapeHtml(typeof value === "object" ? JSON.stringify(value) : value)}`)
+                .join(" / ");
         }
 
         // DEBUG機能: 設定画面からオンラインランキングと端末情報を確認する。
@@ -2207,7 +2203,7 @@
             listEl.innerText = "ランキングを読み込み中...";
             try {
                 const params = new URLSearchParams({
-                    select: "id,player_name,score,total_time_seconds,cleared_count,created_at,device_info",
+                    select: "id,mode,player_name,score,total_time_seconds,cleared_count,created_at,device_info",
                     mode: `eq.${activeMode}`,
                     order: "score.desc,total_time_seconds.asc,created_at.asc",
                     limit: "50"
@@ -2219,7 +2215,7 @@
                     }
                 });
                 if (!response.ok && response.status === 400) {
-                    params.set("select", "id,player_name,score,total_time_seconds,cleared_count,created_at");
+                    params.set("select", "id,mode,player_name,score,total_time_seconds,cleared_count,created_at");
                     response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
                         headers: {
                             "apikey": SUPABASE_ANON_KEY,
@@ -2231,12 +2227,15 @@
                 const rankings = await response.json();
                 listEl.innerHTML = rankings.map((item, index) => {
                     const date = item.created_at ? new Date(item.created_at).toLocaleString("ja-JP") : "日時不明";
-                    return `<div style="border-bottom:1px solid #475569; padding:4px 0;">
-                        <b>${index + 1}位 ${escapeHtml(item.player_name || "名前なし")}</b>
-                        / ${Number(item.score || 0).toLocaleString()}点
-                        / ${formatTotalTime(item.total_time_seconds)}
-                        / ${escapeHtml(date)}<br>
-                        <span style="color:#cbd5e1;">${formatDeviceInfo(item.device_info)}</span>
+                    return `<div style="border-bottom:1px solid #475569; padding:6px 0;">
+                        <b>${index + 1}位 ${escapeHtml(item.player_name || "名前なし")}</b><br>
+                        ID: ${escapeHtml(item.id || "不明")}<br>
+                        コース: ${escapeHtml(item.mode || activeMode)}<br>
+                        スコア: ${Number(item.score || 0).toLocaleString()}点<br>
+                        総合時間: ${formatTotalTime(item.total_time_seconds)}<br>
+                        クリア数: ${Number(item.cleared_count || 0)}問<br>
+                        登録日時: ${escapeHtml(date)}<br>
+                        <span style="color:#cbd5e1;">端末情報: ${formatDeviceInfo(item.device_info)}</span>
                     </div>`;
                 }).join("") || "このコースのランキングはありません。";
             } catch (error) {
