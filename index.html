@@ -214,6 +214,54 @@
 
         .rocket-life { display: inline-block; animation: rocketHover 1.5s ease-in-out infinite alternate; }
         @keyframes rocketHover { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+
+        /* 15問クリア後の結果・ランキング */
+        .clear-results-panel {
+            background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,41,59,0.92));
+            border: 1px solid rgba(250,204,21,0.65); border-radius: 18px; padding: 16px 14px;
+            margin-bottom: 16px; text-align: left; box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        }
+        .clear-score-card {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 16px;
+        }
+        .clear-score-item {
+            background: rgba(2,6,23,0.62); border: 1px solid rgba(56,189,248,0.35);
+            border-radius: 10px; padding: 9px 8px; text-align: center;
+        }
+        .clear-score-label { display: block; color: #94a3b8; font-size: 11px; margin-bottom: 3px; }
+        .clear-score-value { display: block; color: #f8fafc; font-size: 19px; font-weight: 900; }
+        .clear-rank-highlight {
+            color: #111827; background: linear-gradient(135deg, #fde68a, #facc15);
+            border-radius: 12px; padding: 12px 10px; text-align: center; font-size: 21px;
+            font-weight: 900; box-shadow: 0 4px 0 #a16207;
+        }
+        .ranking-entry { margin-top: 14px; }
+        .ranking-entry-title { color: #facc15; font-size: 13px; font-weight: 900; margin-bottom: 6px; }
+        .ranking-name-row { display: flex; gap: 6px; align-items: stretch; }
+        .ranking-name-row input { min-width: 0; }
+        .ranking-name-row .btn { flex: 0 0 auto; }
+        .ranking-table { display: grid; gap: 5px; margin-top: 14px; }
+        .ranking-table-header, .ranking-row {
+            display: grid; grid-template-columns: 42px minmax(0, 1fr) 80px 52px;
+            align-items: center; gap: 6px;
+        }
+        .ranking-table-header { color: #94a3b8; font-size: 11px; padding: 0 9px 2px; }
+        .ranking-row {
+            min-height: 42px; padding: 7px 9px; background: rgba(2,6,23,0.58);
+            border: 1px solid rgba(148,163,184,0.15); border-radius: 9px; font-size: 13px;
+        }
+        .ranking-row.is-current { border-color: #facc15; background: rgba(250,204,21,0.16); }
+        .ranking-position { color: #facc15; font-size: 16px; font-weight: 900; text-align: center; }
+        .ranking-player { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+        .ranking-points { color: #f8fafc; font-weight: 900; text-align: right; }
+        .ranking-time { color: #cbd5e1; font-size: 12px; text-align: right; }
+        .ranking-empty { color: #94a3b8; text-align: center; padding: 14px 4px; }
+        .ranking-source { color: #64748b; font-size: 11px; text-align: right; margin-top: 7px; }
+
+        @media (max-width: 360px) {
+            .ranking-table-header, .ranking-row { grid-template-columns: 34px minmax(0, 1fr) 70px 48px; gap: 4px; }
+            .ranking-row { padding-left: 6px; padding-right: 6px; }
+        }
     </style>
 </head>
 <body>
@@ -469,15 +517,23 @@
 
         <!-- HTML: 全15問クリア後の結果・ランキング画面 -->
         <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
-            <h2 style="font-size: 34px; color: #facc15; margin-bottom: 10px; font-weight: 900; text-shadow: 0 0 25px #facc15;">🏆 全15ステージ完走！ 🏆</h2>
-            <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 12px;">漢字ツアーズ 制覇達成！</p>
-            <div style="background: rgba(15,23,42,0.85); border: 2px solid #facc15; border-radius: 14px; padding: 12px; margin-bottom: 16px; text-align: left;">
-                <div id="clear-rank" style="color: #facc15; font-size: 20px; font-weight: 900; text-align: center; margin-bottom: 8px;">あなたの順位: -</div>
-                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <h2 style="font-size: 34px; color: #facc15; margin-bottom: 8px; font-weight: 900; text-shadow: 0 0 25px #facc15;">🏆 15問クリア！</h2>
+            <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 14px;">漢字ツアーズ 制覇達成！</p>
+            <div class="clear-results-panel">
+                <div id="clear-rank" class="clear-rank-highlight">あなたの順位: -</div>
+                <div class="clear-score-card">
+                    <div class="clear-score-item"><span class="clear-score-label">スコア</span><span id="clear-score-value" class="clear-score-value">-</span></div>
+                    <div class="clear-score-item"><span class="clear-score-label">クリアタイム</span><span id="clear-time-value" class="clear-score-value">-</span></div>
+                </div>
+                <div class="ranking-entry">
+                    <div class="ranking-entry-title">ランキングに表示する名前</div>
+                    <div class="ranking-name-row">
                     <input id="ranking-name" type="text" maxlength="12" value="あなた" placeholder="名前" style="margin: 0; padding: 8px; font-size: 16px;" oninput="saveRankingName(this.value)">
                     <button type="button" class="btn" style="width: auto; margin: 0; padding: 8px 12px; font-size: 13px; white-space: nowrap;" onclick="registerRanking()">登録</button>
+                    </div>
                 </div>
-                <div id="ranking-list" style="font-size: 14px; line-height: 1.8;">ランキングを読み込み中...</div>
+                <div class="ranking-entry-title" style="margin-top: 18px;">上位ランキング</div>
+                <div id="ranking-list" class="ranking-table" aria-live="polite">ランキングを読み込み中...</div>
             </div>
             <button type="button" class="btn" style="background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color:#4ade80; box-shadow: 0 5px 0 #166534;" onclick="restartWithContinue()">もう一度挑戦する</button>
             <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
@@ -2221,17 +2277,29 @@
             const listEl = document.getElementById("ranking-list");
             if (rankEl) {
                 rankEl.innerText = currentIndexInRanking >= 0
-                    ? `あなたの順位: ${currentIndexInRanking + 1}位　スコア: ${score.toLocaleString()}　時間: ${formatTotalTime(totalTimeSeconds)}${isOnline ? "　🌐オンライン" : "　📱ローカル"}`
-                    : `スコア: ${score.toLocaleString()}　時間: ${formatTotalTime(totalTimeSeconds)}${isOnline ? "　🌐オンライン" : "　📱ローカル"}`;
+                    ? `あなたの順位: ${currentIndexInRanking + 1}位`
+                    : "今回の順位を集計中";
             }
+            const scoreEl = document.getElementById("clear-score-value");
+            const timeEl = document.getElementById("clear-time-value");
+            if (scoreEl) scoreEl.innerText = `${score.toLocaleString()}点`;
+            if (timeEl) timeEl.innerText = formatTotalTime(totalTimeSeconds);
             if (listEl) {
-                listEl.innerHTML = rankings.slice(0, 5).map((item, index) => {
-                    const marker = item.score === score &&
+                const rows = rankings.slice(0, 5).map((item, index) => {
+                    const isCurrent = item.score === score &&
                         item.name === getStorage("ranking_name", "あなた") &&
-                        Math.round(Number(item.totalTimeSeconds) * 10) === Math.round(totalTimeSeconds * 10) ? "▶" : "";
+                        Math.round(Number(item.totalTimeSeconds) * 10) === Math.round(totalTimeSeconds * 10);
                     const time = formatTotalTime(item.totalTimeSeconds);
-                    return `<div>${marker} ${index + 1}位　${escapeHtml(item.name || "あなた")}　${Number(item.score || 0).toLocaleString()}点　${time}</div>`;
-                }).join("") || "まだランキングがありません。";
+                    return `<div class="ranking-row${isCurrent ? " is-current" : ""}">
+                        <span class="ranking-position">${index + 1}</span>
+                        <span class="ranking-player">${isCurrent ? "▶ " : ""}${escapeHtml(item.name || "あなた")}</span>
+                        <span class="ranking-points">${Number(item.score || 0).toLocaleString()}点</span>
+                        <span class="ranking-time">${time}</span>
+                    </div>`;
+                }).join("");
+                listEl.innerHTML = rankings.length
+                    ? `<div class="ranking-table-header"><span>順位</span><span>名前</span><span style="text-align:right;">スコア</span><span style="text-align:right;">時間</span></div>${rows}<div class="ranking-source">${isOnline ? "🌐 オンラインランキング" : "📱 この端末のランキング"}</div>`
+                    : `<div class="ranking-empty">まだランキングがありません。</div>`;
             }
         }
 
