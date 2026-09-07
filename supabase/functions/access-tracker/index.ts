@@ -55,14 +55,20 @@ Deno.serve(async (request) => {
         expires_at: expires.toISOString(),
       }),
     });
-    if (!response.ok) return json({ error: "Access log failed" }, 502);
+    if (!response.ok) {
+      console.error("Access log insert failed:", response.status, await response.text());
+      return json({ error: "Access log failed" }, 502);
+    }
     return json({ ok: true });
   }
 
   if (request.headers.get("x-admin-password") !== adminPassword) return json({ error: "Unauthorized" }, 401);
   if (request.method === "GET") {
     const response = await database("access_logs?select=visitor_id,player_name,device_info,ip_address,first_seen,last_seen,expires_at&expires_at=gt.now()&order=last_seen.desc&limit=200");
-    if (!response.ok) return json({ error: "Access log query failed" }, 502);
+    if (!response.ok) {
+      console.error("Access log query failed:", response.status, await response.text());
+      return json({ error: "Access log query failed" }, 502);
+    }
     return json(await response.json());
   }
   if (request.method === "DELETE") {
