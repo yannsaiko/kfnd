@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start local server",
+            "type": "shell",
+            "command": "if curl -fsS http://localhost:8000/ >/dev/null 2>&1; then echo 'Serving HTTP on existing server'; else exec python3 -m http.server 8000; fi",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Chrome for debugging",
+            "type": "shell",
+            "command": "pkill -f -- '--user-data-dir=/tmp/kfnd-chrome-debug-profile-headless' 2>/dev/null || true; pkill -f -- '--user-data-dir=/tmp/kfnd-chrome-debug-profile' 2>/dev/null || true; exec \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/kfnd-chrome-debug-profile --no-first-run --no-default-browser-check --new-window http://localhost:8000/index.html",
+            "dependsOn": "Start local server",
+            "dependsOrder": "sequence",
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}

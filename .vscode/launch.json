@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Open index.html in Chrome (auto)",
+            "url": "http://localhost:8000/index.html",
+            "webRoot": "${workspaceFolder}",
+            "runtimeExecutable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "args": [
+                "--new-window",
+                "--user-data-dir=/tmp/kfnd-chrome-debug-profile",
+                "--no-first-run",
+                "--no-default-browser-check"
+            ],
+            "preLaunchTask": "Start local server"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Debug generate_json.py",
+            "program": "${workspaceFolder}/generate_json.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
