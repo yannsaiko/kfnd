@@ -5,6 +5,7 @@ create table if not exists public.access_logs (
     player_name text,
     device_info jsonb not null default '{}'::jsonb,
     ip_address inet not null,
+    current_page text not null default 'title',
     first_seen timestamptz not null default now(),
     last_seen timestamptz not null default now(),
     expires_at timestamptz not null default (now() + interval '90 days')
@@ -20,6 +21,9 @@ revoke all on public.access_logs from public;
 
 grant usage on schema public to service_role;
 grant select, insert, update, delete on table public.access_logs to service_role;
+
+alter table public.access_logs
+    add column if not exists current_page text not null default 'title';
 
 alter table public.rankings
     add column if not exists visitor_id text;

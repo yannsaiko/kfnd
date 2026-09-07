@@ -432,6 +432,7 @@
                         <div style="border-top: 1px solid rgba(250,204,21,0.35); margin-top: 8px; padding-top: 8px;">
                             <input id="admin-password" type="password" placeholder="管理者パスワード" style="margin: 3px 0; padding: 7px; font-size: 12px;">
                             <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugLoadAccessLogs()">アクセス中の端末とIPを表示</button>
+                            <button type="button" class="btn" style="padding: 7px; font-size: 12px; margin: 3px 0;" onclick="debugLoadTitleDevices()">タイトル画面を開いた端末を表示</button>
                             <div id="debug-access-list" style="font-size: 11px; line-height: 1.5; max-height: 220px; overflow: auto; margin-top: 6px;">管理者パスワードを入力してください。</div>
                         </div>
                     </div>
@@ -1484,6 +1485,7 @@
             const loadEl = document.getElementById("screen-loading");
 
             if (titleEl) titleEl.classList.add("hidden");
+            sendAccessHeartbeat("game");
             if (overEl) overEl.classList.add("hidden");
             if (clearEl) clearEl.classList.add("hidden");
             if (loadEl) loadEl.classList.remove("hidden");
@@ -1985,7 +1987,7 @@
             return visitorId;
         }
 
-        async function sendAccessHeartbeat() {
+        async function sendAccessHeartbeat(page = document.getElementById("screen-title")?.classList.contains("hidden") ? "game" : "title") {
             if (getStorage("access_log_consent", "") !== "yes") return;
             try {
                 await fetch(ACCESS_TRACKER_URL, {
@@ -1995,6 +1997,7 @@
                         visitorId: getVisitorId(),
                         playerName: getStorage("ranking_name", ""),
                         deviceInfo: getDeviceInfo()
+                        ,page
                     }),
                     keepalive: true
                 });
@@ -2312,6 +2315,7 @@
                         return `<div style="border-bottom:1px solid #475569; padding:4px 0;">
                             <b>${escapeHtml(item.player_name || "名前未登録")}</b>
                             / IP: ${escapeHtml(item.ip_address || "不明")}
+                            / 画面: ${escapeHtml(item.current_page === "game" ? "ゲーム中" : "タイトル")}
                             / 最終アクセス: ${escapeHtml(lastSeen)}<br>
                             <span style="color:#cbd5e1;">${formatDeviceInfo(item.device_info)}</span>
                         </div>`;
@@ -2319,6 +2323,35 @@
                 }
             } catch (error) {
                 if (listEl) listEl.innerText = `アクセス状況を取得できませんでした: ${error.message}`;
+            }
+        }
+
+        // DEBUG機能: 現在タイトル画面にいる端末だけを表示する。
+        async function debugLoadTitleDevices() {
+            if (!DEBUG_MODE) return;
+            const listEl = document.getElementById("debug-access-list");
+            const password = document.getElementById("admin-password")?.value || "";
+            if (!password) {
+                if (listEl) listEl.innerText = "管理者パスワードを入力してください。";
+                return;
+            }
+            if (listEl) listEl.innerText = "タイトル画面の端末を読み込み中...";
+            try {
+                const response = await fetch(ACCESS_TRACKER_URL, {
+                    headers: { "x-admin-password": password }
+                });
+                if (!response.ok) throw new Error(response.status === 401 ? "管理者パスワードが違います。" : `取得失敗: ${response.status}`);
+                const logs = (await response.json()).filter(item => item.current_page === "title");
+                if (listEl) {
+                    listEl.innerHTML = logs.map(item => `<div style="border-bottom:1px solid #475569; padding:4px 0;">
+                        <b>${escapeHtml(item.player_name || "名前未登録")}</b>
+                        / IP: ${escapeHtml(item.ip_address || "不明")}<br>
+                        最終アクセス: ${escapeHtml(new Date(item.last_seen).toLocaleString("ja-JP"))}<br>
+                        端末: ${formatDeviceInfo(item.device_info)}
+                    </div>`).join("") || "現在タイトル画面を開いている端末はありません。";
+                }
+            } catch (error) {
+                if (listEl) listEl.innerText = `タイトル画面の端末を取得できませんでした: ${error.message}`;
             }
         }
 
@@ -2395,6 +2428,7 @@
             document.getElementById("screen-gameover").classList.add("hidden");
             document.getElementById("screen-clear").classList.add("hidden");
             document.getElementById("screen-title").classList.remove("hidden");
+            sendAccessHeartbeat("title");
         }
     </script>
 </body>

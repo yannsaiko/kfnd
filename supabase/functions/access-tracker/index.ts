@@ -4,11 +4,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, GET, DELETE, OPTIONS",
 };
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status,
+  headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -16,8 +15,7 @@ const adminPassword = Deno.env.get("ADMIN_PASSWORD")!;
 
 function clientIp(request: Request) {
   return request.headers.get("x-forwarded-for")?.split(",")[0].trim()
-    || request.headers.get("cf-connecting-ip")
-    || "unknown";
+    || request.headers.get("cf-connecting-ip") || "unknown";
 }
 
 async function database(path: string, init: RequestInit = {}) {
@@ -25,7 +23,7 @@ async function database(path: string, init: RequestInit = {}) {
     ...init,
     headers: {
       apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
+      Authorization: "Bearer " + serviceRoleKey,
       "Content-Type": "application/json",
       ...(init.headers || {}),
     },
@@ -42,7 +40,6 @@ Deno.serve(async (request) => {
       return json({ error: "Invalid visitor ID" }, 400);
     }
     const now = new Date();
-    const expires = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
     const response = await database("access_logs?on_conflict=visitor_id", {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
@@ -51,8 +48,9 @@ Deno.serve(async (request) => {
         player_name: typeof body.playerName === "string" ? body.playerName.slice(0, 12) : null,
         device_info: body.deviceInfo || {},
         ip_address: clientIp(request),
+        current_page: body.page === "game" ? "game" : "title",
         last_seen: now.toISOString(),
-        expires_at: expires.toISOString(),
+        expires_at: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString(),
       }),
     });
     if (!response.ok) {
@@ -64,7 +62,7 @@ Deno.serve(async (request) => {
 
   if (request.headers.get("x-admin-password") !== adminPassword) return json({ error: "Unauthorized" }, 401);
   if (request.method === "GET") {
-    const response = await database("access_logs?select=visitor_id,player_name,device_info,ip_address,first_seen,last_seen,expires_at&expires_at=gt.now()&order=last_seen.desc&limit=200");
+    const response = await database("access_logs?select=visitor_id,player_name,device_info,ip_address,current_page,first_seen,last_seen,expires_at&expires_at=gt.now()&order=last_seen.desc&limit=200");
     if (!response.ok) {
       console.error("Access log query failed:", response.status, await response.text());
       return json({ error: "Access log query failed" }, 502);
