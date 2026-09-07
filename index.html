@@ -2131,7 +2131,7 @@
                     response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
                         headers: {
                             "apikey": SUPABASE_ANON_KEY,
-                            "Authorization": "Bearer " + apiKey,
+                            "Authorization": "Bearer " + SUPABASE_ANON_KEY,
                         }
                     });
                 }
@@ -2215,7 +2215,7 @@
                 let response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
                     headers: {
                         "apikey": SUPABASE_ANON_KEY,
-                        "Authorization": "Bearer " + apiKey,
+                        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
                     }
                 });
                 if (!response.ok && response.status === 400) {
@@ -2223,7 +2223,7 @@
                     response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
                         headers: {
                             "apikey": SUPABASE_ANON_KEY,
-                            "Authorization": "Bearer " + apiKey,
+                            "Authorization": "Bearer " + SUPABASE_ANON_KEY,
                         }
                     });
                 }

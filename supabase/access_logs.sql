@@ -17,3 +17,6 @@ create index if not exists access_logs_last_seen_idx
 
 revoke all on public.access_logs from anon, authenticated;
 revoke all on public.access_logs from public;
+
+grant usage on schema public to service_role;
+grant select, insert, update, delete on table public.access_logs to service_role;
