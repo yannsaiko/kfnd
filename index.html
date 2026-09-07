@@ -2058,7 +2058,8 @@
                     score: entry.score,
                     total_time_seconds: entry.totalTimeSeconds,
                     cleared_count: entry.clearedCount,
-                    device_info: entry.deviceInfo
+                    device_info: entry.deviceInfo,
+                    visitor_id: getVisitorId()
                 };
                 let response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
                     method: "POST",
@@ -2203,7 +2204,7 @@
             listEl.innerText = "ランキングを読み込み中...";
             try {
                 const params = new URLSearchParams({
-                    select: "id,mode,player_name,score,total_time_seconds,cleared_count,created_at,device_info",
+                    select: "id,mode,player_name,score,total_time_seconds,cleared_count,created_at,device_info,visitor_id",
                     mode: `eq.${activeMode}`,
                     order: "score.desc,total_time_seconds.asc,created_at.asc",
                     limit: "50"
@@ -2215,7 +2216,7 @@
                     }
                 });
                 if (!response.ok && response.status === 400) {
-                    params.set("select", "id,mode,player_name,score,total_time_seconds,cleared_count,created_at");
+                    params.set("select", "id,mode,player_name,score,total_time_seconds,cleared_count,created_at,visitor_id");
                     response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
                         headers: {
                             "apikey": SUPABASE_ANON_KEY,
@@ -2225,8 +2226,22 @@
                 }
                 if (!response.ok) throw new Error(`取得失敗: ${response.status}`);
                 const rankings = await response.json();
+                const password = document.getElementById("admin-password")?.value || "";
+                if (!password) throw new Error("IPと端末情報を表示するには管理者パスワードを入力してください。");
+                const accessResponse = await fetch(ACCESS_TRACKER_URL, {
+                    headers: { "x-admin-password": password }
+                });
+                if (!accessResponse.ok) {
+                    throw new Error(accessResponse.status === 401
+                        ? "管理者パスワードが違います。"
+                        : `アクセスログ取得失敗: ${accessResponse.status}`);
+                }
+                const accessByVisitorId = new Map(
+                    (await accessResponse.json()).map(item => [item.visitor_id, item])
+                );
                 listEl.innerHTML = rankings.map((item, index) => {
                     const date = item.created_at ? new Date(item.created_at).toLocaleString("ja-JP") : "日時不明";
+                    const access = accessByVisitorId.get(item.visitor_id);
                     return `<div style="border-bottom:1px solid #475569; padding:6px 0;">
                         <b>${index + 1}位 ${escapeHtml(item.player_name || "名前なし")}</b><br>
                         ID: ${escapeHtml(item.id || "不明")}<br>
@@ -2235,7 +2250,11 @@
                         総合時間: ${formatTotalTime(item.total_time_seconds)}<br>
                         クリア数: ${Number(item.cleared_count || 0)}問<br>
                         登録日時: ${escapeHtml(date)}<br>
-                        <span style="color:#cbd5e1;">端末情報: ${formatDeviceInfo(item.device_info)}</span>
+                        訪問者ID: ${escapeHtml(item.visitor_id || "未記録")}<br>
+                        IPアドレス: ${escapeHtml(access?.ip_address || "未記録")}<br>
+                        最初のアクセス: ${escapeHtml(access?.first_seen ? new Date(access.first_seen).toLocaleString("ja-JP") : "未記録")}<br>
+                        最終アクセス: ${escapeHtml(access?.last_seen ? new Date(access.last_seen).toLocaleString("ja-JP") : "未記録")}<br>
+                        <span style="color:#cbd5e1;">端末情報: ${formatDeviceInfo(access?.device_info || item.device_info)}</span>
                     </div>`;
                 }).join("") || "このコースのランキングはありません。";
             } catch (error) {

@@ -20,3 +20,8 @@ revoke all on public.access_logs from public;
 
 grant usage on schema public to service_role;
 grant select, insert, update, delete on table public.access_logs to service_role;
+
+alter table public.rankings
+    add column if not exists visitor_id text;
+create index if not exists rankings_visitor_id_idx
+    on public.rankings(visitor_id);
