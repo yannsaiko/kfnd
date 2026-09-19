@@ -1054,8 +1054,7 @@
                 ["蜻蛉","とんぼ","大きな複眼を持つ昆虫。"],["紫苑","しおん","秋に薄紫の花を咲かせる植物。"],["玉蜀黍","とうもろこし","黄色の粒が実る穀物。"],
                 ["翡翠","ひすい","深緑色の美しい宝石。"],["啄木鳥","きつつき","木をつついて穴をあける鳥。"],["海月","くらげ","水中に漂う刺胞動物。"],
                 ["金雀枝","えにしだ","黄色の小さな花を咲かせる低木。"],["無患子","むくろじ","種子が羽子の玉に使われる樹木。"],["羊歯","しだ","胞子で増える非種子植物。"],
-                ["山車","だし","祭りで引いて練り歩く車。"],["鱏","えい","平たい体を持つ海水魚。"],["獺","かわうそ","水辺で暮らすイタチ科の動物。"],
-                ["鸚鵡","おうむ","人の言葉を真似る鳥。"]
+                ["山車","だし","祭りで引いて練り歩く車。"],["鱏","えい","平たい体を持つ海水魚。"],["獺","かわうそ","水辺で暮らすイタチ科の動物。"],["鸚鵡","おうむ","人の言葉を真似る鳥。"]
             ]
         };
 
@@ -1561,14 +1560,23 @@
             const stageText = document.getElementById("stage-text");
             const categoryText = document.getElementById("category-text");
             const kanjiDisplay = document.getElementById("kanji-display");
-            const bossBadge = document.getElementById("boss-badge");
             const enemyBox = document.getElementById("enemy-box");
+            const bossBadge = document.getElementById("boss-badge");
+            const aiMessage = document.getElementById("ai-message");
             const userInput = document.getElementById("user-input");
-            const aiMsg = document.getElementById("ai-message");
 
             if (stageText) stageText.innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
             if (categoryText) categoryText.innerText = `【${q.category}】`;
-            
+
+            currentEnemyType = q.isBoss ? 'boss' : 'normal';
+            const colors = ['#38bdf8', '#818cf8', '#34d399', '#f43f5e', '#a855f7'];
+            currentEnemyColor = colors[currentIndex % colors.length];
+
+            if (bossBadge) {
+                if (q.isBoss) bossBadge.classList.remove("hidden");
+                else bossBadge.classList.add("hidden");
+            }
+
             if (kanjiDisplay) {
                 kanjiDisplay.innerText = q.kanji;
                 kanjiDisplay.classList.remove("kanji-spawn");
@@ -1576,61 +1584,23 @@
                 kanjiDisplay.classList.add("kanji-spawn");
             }
 
-            if (bossBadge) {
-                if (q.isBoss) bossBadge.classList.remove("hidden");
-                else bossBadge.classList.add("hidden");
+            if (enemyBox) {
+                enemyBox.classList.remove("danger-border");
             }
-
-            currentEnemyType = q.isBoss ? 'boss' : 'normal';
-            const colors = ['#38bdf8', '#4ade80', '#c084fc', '#facc15', '#fb923c'];
-            currentEnemyColor = colors[currentIndex % colors.length];
 
             if (userInput) userInput.value = "";
-            if (aiMsg) aiMsg.innerText = `🎙️「第${currentIndex + 1}問！『${q.kanji}』の読みを答えてください！」`;
+            if (aiMessage) aiMessage.innerText = `🎙️「第${currentIndex + 1}問！「${q.kanji}」の読みをお答えください！」`;
 
-            if (q.isBoss) {
-                playSound('boss');
-                if (enemyBox) enemyBox.classList.add('danger-border');
-            } else {
-                if (enemyBox) enemyBox.classList.remove('danger-border');
-            }
-
-            questionStartedAt = Date.now();
-            timeRemaining = q.isBoss ? 12 : 10;
+            timeRemaining = 10;
             updateTimerUI();
+            questionStartedAt = Date.now();
             startTimer();
             startBGM();
         }
 
-        function updateTimerUI() {
-            const timerText = document.getElementById("timer-text");
-            const timerBox = document.getElementById("timer-box");
-            if (timerText) timerText.innerText = timeRemaining;
-
-            if (timerBox) {
-                if (timeRemaining <= 3) {
-                    timerBox.classList.add("timer-warning");
-                } else {
-                    timerBox.classList.remove("timer-warning");
-                }
-            }
-        }
-
         function startTimer() {
             stopTimer();
-            timer = setInterval(() => {
-                if (isPaused) return;
-                timeRemaining--;
-                updateTimerUI();
-
-                if (timeRemaining <= 3 && timeRemaining > 0) {
-                    playSound('tick');
-                }
-
-                if (timeRemaining <= 0) {
-                    handleTimeUp();
-                }
-            }, 1000);
+            timer = setInterval(tickTimer, 1000);
         }
 
         function stopTimer() {
@@ -1638,265 +1608,240 @@
             timer = null;
         }
 
-        function handleTimeUp() {
-            stopTimer();
-            playSound('wrong');
-            flashDamage();
-            lives--;
-            updateLivesDisplay();
-
-            const aiMsg = document.getElementById("ai-message");
-            if (aiMsg) aiMsg.innerText = "⏰ タイムアップ！ダメージを受けた！";
-
-            if (lives <= 0) {
-                handleGameOver();
-            } else {
-                setTimeout(() => {
-                    timeRemaining = currentList[currentIndex]?.isBoss ? 12 : 10;
-                    updateTimerUI();
-                    startTimer();
-                }, 1200);
-            }
-        }
-
-        function passQuestion() {
+        function tickTimer() {
             if (isPaused) return;
-            initAudio();
+            timeRemaining--;
+            updateTimerUI();
+
+            if (timeRemaining <= 3 && timeRemaining > 0) {
+                playSound('tick');
+            }
+
+            if (timeRemaining <= 0) {
+                handleTimeout();
+            }
+        }
+
+        function updateTimerUI() {
+            const timerBox = document.getElementById("timer-box");
+            const timerText = document.getElementById("timer-text");
+            const enemyBox = document.getElementById("enemy-box");
+
+            if (timerText) timerText.innerText = timeRemaining;
+
+            if (timeRemaining <= 3) {
+                if (timerBox) timerBox.classList.add("timer-warning");
+                if (enemyBox) enemyBox.classList.add("danger-border");
+            } else {
+                if (timerBox) timerBox.classList.remove("timer-warning");
+                if (enemyBox) enemyBox.classList.remove("danger-border");
+            }
+        }
+
+        function handleTimeout() {
             stopTimer();
             playSound('wrong');
             flashDamage();
             lives--;
             updateLivesDisplay();
 
+            const enemyBox = document.getElementById("enemy-box");
+            if (enemyBox) {
+                enemyBox.classList.add("shake-hard");
+                setTimeout(() => enemyBox.classList.remove("shake-hard"), 500);
+            }
+
             if (lives <= 0) {
-                handleGameOver();
+                showGameOver();
             } else {
-                currentIndex++;
-                loadQuestion();
+                const aiMessage = document.getElementById("ai-message");
+                if (aiMessage) aiMessage.innerText = "🎙️「時間切れ！ライフ減少！もう一度挑戦！」";
+                timeRemaining = 10;
+                updateTimerUI();
+                startTimer();
             }
         }
 
-        // --- 10. 解答入力・正解判定 ---
+        // --- 10. キー入力・回答判定 ---
         function addKey(char) {
-            if (isPaused) return;
             playSound('click');
             const input = document.getElementById("user-input");
             if (input) input.value += char;
         }
 
         function delKey() {
-            if (isPaused) return;
             playSound('click');
             const input = document.getElementById("user-input");
-            if (input && input.value.length > 0) {
-                input.value = input.value.slice(0, -1);
-            }
+            if (input) input.value = input.value.slice(0, -1);
         }
 
         function toggleDakutenSmall() {
-            if (isPaused) return;
             playSound('click');
             const input = document.getElementById("user-input");
-            if (!input || input.value.length === 0) return;
-
-            const str = input.value;
-            const lastChar = str.slice(-1);
-            const converted = DAKUTEN_MAP[lastChar] || lastChar;
-            input.value = str.slice(0, -1) + converted;
-        }
-
-        function normalizeKana(str) {
-            if (!str) return "";
-            return str.trim()
-                .replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60))
-                .replace(/\s+/g, "");
-        }
-
-        async function submitAnswer() {
-            if (isPaused) return;
-            initAudio();
-            const inputEl = document.getElementById("user-input");
-            if (!inputEl) return;
-
-            const userAns = normalizeKana(inputEl.value);
-            if (!userAns) return;
-
-            const q = currentList[currentIndex];
-            if (!q) return;
-
-            const validReadings = q.reading.split(/[/,、・]/).map(r => normalizeKana(r));
-            const isStrictCorrect = validReadings.includes(userAns);
-
-            stopTimer();
-
-            if (isStrictCorrect) {
-                handleCorrectAnswer(q);
-            } else {
-                if (isApiOnline && apiKey) {
-                    const aiResult = await checkAnswerWithAI(q.kanji, q.reading, userAns);
-                    if (aiResult.isCorrect) {
-                        handleCorrectAnswer(q);
-                        return;
-                    }
-                }
-                handleWrongAnswer(q);
+            if (!input || !input.value) return;
+            const lastChar = input.value.slice(-1);
+            if (DAKUTEN_MAP[lastChar]) {
+                input.value = input.value.slice(0, -1) + DAKUTEN_MAP[lastChar];
             }
         }
 
-        async function checkAnswerWithAI(kanji, reading, userAnswer) {
-            try {
-                const prompt = `漢字:「${kanji}」
-正解の読み:「${reading}」
-ユーザーの回答:「${userAnswer}」
+        async function submitAnswer() {
+            const input = document.getElementById("user-input");
+            if (!input || !input.value.trim()) return;
 
-ユーザーの回答が正解または許容できる読み（送り仮名の違い、ひらがな表記の正当性など）であるか判定してください。
-回答形式はJSONのみで答えてください:
-{"isCorrect": true/false, "reason": "簡単な解説"}`;
+            const userAns = input.value.trim().toLowerCase();
+            const q = currentList[currentIndex];
+            const correctReading = q.reading.toLowerCase();
 
-                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${apiKey}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: HF_MODEL,
-                        messages: [{ role: "user", content: prompt }],
-                        max_tokens: 100,
-                        temperature: 0.1
-                    })
-                });
+            let isCorrect = (userAns === correctReading);
 
-                if (!res.ok) return { isCorrect: false };
-                const data = await res.json();
-                const content = data.choices[0].message.content;
-                const match = content.match(/\{[\s\S]*\}/);
-                if (match) {
-                    return JSON.parse(match[0]);
+            if (!isCorrect && isApiOnline) {
+                if (userAns.replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60)) === correctReading) {
+                    isCorrect = true;
                 }
-            } catch(e) {}
-            return { isCorrect: false };
-        }
+            }
 
-        function handleCorrectAnswer(q) {
-            playSound('laser');
-            const enemyAnchor = document.getElementById('enemy-anchor');
-            const rect = enemyAnchor ? enemyAnchor.getBoundingClientRect() : { left: window.innerWidth / 2, top: 150, width: 0, height: 0 };
-            const ex = rect.left + rect.width / 2;
-            const ey = rect.top + rect.height / 2;
-
-            triggerLaserAttack(ex, ey, () => {
-                playSound('correct');
-                createExplosion(ex, ey, q.isBoss ? 100 : 60);
-
-                const elapsed = (Date.now() - questionStartedAt) / 1000;
+            if (isCorrect) {
+                stopTimer();
+                stopBGM();
+                playSound('laser');
+                
+                const elapsed = Math.max(0.5, (Date.now() - questionStartedAt) / 1000);
                 totalTimeSeconds += elapsed;
-                const baseScore = (currentIndex + 1) * 100;
-                const timeBonus = Math.max(0, timeRemaining * 15);
-                score += baseScore + timeBonus;
+                const pts = Math.max(100, Math.floor((10 - Math.min(10, elapsed)) * 100) + 500);
+                score += pts;
                 clearedCount++;
 
-                setTimeout(() => {
-                    showExplanationModal(true, q);
-                }, 400);
-            });
+                const enemyAnchor = document.getElementById("enemy-anchor");
+                if (enemyAnchor) {
+                    const rect = enemyAnchor.getBoundingClientRect();
+                    const ex = rect.left + rect.width / 2;
+                    const ey = rect.top + rect.height / 2;
+                    triggerLaserAttack(ex, ey, () => {
+                        playSound('correct');
+                        createExplosion(ex, ey, q.isBoss ? 100 : 60);
+                        setTimeout(() => showExplanationModal(q), 400);
+                    });
+                } else {
+                    playSound('correct');
+                    showExplanationModal(q);
+                }
+            } else {
+                playSound('wrong');
+                input.classList.add("shake-hard");
+                setTimeout(() => input.classList.remove("shake-hard"), 400);
+                input.value = "";
+                const aiMessage = document.getElementById("ai-message");
+                if (aiMessage) aiMessage.innerText = "🎙️「違うようです！もう一度！」";
+            }
         }
 
-        function handleWrongAnswer(q) {
+        function passQuestion() {
             playSound('wrong');
             flashDamage();
             lives--;
             updateLivesDisplay();
 
-            const gameScreen = document.getElementById("screen-game");
-            if (gameScreen) {
-                gameScreen.classList.add("shake-hard");
-                setTimeout(() => gameScreen.classList.remove("shake-hard"), 400);
-            }
-
             if (lives <= 0) {
-                handleGameOver();
+                showGameOver();
             } else {
-                const aiMsg = document.getElementById("ai-message");
-                if (aiMsg) aiMsg.innerText = `❌ 残念！もう一度入力してください（残りLIFE: ${lives}）`;
-                const inputEl = document.getElementById("user-input");
-                if (inputEl) inputEl.value = "";
-                startTimer();
+                currentIndex++;
+                loadQuestion();
             }
         }
 
-        function showExplanationModal(isCorrect, q) {
-            stopTimer();
-            stopBGM();
+        // --- 11. モーダル＆結果画面 ---
+        function showExplanationModal(q) {
             const modal = document.getElementById("modal-explanation");
-            const title = document.getElementById("modal-title");
-            const kanji = document.getElementById("modal-kanji");
-            const reading = document.getElementById("modal-reading");
-            const meaning = document.getElementById("modal-meaning");
+            const kanjiEl = document.getElementById("modal-kanji");
+            const readingEl = document.getElementById("modal-reading");
+            const meaningEl = document.getElementById("modal-meaning");
+            const titleEl = document.getElementById("modal-title");
 
-            if (title) {
-                title.innerText = isCorrect ? "💥 STAGE CLEAR!" : "❌ DAMAGE!";
-                title.style.color = isCorrect ? "#4ade80" : "#ef4444";
-            }
-            if (kanji) kanji.innerText = q.kanji;
-            if (reading) reading.innerText = `【読み】${q.reading}`;
-            if (meaning) meaning.innerText = q.meaning || "解説を読み込み中...";
+            if (titleEl) titleEl.innerText = q.isBoss ? "💥 BOSS CLEAR!" : "💥 STAGE CLEAR!";
+            if (kanjiEl) kanjiEl.innerText = q.kanji;
+            if (readingEl) readingEl.innerText = `【読み】${q.reading}`;
+            if (meaningEl) meaningEl.innerText = q.meaning || "解説データ準備中";
 
             if (modal) modal.classList.remove("hidden");
         }
 
         function nextStage() {
-            document.getElementById("modal-explanation")?.classList.add("hidden");
+            const modal = document.getElementById("modal-explanation");
+            if (modal) modal.classList.add("hidden");
             currentIndex++;
-            if (currentIndex >= currentList.length) {
-                showClearScreen();
-            } else {
-                loadQuestion();
-            }
+            loadQuestion();
         }
 
-        function handleGameOver() {
+        function showGameOver() {
             stopTimer();
             stopBGM();
+            playSound('wrong');
             const stats = document.getElementById("gameover-stats");
-            if (stats) stats.innerText = `到達: STAGE ${currentIndex + 1} / 15 (正解撃破数: ${clearedCount})`;
+            if (stats) stats.innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (撃破数: ${clearedCount})`;
             showScreen("screen-gameover");
         }
 
-        // --- 11. 結果表示・オンラインランキング ---
-        async function showClearScreen() {
+        function showClearScreen() {
             stopTimer();
             stopBGM();
-            createConfetti();
-
-            const clearStats = document.getElementById("clear-stats");
+            playSound('correct');
+            
+            const stats = document.getElementById("clear-stats");
             const scoreVal = document.getElementById("clear-score-value");
             const timeVal = document.getElementById("clear-time-value");
 
-            if (clearStats) clearStats.innerText = `全15ステージ完全制覇！ (${activeMode})`;
+            if (stats) stats.innerText = `【${activeMode}】全15問 完全制覇！`;
             if (scoreVal) scoreVal.innerText = score.toLocaleString();
             if (timeVal) timeVal.innerText = `${totalTimeSeconds.toFixed(1)}秒`;
 
             showScreen("screen-clear");
-            await loadRanking();
+            loadRanking();
         }
 
+        // --- 12. ランキング＆デバッグ・アクセストラッカー ---
         function saveRankingName(val) {
-            setStorage("ranking_name", val || "あなた");
+            setStorage("ranking_name", val);
+        }
+
+        async function loadRanking() {
+            const listEl = document.getElementById("ranking-list");
+            if (!listEl) return;
+            listEl.innerHTML = "読み込み中...";
+
+            try {
+                const res = await fetch(`${SUPABASE_REST_URL}/kanji_rankings?category=eq.${encodeURIComponent(activeMode)}&order=score.desc,clear_time.asc&limit=10`, {
+                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+                });
+                if (!res.ok) throw new Error("Fetch failed");
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    listEl.innerHTML = `<div class="ranking-empty">まだ記録がありません。1人目のランクインを目指しましょう！</div>`;
+                    return;
+                }
+
+                let html = `<div class="ranking-table-header"><span>順位</span><span>名前</span><span>スコア</span><span>タイム</span></div>`;
+                data.forEach((item, idx) => {
+                    html += `
+                        <div class="ranking-row">
+                            <span class="ranking-position">${idx + 1}</span>
+                            <span class="ranking-player">${escapeHtml(item.player_name || "名無し")}</span>
+                            <span class="ranking-points">${(item.score || 0).toLocaleString()}</span>
+                            <span class="ranking-time">${(item.clear_time || 0).toFixed(1)}s</span>
+                        </div>
+                    `;
+                });
+                listEl.innerHTML = html;
+            } catch(e) {
+                listEl.innerHTML = `<div class="ranking-empty">ランキングの取得に失敗しました。</div>`;
+            }
         }
 
         async function registerRanking() {
             const nameInput = document.getElementById("ranking-name");
-            const playerName = nameInput ? (nameInput.value.trim() || "あなた") : "あなた";
-            saveRankingName(playerName);
-
-            const payload = {
-                player_name: playerName,
-                score: score,
-                clear_time: parseFloat(totalTimeSeconds.toFixed(1)),
-                stage_mode: activeMode,
-                created_at: new Date().toISOString()
-            };
+            const name = nameInput ? nameInput.value.trim() : "あなた";
+            if (!name) return;
 
             try {
                 const res = await fetch(`${SUPABASE_REST_URL}/kanji_rankings`, {
@@ -1905,123 +1850,50 @@
                         "apikey": SUPABASE_ANON_KEY,
                         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
                         "Content-Type": "application/json",
-                        "Prefer": "return=representation"
+                        "Prefer": "return=minimal"
                     },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    alert("🏆 ランキングに登録しました！");
-                    await loadRanking();
-                } else {
-                    saveLocalRanking(payload);
-                    await loadRanking();
-                }
-            } catch(e) {
-                saveLocalRanking(payload);
-                await loadRanking();
-            }
-        }
-
-        function saveLocalRanking(entry) {
-            try {
-                const localData = JSON.parse(getStorage("local_rankings", "[]"));
-                localData.push(entry);
-                setStorage("local_rankings", JSON.stringify(localData));
-            } catch(e) {}
-        }
-
-        async function loadRanking() {
-            const listEl = document.getElementById("ranking-list");
-            const rankHighlight = document.getElementById("clear-rank");
-            if (listEl) listEl.innerHTML = "ランキング読み込み中...";
-
-            let rankings = [];
-            try {
-                const url = `${SUPABASE_REST_URL}/kanji_rankings?stage_mode=eq.${encodeURIComponent(activeMode)}&order=score.desc,clear_time.asc&limit=10`;
-                const res = await fetch(url, {
-                    headers: {
-                        "apikey": SUPABASE_ANON_KEY,
-                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-                    }
+                    body: JSON.stringify({
+                        category: activeMode,
+                        player_name: name,
+                        score: score,
+                        clear_time: totalTimeSeconds
+                    })
                 });
                 if (res.ok) {
-                    rankings = await res.json();
+                    alert("ランキングに登録しました！");
+                    loadRanking();
                 } else {
-                    rankings = getLocalRankings(activeMode);
+                    alert("登録に失敗しました。");
                 }
             } catch(e) {
-                rankings = getLocalRankings(activeMode);
+                alert("通信エラーが発生しました。");
             }
-
-            if (!listEl) return;
-
-            if (rankings.length === 0) {
-                listEl.innerHTML = `<div class="ranking-empty">まだ記録がありません。一番乗りで登録しよう！</div>`;
-                if (rankHighlight) rankHighlight.innerText = "あなたの順位: 第1位 (初記録)";
-                return;
-            }
-
-            let html = `
-                <div class="ranking-table-header">
-                    <span>順位</span>
-                    <span>名前</span>
-                    <span style="text-align:right;">スコア</span>
-                    <span style="text-align:right;">タイム</span>
-                </div>
-            `;
-
-            let myRank = "-";
-            const currentName = getStorage("ranking_name", "あなた");
-
-            rankings.forEach((r, idx) => {
-                const isCurrent = (r.player_name === currentName && r.score === score);
-                if (isCurrent && myRank === "-") myRank = idx + 1;
-
-                html += `
-                    <div class="ranking-row ${isCurrent ? 'is-current' : ''}">
-                        <div class="ranking-position">#${idx + 1}</div>
-                        <div class="ranking-player">${escapeHtml(r.player_name)}</div>
-                        <div class="ranking-points">${r.score.toLocaleString()}</div>
-                        <div class="ranking-time">${r.clear_time}s</div>
-                    </div>
-                `;
-            });
-
-            listEl.innerHTML = html;
-            if (rankHighlight) {
-                rankHighlight.innerText = myRank !== "-" ? `あなたの順位: 第${myRank}位` : `あなたの順位: TOP 10 圏外`;
-            }
-        }
-
-        function getLocalRankings(mode) {
-            try {
-                const all = JSON.parse(getStorage("local_rankings", "[]"));
-                return all.filter(r => r.stage_mode === mode)
-                    .sort((a, b) => b.score - a.score || a.clear_time - b.clear_time)
-                    .slice(0, 10);
-            } catch(e) { return []; }
         }
 
         function escapeHtml(str) {
-            if (!str) return "";
-            return str.replace(/[&<>"']/g, match => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            })[match]);
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        // --- DEBUG機能 ---
+        function requestAccessLogConsent() { return true; }
+        async function sendAccessHeartbeat() {
+            try {
+                fetch(ACCESS_TRACKER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "heartbeat", mode: activeMode })
+                }).catch(() => {});
+            } catch(e) {}
+        }
+
         function updateDebugState() {
-            const stateEl = document.getElementById("debug-state");
-            if (stateEl) {
-                stateEl.innerHTML = `STAGE: ${currentIndex + 1}/15 | LIFE: ${lives} | SCORE: ${score} | API: ${isApiOnline ? 'OK' : 'OFF'}`;
-            }
+            const el = document.getElementById("debug-state");
+            if (el) el.innerText = `Index: ${currentIndex}, Score: ${score}, Lives: ${lives}, Time: ${timeRemaining}`;
         }
 
         function debugSolveCurrent() {
-            if (currentList[currentIndex]) {
-                const inputEl = document.getElementById("user-input");
-                if (inputEl) inputEl.value = currentList[currentIndex].reading.split(/[/,]/)[0];
+            if (currentIndex < currentList.length) {
+                const input = document.getElementById("user-input");
+                if (input) input.value = currentList[currentIndex].reading;
                 submitAnswer();
             }
         }
@@ -2033,71 +1905,14 @@
         }
 
         function debugClearStage() {
-            currentIndex = 14;
-            showClearScreen();
+            currentIndex = currentList.length - 1;
+            debugSolveCurrent();
         }
 
-        async function debugLoadRanking() {
-            const el = document.getElementById("debug-ranking-list");
-            if (!el) return;
-            el.innerHTML = "読み込み中...";
-
-            try {
-                const url = `${SUPABASE_REST_URL}/kanji_rankings?order=created_at.desc&limit=20`;
-                const res = await fetch(url, {
-                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    el.innerHTML = data.map(d => `[${d.stage_mode}] ${escapeHtml(d.player_name)}: ${d.score}点 (${d.clear_time}s)`).join("<br>") || "データなし";
-                } else {
-                    el.innerText = "取得失敗";
-                }
-            } catch(e) {
-                el.innerText = "エラー発生";
-            }
-        }
-
-        async function debugDeleteRanking() {
-            if (!confirm(`【${activeMode}】の全ランキングデータを削除しますか？`)) return;
-            try {
-                const res = await fetch(`${SUPABASE_REST_URL}/kanji_rankings?stage_mode=eq.${encodeURIComponent(activeMode)}`, {
-                    method: "DELETE",
-                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
-                });
-                if (res.ok) alert("削除完了しました");
-            } catch(e) { alert("削除失敗"); }
-        }
-
-        function requestAccessLogConsent() {
-            return true;
-        }
-
-        async function sendAccessHeartbeat() {
-            try {
-                await fetch(ACCESS_TRACKER_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "heartbeat", timestamp: new Date().toISOString() })
-                });
-            } catch(e) {}
-        }
-
-        async function debugLoadAccessLogs() {
-            const pass = document.getElementById("admin-password")?.value;
-            const el = document.getElementById("debug-access-list");
-            if (!el) return;
-            if (!pass) { el.innerText = "パスワードを入力してください"; return; }
-            el.innerText = "アクセスログ読み込み中...";
-        }
-
-        async function debugLoadTitleDevices() {
-            const pass = document.getElementById("admin-password")?.value;
-            const el = document.getElementById("debug-access-list");
-            if (!el) return;
-            if (!pass) { el.innerText = "パスワードを入力してください"; return; }
-            el.innerText = "端末情報読み込み中...";
-        }
+        function debugLoadRanking() { loadRanking(); }
+        function debugDeleteRanking() { alert("デバッグ: ランキング削除機能"); }
+        function debugLoadAccessLogs() { alert("デバッグ: アクセスログ機能"); }
+        function debugLoadTitleDevices() { alert("デバッグ: 端末情報機能"); }
     </script>
 </body>
 </html>
