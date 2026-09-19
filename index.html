@@ -265,6 +265,16 @@
     </style>
 </head>
 <body>
+    <!-- =========================================================
+         HTML編集マップ
+         画面の文章・ボタンを変更        → screen-title / screen-game
+         設定画面・デバッグ操作を変更    → modal-settings
+         ゲームオーバー画面を変更        → screen-gameover
+         クリア結果・ランキングを変更    → screen-clear
+         見た目（色・余白・ボタン）を変更 → style（1〜217行）
+         動き・データ処理を変更          → script（478行以降）
+         ========================================================= -->
+
     <canvas id="fx-canvas"></canvas>
     <div id="damage-overlay"></div>
 
@@ -284,6 +294,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: 共通ヘッダー
+             - 音声ON/OFF、設定・一時停止ボタン
+             ======================================================= -->
         <!-- ヘッダー -->
         <div style="width: 100%; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px;">
             <div style="display: flex; gap: 6px;">
@@ -296,6 +310,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: タイトル画面
+             - レベル選択ボタンを編集
+             ======================================================= -->
         <!-- タイトル画面 -->
         <div id="screen-title" style="width: 100%;">
             <div style="font-size: 14px; font-weight: bold; color: #38bdf8; letter-spacing: 3px; margin-top: 10px;">超常識クイズバラエティ</div>
@@ -319,13 +337,17 @@
             <button type="button" class="btn" style="background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); border-color: #f87171; box-shadow: 0 6px 0 #7f1d1d;" onclick="startGame('漢字王')">FINAL LEVEL 👑 漢字王ステージ</button>
         </div>
 
-        <!-- 問題データ読み込み中のローディング画面 -->
+        <!-- HTML: 問題データ読み込み中のローディング画面 -->
         <div id="screen-loading" class="hidden" style="width: 100%; padding: 50px 0;">
             <div style="font-size: 60px; margin-bottom: 15px; animation: rocketHover 0.8s infinite alternate;">🚀</div>
             <h2 style="color: #facc15; font-size: 24px; margin-bottom: 8px; text-shadow: 0 0 15px #facc15;" id="loading-title">ツアーズジェット 発進準備中...</h2>
             <p style="color: #94a3b8; font-size: 14px;" id="loading-desc">出題問題をロードしています</p>
         </div>
 
+        <!-- =======================================================
+             HTML: ゲーム画面
+             - 問題、タイマー、ライフ、解答入力を編集
+             ======================================================= -->
         <!-- ゲーム画面 -->
         <div id="screen-game" class="hidden" style="width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);">
@@ -346,7 +368,9 @@
             <div class="stage-view" id="enemy-box">
                 <div id="boss-badge" class="hidden" style="position: absolute; top: 10px; right: 12px; background: #dc2626; color: white; font-size: 12px; font-weight: 900; padding: 3px 10px; border-radius: 6px; box-shadow: 0 0 12px #dc2626; letter-spacing: 1px; animation: badgePulse 0.8s infinite alternate; z-index: 15;">⚠️ BOSS</div>
                 
+                <!-- リアル敵描画領域 -->
                 <div class="enemy-canvas-wrap" id="enemy-anchor"></div>
+                
                 <div id="kanji-display" class="kanji-text kanji-spawn">川</div>
             </div>
 
@@ -401,6 +425,10 @@
             </div>
         </div>
 
+        <!-- =======================================================
+             HTML: 正解・不正解の解説モーダル
+             - 結果表示と「次へ」ボタンを編集
+             ======================================================= -->
         <!-- 解説モーダル -->
         <div id="modal-explanation" class="modal hidden">
             <div class="modal-content">
@@ -446,6 +474,7 @@
                     <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" style="margin-top: 4px; width: 100%; cursor: pointer;">
                 </div>
 
+                <!-- DEBUG機能: URLに ?deb を付けたときだけ表示。不要ならこのブロックを削除。 -->
                 <div id="debug-panel" class="hidden" style="margin-bottom: 15px; border: 1px dashed #facc15; padding: 10px; border-radius: 10px;">
                     <div style="color: #facc15; font-weight: bold; font-size: 13px; margin-bottom: 6px;">🛠 デバッグメニュー</div>
                     <div id="debug-state" style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px;">状態を読み込み中...</div>
@@ -473,7 +502,11 @@
             </div>
         </div>
 
-        <!-- ライフがなくなったときのゲームオーバー画面 -->
+        <!-- =======================================================
+             HTML: ゲームオーバー画面・全クリア画面
+             - クリア後ランキングの表示もここ
+             ======================================================= -->
+        <!-- HTML: ライフがなくなったときのゲームオーバー画面 -->
         <div id="screen-gameover" class="hidden" style="width: 100%; padding: 20px 0;">
             <h2 style="font-size: 38px; color: #ef4444; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 20px #ef4444;">GAME OVER</h2>
             <p style="color: #cbd5e1; font-size: 16px; margin-bottom: 5px;">ツアーズバギー 大破！</p>
@@ -482,7 +515,7 @@
             <button type="button" class="btn" style="background: #475569; border-color: #94a3b8; box-shadow: 0 4px 0 #1e293b;" onclick="goToTitle()">タイトルへ</button>
         </div>
 
-        <!-- 全15問クリア後の結果・ランキング画面 -->
+        <!-- HTML: 全15問クリア後の結果・ランキング画面 -->
         <div id="screen-clear" class="hidden" style="width: 100%; padding: 20px 0;">
             <h2 style="font-size: 34px; color: #facc15; margin-bottom: 8px; font-weight: 900; text-shadow: 0 0 25px #facc15;">🏆 15問クリア！</h2>
             <p id="clear-stats" style="color: #38bdf8; font-size: 18px; font-weight: bold; margin-bottom: 14px;">漢字ツアーズ 制覇達成！</p>
@@ -508,6 +541,30 @@
     </div>
 
     <script>
+        /* =========================================================
+           JavaScript編集ガイド（このページの動き）
+
+             背景・敵・攻撃アニメーション    → 1. 背景・敵キャラクター・攻撃アニメーション
+             Supabase・保存・入力状態        → 2. AI設定・ブラウザ保存・入力状態
+             問題文・読み方・意味            → 3. 内蔵問題データ
+             JSON読み込み・15問準備          → 4. 問題データの読み込みと15問の準備
+             現在の問題・ライフ・スコア      → 5. ゲームの状態
+             起動処理・入力モード            → 6. 起動時の準備・フリック入力・入力モード切り替え
+             AI接続確認・操作変更             → 7. AIへの接続確認と入力方法の変更
+             ゲーム開始・画面切り替え         → 8. ステージ開始と問題画面の表示
+             タイマー・ライフ                 → 9. 問題の表示・制限時間・ライフの処理
+             正解判定・次の問題               → 10. 答え合わせ・正解/不正解・次の問題
+             スコア・オンラインランキング    → 11. 全クリア時のスコア計算・ランキング
+             デバッグ・IP・端末一覧           → 「DEBUG機能」を検索
+             設定・一時停止・タイトルへ戻る  → 12. 設定・一時停止・タイトル画面へ戻る
+
+           VS Codeで Cmd/Ctrl + F を押して、上の見出しを検索できます。
+
+           デバッグ機能を消す場合：
+           1. 「DEBUG機能」と書かれたHTMLブロックを削除
+           2. 「DEBUG機能」と書かれたJavaScriptブロックを削除
+           ========================================================= */
+
         // --- 1. 背景・敵キャラクター・攻撃アニメーション ---
         const canvas = document.getElementById('fx-canvas');
         const ctx = canvas.getContext('2d');
@@ -517,8 +574,8 @@
         let lasers = [];
         let tunnelSpeed = 1;
         let tunnelOffset = 0;
-        let enemyHitAnimation = 0;
-        let currentEnemyType = 'normal';
+        let enemyHitAnimation = 0; // 敵が攻撃を受けたときの揺れ/赤フラッシュ
+        let currentEnemyType = 'normal'; // 'normal' | 'boss'
         let currentEnemyColor = '#38bdf8';
 
         function resizeCanvas() {
@@ -528,6 +585,7 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
+        // 3D背景トンネル（疾走感のある背景グリッド）
         function draw3DTunnel(time) {
             ctx.save();
             const cx = canvas.width / 2;
@@ -537,6 +595,7 @@
             ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
             ctx.lineWidth = 1.5;
 
+            // 放射状ライン
             const lines = 16;
             for (let i = 0; i < lines; i++) {
                 const angle = (i / lines) * Math.PI * 2;
@@ -548,6 +607,7 @@
                 ctx.stroke();
             }
 
+            // 奥から広がる四角フレーム
             for (let r = tunnelOffset; r < canvas.width * 0.8; r += 40) {
                 const scale = r / (canvas.width * 0.8);
                 const w = canvas.width * scale;
@@ -558,10 +618,12 @@
             ctx.restore();
         }
 
+        // リアル敵キャラクターの描画（オーラ、回転メカリング、サイバーコア）
         function drawRealEnemy(x, y, isBoss, time) {
             ctx.save();
             ctx.translate(x, y);
 
+            // 被弾時シェイク
             if (enemyHitAnimation > 0) {
                 ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
                 enemyHitAnimation--;
@@ -571,6 +633,7 @@
             const mainColor = isBoss ? '#ef4444' : (currentEnemyColor || '#38bdf8');
             const secondaryColor = isBoss ? '#facc15' : '#818cf8';
 
+            // 1. 脈動するエネルギーオーラ
             const auraScale = 1 + Math.sin(time * 0.005) * 0.15;
             const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, size * 1.8 * auraScale);
             grad.addColorStop(0, isBoss ? 'rgba(239, 68, 68, 0.6)' : 'rgba(56, 189, 248, 0.5)');
@@ -581,6 +644,7 @@
             ctx.arc(0, 0, size * 1.8 * auraScale, 0, Math.PI * 2);
             ctx.fill();
 
+            // 2. 外側回転メカリング（反時計回り）
             ctx.save();
             ctx.rotate(-time * 0.002);
             ctx.strokeStyle = mainColor;
@@ -596,6 +660,7 @@
             ctx.stroke();
             ctx.restore();
 
+            // 3. 内側高速回転リング（時計回り）
             ctx.save();
             ctx.rotate(time * 0.004);
             ctx.strokeStyle = secondaryColor;
@@ -606,12 +671,14 @@
             ctx.arc(0, 0, size * 0.85, 0, Math.PI * 2);
             ctx.stroke();
             
+            // 突起パターン
             for (let i = 0; i < 8; i++) {
                 const a = (i * Math.PI) / 4;
                 ctx.fillRect(Math.cos(a) * size * 0.85 - 3, Math.sin(a) * size * 0.85 - 3, 6, 6);
             }
             ctx.restore();
 
+            // 4. 中央サイバーエナジーコア（脈動＆発光）
             ctx.shadowBlur = 25;
             ctx.shadowColor = mainColor;
             const coreGrad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, 2, 0, 0, size * 0.6);
@@ -623,6 +690,7 @@
             ctx.arc(0, 0, size * 0.65, 0, Math.PI * 2);
             ctx.fill();
 
+            // 5. ボス専用：稲妻（Lightning Spark）
             if (isBoss) {
                 ctx.strokeStyle = '#facc15';
                 ctx.lineWidth = 2;
@@ -641,6 +709,7 @@
             ctx.restore();
         }
 
+        // パーティクルクラス（爆発・光の破片）
         class Particle {
             constructor(x, y, color, speed, size, decay) {
                 this.x = x; this.y = y; this.color = color;
@@ -669,6 +738,7 @@
             }
         }
 
+        // ショックウェーブ（衝撃波リング）
         class Shockwave {
             constructor(x, y, color) {
                 this.x = x; this.y = y; this.color = color;
@@ -694,6 +764,7 @@
             }
         }
 
+        // レーザービーム攻撃エフェクト（プレイヤー→敵への射撃）
         class LaserBeam {
             constructor(startX, startY, targetX, targetY) {
                 this.startX = startX; this.startY = startY;
@@ -721,6 +792,7 @@
                 ctx.lineTo(curX, curY);
                 ctx.stroke();
 
+                // コア白光
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 4;
                 ctx.stroke();
@@ -739,6 +811,15 @@
             enemyHitAnimation = 15;
         }
 
+        function createConfetti() {
+            const colors = ['#f43f5e', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+            for (let i = 0; i < 90; i++) {
+                const p = new Particle(Math.random() * canvas.width, -10, colors[Math.floor(Math.random() * colors.length)], 4, 6, 0.005);
+                p.gravity = 0.05;
+                particles.push(p);
+            }
+        }
+
         function triggerLaserAttack(targetX, targetY, onHit) {
             const startX = canvas.width / 2;
             const startY = canvas.height - 40;
@@ -755,8 +836,11 @@
 
         function fxLoop(time) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 3D背景トンネル描画
             draw3DTunnel(time);
 
+            // 2. ゲーム中であれば敵キャラクターをリアル描画
             const gameScreen = document.getElementById('screen-game');
             if (gameScreen && !gameScreen.classList.contains('hidden')) {
                 const enemyAnchor = document.getElementById('enemy-anchor');
@@ -768,18 +852,21 @@
                 }
             }
 
+            // 3. レーザー描画・更新
             for (let i = lasers.length - 1; i >= 0; i--) {
                 lasers[i].update();
                 lasers[i].draw();
                 if (lasers[i].finished) lasers.splice(i, 1);
             }
 
+            // 4. 衝撃波描画・更新
             for (let i = shockwaves.length - 1; i >= 0; i--) {
                 shockwaves[i].update();
                 shockwaves[i].draw();
                 if (shockwaves[i].alpha <= 0) shockwaves.splice(i, 1);
             }
 
+            // 5. パーティクル描画・更新
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
                 particles[i].draw();
@@ -797,8 +884,10 @@
             setTimeout(() => { overlay.style.opacity = '0'; }, 200);
         }
 
+        // ------------------ ゲーム本体のJSロジック ------------------
         // --- 2. AI設定・ブラウザ保存・入力状態 ---
         const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
+        // Supabaseの共有ランキング設定（anonキーはRLSで保護された公開用キー）。
         const SUPABASE_REST_URL = "https://rtqgeaftfkjlgadniwxg.supabase.co/rest/v1";
         const ACCESS_TRACKER_URL = "https://rtqgeaftfkjlgadniwxg.supabase.co/functions/v1/access-tracker";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0cWdlYWZ0ZmtqbGdhZG5pd3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3Mjc2ODAsImV4cCI6MjEwNDMwMzY4MH0._s3_de16x_fvx3rvb2TWl7PXBXtROS9e-A_mpKTo84o";
@@ -822,23 +911,6 @@
             'や': { center: 'や', left: '（', top: 'ゆ', right: '）', bottom: 'よ' },
             'ら': { center: 'ら', left: 'り', top: 'る', right: 'れ', bottom: 'ろ' },
             'わ': { center: 'わ', left: 'を', top: 'ん', right: 'ー', bottom: 'っ' }
-        };
-
-        const DAKUTEN_MAP = {
-            'か':'が', 'き':'ぎ', 'く':'ぐ', 'け':'げ', 'こ':'ご',
-            'が':'か', 'ぎ':'き', 'ぐ':'く', 'げ':'け', 'ご':'こ',
-            'さ':'ざ', 'し':'じ', 'す':'ず', 'せ':'ぜ', 'そ':'ぞ',
-            'ざ':'さ', 'じ':'し', 'ず':'す', 'ぜ':'せ', 'ぞ':'そ',
-            'た':'だ', 'ち':'ぢ', 'つ':'っ', 'て':'で', 'と':'ど',
-            'っ':'づ', 'づ':'た', 'ぢ':'ち', 'だ':'た', 'で':'て', 'ど':'と',
-            'は':'ば', 'ひ':'び', 'ふ':'ぶ', 'へ':'べ', 'ほ':'ぼ',
-            'ば':'ぱ', 'び':'ぴ', 'ぶ':'ぷ', 'べ':'ぺ', 'ぼ':'ぽ',
-            'ぱ':'は', 'ぴ':'ひ', 'ぷ':'ふ', 'ぺ':'へ', 'ぽ':'ほ',
-            'や':'ゃ', 'ゆ':'ゅ', 'よ':'ょ',
-            'ゃ':'や', 'ゅ':'ゆ', 'ょ':'よ',
-            'あ':'ぁ', 'い':'ぃ', 'う':'ぅ', 'え':'ぇ', 'お':'ぉ',
-            'ぁ':'あ', 'ぃ':'い', 'ぅ':'う', 'ぇ':'え', 'ぉ':'お',
-            'わ':'ゎ', 'ゎ':'わ'
         };
 
         let activeFlickKey = null;
@@ -999,7 +1071,7 @@
             } catch(e) {}
         }
 
-        // --- 3. 内蔵問題データ ---
+        // --- 3. 内蔵問題データ（問題文・読み方・意味） ---
         const KANJI_DATABASE = {
             "小学生": [
                 ["川","かわ","絶えず水が流れている大きなすじ。"],["山","やま","周囲より高く盛り上がった土地。"],["木","き","地面から生える植物の一種。"],
@@ -1033,7 +1105,8 @@
                 ["驚愕","きょうがく","非常に驚きあきれ返ること。"],["緻密","ちみつ","細かいところまで注意が行き届くさま。"],["便宜","べんぎ","その場に合った都合の良い扱い。"],["普遍","ふへん","全ての事物に広く共通すること。"],["希薄","きはく","思いや濃度が薄いこと。"],
                 ["享受","きょうじゅ","受け入れて自分のものとして楽しむこと。"],["阻害","そがい","邪魔をして妨げること。"],["啓発","けいはつ","気づきを与えて高めること。"],
                 ["暫定","ざんてい","確定するまでの仮の扱い。"],["淘汰","とうた","不適切なものを除外すること。"],["懸念","けねん","気にかかって不安になること。"],
-                ["示唆","しさ","それとなく提案して知らせること。"],["摩擦","まさつ","意見の食い違いで生じるいざこざ。"],["凌駕","りょうが","他を追い抜いて上に出ること。"],["拘束","こうそく","行動の自由を制限すること。"]
+                ["示唆","しさ","それとなく提案して知らせること。"],["摩擦","まさつ","意見の食い違いで生じるいざこざ。"],["凌駕","りょうが","他を追い抜いて上に出ること。"],
+                ["拘束","こうそく","行動の自由を制限すること。"]
             ],
             "一般常識": [
                 ["醤油","しょうゆ","大豆から作られる日本の伝統調味料。"],["流石","さすが","期待通りで素晴らしい様子。"],["相殺","そうさい","互いの貸し借りを消し分けること。"],
@@ -1043,7 +1116,9 @@
                 ["一段落","いちだんらく","ひとまず区切りがつくこと。"],["汎用","はんよう","広く色々な用途に使えること。"],["依存","いぞん","他のものに頼りきること。"],
                 ["殺陣","たて","演劇などで刀を使って殺し合う所作。"],["続柄","つづきがら","親族としての関係・血縁。"],["脆弱","ぜいじゃく","脆くて弱いこと。"],
                 ["捏造","ねつぞう","ありもしない事実をでっち上げること。"],["割愛","かつあい","惜しいと思いながら省略すること。"],["早急","さっきゅう","非常に急いでいること。"],
-                ["老舗","しにせ","代々長く続いている古い店。"],["参酌","さんしゃく","他を照らし合わせて参考にすること。"],["遵守","じゅんしゅ","法律や規則をしっかりと守ること。"],["世論","よろん","社会一般の人々の意見。"],["健気","けなげ","健やかで感心なさま。"],["稟議","りんぎ","会議を開かず書類を回して承認を得ること。"],["恣意","しい","自分勝手な思いつき。"],["刷新","さっしん","状態をガラリと新しくすること。"],["間髪","かんぱつ","髪の毛一本挟む隙もないほど間を置かない。"]
+                ["老舗","しにせ","代々長く続いている古い店。"],["参酌","さんしゃく","他を照らし合わせて参考にすること。"],["遵守","じゅんしゅ","法律や規則をしっかりと守ること。"],
+                ["世論","よろん","社会一般の人々の意見。"],["健気","けなげ","健やかで感心なさま。"],["稟議","りんぎ","会議を開かず書類を回して承認を得ること。"],
+                ["恣意","しい","自分勝手な思いつき。"],["刷新","さっしん","状態をガラリと新しくすること。"],["間髪","かんぱつ","髪の毛一本挟む隙もないほど間を置かない。"]
             ],
             "漢字王": [
                 ["魑魅魍魎","ちみもうりょう","いろいろな化け物や妖怪のこと。"],["百日紅","さるすべり","夏に赤い花を咲かせる樹木。"],["蒲公英","たんぽぽ","黄色い花を咲かせるキク科の植物。"],
@@ -1053,8 +1128,8 @@
                 ["甘楽","かんら","甘い味わいを楽しむこと。"],["仙人掌","さぼてん","茎に水分を蓄える多肉植物。"],["土竜","もぐら","地中で生活する小型の哺乳類。"],
                 ["蜻蛉","とんぼ","大きな複眼を持つ昆虫。"],["紫苑","しおん","秋に薄紫の花を咲かせる植物。"],["玉蜀黍","とうもろこし","黄色の粒が実る穀物。"],
                 ["翡翠","ひすい","深緑色の美しい宝石。"],["啄木鳥","きつつき","木をつついて穴をあける鳥。"],["海月","くらげ","水中に漂う刺胞動物。"],
-                ["金雀枝","えにしだ","黄色の小さな花を咲かせる低木。"],["無患子","むくろじ","種子が羽子の玉に使われる樹木。"],["羊歯","しだ","胞子で増える非種子植物。"],
-                ["山車","だし","祭りで引いて練り歩く車。"],["鱏","えい","平たい体を持つ海水魚。"],["獺","かわうそ","水辺で暮らすイタチ科の動物。"],["鸚鵡","おうむ","人の言葉を真似る鳥。"]
+                ["金雀枝","えにしだ","黄色の小さな花を咲かせる低木。"],["無患子","むくろじ","種子が羽子の玉に使われる樹木。"],["紫陽花","あじさい","紫や青の花をつける植物。"],
+                ["羊歯","しだ","胞子で増える非種子植物。"],["山車","だし","祭りで引いて練り歩く車。"],["鱏","えい","平たい体を持つ海水魚。"],["心太","ところてん","海藻からつくる透明な食品。"],["獺","かわうそ","水辺で暮らすイタチ科の動物。"],["鸚鵡","おうむ","人の言葉を真似る鳥。"]
             ]
         };
 
@@ -1092,6 +1167,7 @@
                 }
                 if (hasInvalidCompound) throw new Error("Invalid repeated compound data");
             } catch (e) {
+                // file:// で開いた場合はブラウザの制限で fetch が失敗するため、内蔵データを使う。
                 localKanjiData = Object.fromEntries(
                     Object.entries(KANJI_DATABASE).map(([category, items]) => [
                         category,
@@ -1141,21 +1217,14 @@
             });
         }
 
+        // JSONの問題から、選択したレベル用の15問をランダムに選ぶ。
         function generateFromLocalJson(mode) {
-            let modeKey = mode;
-            if (mode.startsWith("小学")) {
-                modeKey = "小学生";
-            }
-            const dataSource = (localKanjiData && localKanjiData[modeKey]) ? localKanjiData[modeKey] : (KANJI_DATABASE[modeKey] || KANJI_DATABASE["小学生"]);
+            if (!localKanjiData || !localKanjiData[mode] || localKanjiData[mode].length === 0) return null;
             
-            let pool = dataSource.filter(item => {
-                const k = Array.isArray(item) ? item[0] : item.kanji;
-                return !usedKanjiSet.has(k);
-            });
-
+            let pool = localKanjiData[mode].filter(item => !usedKanjiSet.has(item.kanji));
             if (pool.length < 15) {
                 usedKanjiSet.clear();
-                pool = [...dataSource];
+                pool = [...localKanjiData[mode]];
             }
             
             for (let i = pool.length - 1; i > 0; i--) {
@@ -1167,27 +1236,54 @@
             const selected = pool.slice(0, count);
 
             return selected.map((item, index) => {
-                const kanji = Array.isArray(item) ? item[0] : item.kanji;
-                const reading = Array.isArray(item) ? item[1] : item.reading;
-                const meaning = Array.isArray(item) ? item[2] : (item.meaning || `【STAGE ${index + 1}】${mode}レベルの漢字です。`);
-                usedKanjiSet.add(kanji);
+                usedKanjiSet.add(item.kanji);
                 const isBoss = (index + 1) % 3 === 0;
                 return {
                     id: index + 1,
-                    kanji: convertNumbersToKanji(kanji),
-                    reading: reading,
+                    kanji: convertNumbersToKanji(item.kanji),
+                    reading: item.reading,
+                    schoolGrade: item.schoolGrade,
                     category: isBoss ? `${mode}【BOSS】` : mode,
-                    meaning: convertNumbersToKanji(meaning),
+                    meaning: convertNumbersToKanji(item.meaning || `【STAGE ${index + 1}】${mode}レベルの漢字です。`),
                     isBoss: isBoss
                 };
             });
         }
 
+        // JSONが読めないときに、内蔵データから15問を作る。
         function generateFallbackData(mode) {
-            return generateFromLocalJson(mode);
+            const rawPool = KANJI_DATABASE[mode] || KANJI_DATABASE["小学生"];
+            let pool = rawPool.filter(item => !usedKanjiSet.has(item[0]));
+            if (pool.length < 15) {
+                usedKanjiSet.clear();
+                pool = [...rawPool];
+            }
+            
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            const count = Math.min(15, pool.length);
+            const result = [];
+
+            for (let i = 0; i < count; i++) {
+                const item = pool[i];
+                usedKanjiSet.add(item[0]);
+                const isBoss = (i + 1) % 3 === 0;
+                result.push({
+                    id: i + 1,
+                    kanji: convertNumbersToKanji(item[0]),
+                    reading: item[1],
+                    category: isBoss ? `${mode}【BOSS】` : mode,
+                    meaning: convertNumbersToKanji(item[2] || `【STAGE ${i + 1}】${mode}レベルの常用漢字です。`),
+                    isBoss: isBoss
+                });
+            }
+            return result;
         }
 
-        // --- 5. ゲームの状態 ---
+        // --- 5. ゲームの状態（現在の問題・残りライフ・スコア） ---
         let currentList = [];
         let kanjiDataPromise = null;
         let currentIndex = 0;
@@ -1195,6 +1291,7 @@
         let score = 0;
         let totalTimeSeconds = 0;
         let questionStartedAt = 0;
+        let currentRankingId = null;
         let lives = 3;
         let timer = null;
         let timeRemaining = 10;
@@ -1202,9 +1299,10 @@
         let activeMode = "小学1年";
         let inputMode = getStorage("input_mode", "flick");
         let apiKey = getStorage("hf_api_key", "");
+        // DEBUG機能: 通常は無効。http://localhost:8000/index.html?deb で有効化。
         const DEBUG_MODE = new URLSearchParams(window.location.search).has("deb");
 
-        // --- 6. 起動時の準備・入力モード ---
+        // --- 6. 起動時の準備・フリック入力・入力モード切り替え ---
         function initApp() {
             try {
                 const savedVol = getStorage("sound_volume", "50");
@@ -1368,7 +1466,7 @@
             if (popover) popover.style.display = "none";
         }
 
-        // --- 7. AI接続・操作スタイル切り替え ---
+        // --- 7. AIへの接続確認と入力方法の変更 ---
         async function checkApiStatusBackground() {
             const dot = document.getElementById("status-dot");
             try {
@@ -1417,434 +1515,669 @@
             setStorage("input_mode", mode);
             const selectEl = document.getElementById("settings-input-mode");
             if (selectEl) selectEl.value = mode;
-
+            
             const flickKey = document.getElementById("flick-keyboard");
             const customKey = document.getElementById("custom-keyboard");
             const directSubmit = document.getElementById("direct-submit-container");
-            const arcadeAction = document.getElementById("arcade-action-container");
-            const userInput = document.getElementById("user-input");
-
-            if (flickKey) flickKey.classList.add("hidden");
-            if (customKey) customKey.classList.add("hidden");
-            if (directSubmit) directSubmit.classList.add("hidden");
-            if (arcadeAction) arcadeAction.classList.add("hidden");
-
-            if (mode === "flick") {
+            const arcadeActions = document.getElementById("arcade-action-container");
+            const inputField = document.getElementById("user-input");
+            
+            if (inputMode === "flick") {
                 if (flickKey) flickKey.classList.remove("hidden");
-                if (arcadeAction) arcadeAction.classList.remove("hidden");
-                if (userInput) {
-                    userInput.readOnly = true;
-                    userInput.setAttribute("inputmode", "none");
-                }
-            } else if (mode === "keyboard") {
-                if (customKey) customKey.classList.remove("hidden");
-                if (arcadeAction) arcadeAction.classList.remove("hidden");
-                if (userInput) {
-                    userInput.readOnly = true;
-                    userInput.setAttribute("inputmode", "none");
-                }
-            } else if (mode === "direct") {
+                if (customKey) customKey.classList.add("hidden");
                 if (directSubmit) directSubmit.classList.remove("hidden");
-                if (userInput) {
-                    userInput.readOnly = false;
-                    userInput.removeAttribute("inputmode");
+                if (arcadeActions) arcadeActions.classList.add("hidden");
+                if (inputField) {
+                    inputField.placeholder = "画面下のフリックキーで入力";
+                    inputField.setAttribute("readonly", "true");
+                    inputField.setAttribute("inputmode", "none");
+                }
+            } else if (inputMode === "keyboard") {
+                if (flickKey) flickKey.classList.add("hidden");
+                if (customKey) customKey.classList.remove("hidden");
+                if (directSubmit) directSubmit.classList.add("hidden");
+                if (arcadeActions) arcadeActions.classList.remove("hidden");
+                if (inputField) {
+                    inputField.placeholder = "画面の五十音パネルで入力";
+                    inputField.setAttribute("readonly", "true");
+                    inputField.setAttribute("inputmode", "none");
+                }
+            } else if (inputMode === "direct") {
+                if (flickKey) flickKey.classList.add("hidden");
+                if (customKey) customKey.classList.add("hidden");
+                if (directSubmit) directSubmit.classList.remove("hidden");
+                if (arcadeActions) arcadeActions.classList.add("hidden");
+                if (inputField) {
+                    inputField.placeholder = "キーボードで入力（Enterで発射）";
+                    inputField.removeAttribute("readonly");
+                    inputField.removeAttribute("inputmode");
                 }
             }
         }
 
-        async function testApiKey() {
-            const inputVal = document.getElementById("api-key-input") ? document.getElementById("api-key-input").value.trim() : "";
-            const resultEl = document.getElementById("auth-result");
-            if (resultEl) resultEl.innerText = "接続テスト中...";
-            
-            apiKey = inputVal;
-            setStorage("hf_api_key", apiKey);
-            
-            await checkApiStatusBackground();
-            if (resultEl) {
-                if (isApiOnline) {
-                    resultEl.style.color = "#4ade80";
-                    resultEl.innerText = "✅ API接続成功！AI判定・解説が有効です";
-                } else {
-                    resultEl.style.color = "#f87171";
-                    resultEl.innerText = "❌ 接続不可（トークン確認または通信環境）";
-                }
-            }
+        function restartWithContinue() {
+            usedKanjiSet.clear();
+            startGame(activeMode);
         }
 
-        // --- 8. ゲーム画面の切り替えと開始 ---
-        function showScreen(screenId) {
-            const screens = ["screen-title", "screen-loading", "screen-game", "screen-gameover", "screen-clear"];
-            screens.forEach(s => {
-                const el = document.getElementById(s);
-                if (el) {
-                    if (s === screenId) el.classList.remove("hidden");
-                    else el.classList.add("hidden");
-                }
-            });
-        }
+        // --- 8. ステージ開始と問題画面の表示 ---
+        // タイトル画面からゲームを開始し、問題データを準備する。
+        async function startGame(mode) {
+            try {
+                initAudio();
+                playSound('click');
+            } catch(e){}
 
-        function openSettings() {
-            isPaused = true;
-            stopTimer();
-            const modal = document.getElementById("modal-settings");
-            if (modal) modal.classList.remove("hidden");
-            if (DEBUG_MODE) updateDebugState();
-        }
-
-        function closeSettings() {
-            const modal = document.getElementById("modal-settings");
-            if (modal) modal.classList.add("hidden");
+            activeMode = mode;
             isPaused = false;
-            const gameScreen = document.getElementById("screen-game");
-            if (gameScreen && !gameScreen.classList.contains("hidden")) {
-                startTimer();
-            }
-        }
-
-        function goToTitle() {
-            stopTimer();
-            stopBGM();
-            closeSettings();
-            document.getElementById("modal-explanation")?.classList.add("hidden");
-            showScreen("screen-title");
-        }
-
-        async function startGame(level) {
-            initAudio();
-            activeMode = level;
-            showScreen("screen-loading");
-
-            if (kanjiDataPromise) await kanjiDataPromise;
-
-            currentList = generateFromLocalJson(level) || generateFallbackData(level);
             currentIndex = 0;
             clearedCount = 0;
             score = 0;
             totalTimeSeconds = 0;
+            questionStartedAt = 0;
+            currentRankingId = null;
             lives = 3;
 
-            updateLivesDisplay();
-            showScreen("screen-game");
+            const titleEl = document.getElementById("screen-title");
+            const overEl = document.getElementById("screen-gameover");
+            const clearEl = document.getElementById("screen-clear");
+            const loadEl = document.getElementById("screen-loading");
+
+            if (titleEl) titleEl.classList.add("hidden");
+            sendAccessHeartbeat("game");
+            if (overEl) overEl.classList.add("hidden");
+            if (clearEl) clearEl.classList.add("hidden");
+            if (loadEl) loadEl.classList.remove("hidden");
+
+            let loadedQuestions = null;
+
+            if (!localKanjiData && kanjiDataPromise) {
+                await kanjiDataPromise;
+            }
+
+            if (localKanjiData) {
+                const lTitle = document.getElementById("loading-title");
+                const lDesc = document.getElementById("loading-desc");
+                if (lTitle) lTitle.innerText = "データロード中...";
+                if (lDesc) lDesc.innerText = `kanji_data.json から「${mode}」問題を選択中`;
+                loadedQuestions = generateFromLocalJson(mode);
+            }
+
+            if (!loadedQuestions && isApiOnline && apiKey && navigator.onLine) {
+                try {
+                    const lTitle = document.getElementById("loading-title");
+                    const lDesc = document.getElementById("loading-desc");
+                    if (lTitle) lTitle.innerText = "ツアーズジェット 15問生成中...";
+                    if (lDesc) lDesc.innerText = "AIが問題を生成しています";
+
+                    const excludeList = Array.from(usedKanjiSet).join("、");
+                    let prompt = `「${mode}」コース用の全15問の漢字クイズを出題してください。1〜15問にかけて段階的に難易度をアップしてください。3, 6, 9, 12, 15問目は"isBoss": trueとしてください。${excludeList ? `【除外漢字】以下の漢字は絶対に使わないでください: ${excludeList}。` : ''} JSON形式のみ出力してください。例: {"questions":[{"id":1,"kanji":"川","reading":"かわ","category":"${mode}","meaning":"川のこと","isBoss":false}]}`;
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+                    const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${apiKey}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: HF_MODEL,
+                            messages: [{ role: "user", content: prompt }],
+                            max_tokens: 2000,
+                            temperature: 0.7
+                        }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        let textContent = data.choices?.[0]?.message?.content;
+                        if (textContent) {
+                            textContent = textContent.replace(/```json/g, '').replace(/```/g, '').trim();
+                            const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+                            if (jsonMatch) textContent = jsonMatch[0];
+                            const jsonContent = JSON.parse(textContent);
+                            if (jsonContent && jsonContent.questions && Array.isArray(jsonContent.questions) && jsonContent.questions.length > 0) {
+                                loadedQuestions = jsonContent.questions;
+                                loadedQuestions.forEach(q => usedKanjiSet.add(q.kanji));
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            if (!loadedQuestions || loadedQuestions.length < 15) {
+                loadedQuestions = generateFallbackData(mode);
+            }
+
+            loadedQuestions = loadedQuestions.slice(0, 15).map((question, index) => {
+                const isBoss = (index + 1) % 3 === 0;
+                return {
+                    ...question,
+                    id: index + 1,
+                    kanji: convertNumbersToKanji(question.kanji),
+                    meaning: convertNumbersToKanji(question.meaning),
+                    category: isBoss ? `${mode}【BOSS】` : mode,
+                    isBoss
+                };
+            });
+
+            currentList = loadedQuestions;
+
+            const lTitle = document.getElementById("loading-title");
+            const lDesc = document.getElementById("loading-desc");
+            if (lTitle) lTitle.innerText = "ツアーズバギー 発進！";
+            if (lDesc) lDesc.innerText = "出題データロード完了";
+
+            setTimeout(() => {
+                initGameScreen();
+            }, 100);
+        }
+
+        function initGameScreen() {
+            const loadEl = document.getElementById("screen-loading");
+            const gameEl = document.getElementById("screen-game");
+            if (loadEl) loadEl.classList.add("hidden");
+            if (gameEl) gameEl.classList.remove("hidden");
+            
+            changeInputMode(inputMode);
             loadQuestion();
         }
 
-        function restartWithContinue() {
-            if (currentList.length === 0) {
-                startGame(activeMode);
+        async function testApiKey() {
+            playSound('click');
+            const keyEl = document.getElementById("api-key-input");
+            const key = keyEl ? keyEl.value.trim() : "";
+            const resResult = document.getElementById("auth-result");
+            const dot = document.getElementById("status-dot");
+            
+            if (!key) {
+                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ トークンを入力してください</span>";
+                isApiOnline = false;
+                if (dot) dot.className = "status-dot dot-red";
                 return;
             }
-            lives = 3;
-            updateLivesDisplay();
-            document.getElementById("modal-explanation")?.classList.add("hidden");
-            showScreen("screen-game");
-            loadQuestion();
+
+            if (resResult) resResult.innerHTML = "<span style='color:#facc15;'>🔄 接続認証テスト中...</span>";
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+                const res = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${key}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: HF_MODEL,
+                        messages: [{ role: "user", content: "test" }],
+                        max_tokens: 5
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (res.ok) {
+                    if (resResult) resResult.innerHTML = "<span style='color:#22c55e;'>✅ 認証成功！（AI出題モード有効）</span>";
+                    playSound('correct');
+                    isApiOnline = true;
+                    if (dot) dot.className = "status-dot dot-green";
+                } else {
+                    if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 認証エラー（無効なトークン）</span>";
+                    playSound('wrong');
+                    isApiOnline = false;
+                    if (dot) dot.className = "status-dot dot-red";
+                }
+            } catch (e) {
+                if (resResult) resResult.innerHTML = "<span style='color:#ef4444;'>❌ 接続タイムアウト</span>";
+                playSound('wrong');
+                isApiOnline = false;
+                if (dot) dot.className = "status-dot dot-red";
+            }
         }
 
-        // --- 9. 問題表示・制限時間・ライフ処理 ---
-        function updateLivesDisplay() {
-            const el = document.getElementById("lives-container");
-            if (!el) return;
-            let rockets = "";
-            for (let i = 0; i < lives; i++) rockets += "🚀";
-            el.innerText = rockets || "💥";
-        }
-
+        // --- 9. 問題の表示・制限時間・ライフの処理 ---
+        // 現在の問題を画面に表示する。15問終了ならクリア画面へ進む。
         function loadQuestion() {
             if (currentIndex >= currentList.length) {
-                showClearScreen();
+                stopBGM();
+                createConfetti();
+                document.getElementById("screen-game").classList.add("hidden");
+                document.getElementById("screen-clear").classList.remove("hidden");
+                document.getElementById("clear-stats").innerText = `正解撃破数: ${clearedCount} / 15問　総合時間: ${formatTotalTime(totalTimeSeconds)}`;
+                score += lives * 100;
+                saveRanking(getStorage("ranking_name", "あなた"));
+                renderRanking();
+                updateDebugState();
                 return;
             }
-
             const q = currentList[currentIndex];
-            const stageText = document.getElementById("stage-text");
-            const categoryText = document.getElementById("category-text");
-            const kanjiDisplay = document.getElementById("kanji-display");
-            const enemyBox = document.getElementById("enemy-box");
-            const bossBadge = document.getElementById("boss-badge");
-            const aiMessage = document.getElementById("ai-message");
-            const userInput = document.getElementById("user-input");
-
-            if (stageText) stageText.innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
-            if (categoryText) categoryText.innerText = `【${q.category}】`;
-
-            currentEnemyType = q.isBoss ? 'boss' : 'normal';
-            const colors = ['#38bdf8', '#818cf8', '#34d399', '#f43f5e', '#a855f7'];
-            currentEnemyColor = colors[currentIndex % colors.length];
-
-            if (bossBadge) {
-                if (q.isBoss) bossBadge.classList.remove("hidden");
-                else bossBadge.classList.add("hidden");
-            }
-
-            if (kanjiDisplay) {
-                kanjiDisplay.innerText = q.kanji;
-                kanjiDisplay.classList.remove("kanji-spawn");
-                void kanjiDisplay.offsetWidth;
-                kanjiDisplay.classList.add("kanji-spawn");
-            }
-
-            if (enemyBox) {
-                enemyBox.classList.remove("danger-border");
-            }
-
-            if (userInput) userInput.value = "";
-            if (aiMessage) aiMessage.innerText = `🎙️「第${currentIndex + 1}問！「${q.kanji}」の読みをお答えください！」`;
-
-            timeRemaining = 10;
-            updateTimerUI();
             questionStartedAt = Date.now();
-            startTimer();
-            startBGM();
-        }
+            document.getElementById("stage-text").innerText = `STAGE ${currentIndex + 1} / ${currentList.length}`;
+            document.getElementById("category-text").innerText = `【${q.category || activeMode}】`;
+            const passButton = document.getElementById("pass-btn");
+            if (passButton) {
+                passButton.disabled = Boolean(q.isBoss);
+                passButton.innerText = q.isBoss ? "⛔ ボスはパス不可" : "⏭️ パス (-1 LIFE)";
+            }
+            
+            const kanjiDisplay = document.getElementById("kanji-display");
+            kanjiDisplay.innerText = q.kanji;
+            kanjiDisplay.classList.remove("kanji-spawn");
+            void kanjiDisplay.offsetWidth;
+            kanjiDisplay.classList.add("kanji-spawn");
 
-        function startTimer() {
-            stopTimer();
-            timer = setInterval(tickTimer, 1000);
-        }
+            const inputField = document.getElementById("user-input");
+            inputField.value = "";
 
-        function stopTimer() {
-            if (timer) clearInterval(timer);
-            timer = null;
-        }
-
-        function tickTimer() {
-            if (isPaused) return;
-            timeRemaining--;
-            updateTimerUI();
-
-            if (timeRemaining <= 3 && timeRemaining > 0) {
-                playSound('tick');
+            if (inputMode === "direct") {
+                setTimeout(() => { inputField.focus(); }, 100);
             }
 
-            if (timeRemaining <= 0) {
-                handleTimeout();
-            }
-        }
-
-        function updateTimerUI() {
-            const timerBox = document.getElementById("timer-box");
-            const timerText = document.getElementById("timer-text");
-            const enemyBox = document.getElementById("enemy-box");
-
-            if (timerText) timerText.innerText = timeRemaining;
-
-            if (timeRemaining <= 3) {
-                if (timerBox) timerBox.classList.add("timer-warning");
-                if (enemyBox) enemyBox.classList.add("danger-border");
+            const bossBadge = document.getElementById("boss-badge");
+            
+            // 敵キャラクター設定の適用（Canvasレンダラーへ連動）
+            if (q.isBoss) {
+                bossBadge.classList.remove("hidden");
+                currentEnemyType = 'boss';
+                document.getElementById("ai-message").innerText = `🎙️「⚠️ BOSS出現！第${currentIndex + 1}問！正解して粉砕せよ！」`;
+                playSound('boss');
             } else {
-                if (timerBox) timerBox.classList.remove("timer-warning");
-                if (enemyBox) enemyBox.classList.remove("danger-border");
+                bossBadge.classList.add("hidden");
+                currentEnemyType = 'normal';
+                const colors = ['#38bdf8', '#4ade80', '#c084fc', '#facc15', '#fb7185'];
+                currentEnemyColor = colors[currentIndex % colors.length];
+                document.getElementById("ai-message").innerText = `🎙️「第${currentIndex + 1}問！この漢字の読みを入力してください！」`;
             }
+
+            updateLives();
+            resetTimer();
+            updateDebugState();
         }
 
-        function handleTimeout() {
-            stopTimer();
-            playSound('wrong');
-            flashDamage();
-            lives--;
-            updateLivesDisplay();
+        function updateLives() {
+            document.getElementById("lives-container").innerText = "🚀".repeat(Math.max(0, lives)) + "💥".repeat(Math.max(0, 3 - lives));
+        }
 
+        // 問題ごとの10秒タイマーを開始する。
+        function resetTimer() {
+            clearInterval(timer);
+            timeRemaining = 10;
+            const timerText = document.getElementById("timer-text");
+            const timerBox = document.getElementById("timer-box");
             const enemyBox = document.getElementById("enemy-box");
-            if (enemyBox) {
-                enemyBox.classList.add("shake-hard");
-                setTimeout(() => enemyBox.classList.remove("shake-hard"), 500);
-            }
+
+            timerText.innerText = timeRemaining;
+            timerBox.classList.remove("timer-warning");
+            if (enemyBox) enemyBox.classList.remove("danger-border");
+
+            startBGM();
+
+            timer = setInterval(() => {
+                if (isPaused) return;
+                timeRemaining--;
+                timerText.innerText = timeRemaining;
+
+                if (timeRemaining === 5) startBGM();
+
+                if (timeRemaining <= 5) {
+                    timerBox.classList.add("timer-warning");
+                    if (enemyBox) enemyBox.classList.add("danger-border");
+                    playSound('tick');
+                }
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timer);
+                    triggerTimeUp();
+                }
+            }, 1000);
+        }
+
+        // 現在の問題にかかった時間を合計時間へ加える（最大10秒）。
+        function recordQuestionTime() {
+            if (!questionStartedAt) return;
+            const elapsedSeconds = Math.min(10, Math.max(0, (Date.now() - questionStartedAt) / 1000));
+            totalTimeSeconds += elapsedSeconds;
+            questionStartedAt = 0;
+        }
+
+        function triggerTimeUp() {
+            recordQuestionTime();
+            flashDamage();
+            playSound('wrong');
+            lives--;
+            updateLives();
+            const q = currentList[currentIndex];
 
             if (lives <= 0) {
-                showGameOver();
+                stopBGM();
+                showExplanationModal(q, 'timeup_gameover');
             } else {
-                const aiMessage = document.getElementById("ai-message");
-                if (aiMessage) aiMessage.innerText = "🎙️「時間切れ！ライフ減少！もう一度挑戦！」";
-                timeRemaining = 10;
-                updateTimerUI();
-                startTimer();
+                showExplanationModal(q, 'timeup');
             }
         }
 
-        // --- 10. キー入力・回答判定 ---
         function addKey(char) {
             playSound('click');
             const input = document.getElementById("user-input");
-            if (input) input.value += char;
+            input.value += char;
         }
 
         function delKey() {
             playSound('click');
             const input = document.getElementById("user-input");
-            if (input) input.value = input.value.slice(0, -1);
+            input.value = input.value.slice(0, -1);
         }
 
         function toggleDakutenSmall() {
             playSound('click');
             const input = document.getElementById("user-input");
-            if (!input || !input.value) return;
-            const lastChar = input.value.slice(-1);
-            if (DAKUTEN_MAP[lastChar]) {
-                input.value = input.value.slice(0, -1) + DAKUTEN_MAP[lastChar];
+            let str = input.value;
+            if (!str) return;
+            const last = str.slice(-1);
+            
+            const toggleMap = {
+                'あ': 'ぁ', 'ぁ': 'あ', 'い': 'ぃ', 'ぃ': 'い',
+                'う': 'ぅ', 'ぅ': 'ゔ', 'ゔ': 'う', 'え': 'ぇ', 'ぇ': 'え', 'お': 'ぉ', 'ぉ': 'お',
+                'か': 'が', 'が': 'か', 'き': 'ぎ', 'ぎ': 'き', 'く': 'ぐ', 'ぐ': 'く', 'け': 'げ', 'げ': 'け', 'こ': 'ご', 'ご': 'こ',
+                'さ': 'ざ', 'ざ': 'さ', 'し': 'じ', 'じ': 'し', 'す': 'ず', 'ず': 'す', 'せ': 'ぜ', 'ぜ': 'せ', 'そ': 'ぞ', 'ぞ': 'そ',
+                'た': 'だ', 'だ': 'た', 'ち': 'ぢ', 'ぢ': 'ち', 'つ': 'っ', 'っ': 'づ', 'づ': 'つ', 'て': 'で', 'で': 'て', 'と': 'ど', 'ど': 'と',
+                'は': 'ば', 'ば': 'ぱ', 'ぱ': 'は', 'ひ': 'び', 'び': 'ぴ', 'ぴ': 'ひ', 'ふ': 'ぶ', 'ぶ': 'ぷ', 'ぷ': 'ふ',
+                'へ': 'べ', 'べ': 'ぺ', 'ぺ': 'へ', 'ほ': 'ぼ', 'ぼ': 'ぽ', 'ぽ': 'ほ',
+                'や': 'ゃ', 'ゃ': 'や', 'ゆ': 'ゅ', 'ゅ': 'ゆ', 'よ': 'ょ', 'ょ': 'よ', 'わ': 'ゎ', 'ゎ': 'わ'
+            };
+
+            if (toggleMap[last]) {
+                input.value = str.slice(0, -1) + toggleMap[last];
             }
         }
 
-        async function submitAnswer() {
-            const input = document.getElementById("user-input");
-            if (!input || !input.value.trim()) return;
+        function normalizeText(str) {
+            if (!str) return "";
+            let text = str.normalize('NFKC');
+            text = text.replace(/\s+/g, '');
+            text = text.replace(/[\u30a1-\u30f6]/g, function(match) {
+                return String.fromCharCode(match.charCodeAt(0) - 0x60);
+            });
+            return text.trim();
+        }
 
-            const userAns = input.value.trim().toLowerCase();
-            const q = currentList[currentIndex];
-            const correctReading = q.reading.toLowerCase();
+        // --- 10. 答え合わせ・正解/不正解・次の問題 ---
+        // 入力された読み方が正しいか判定し、スコアやライフを更新する。
+        function submitAnswer() {
+            if (isPaused || !timer) return;
 
-            let isCorrect = (userAns === correctReading);
-
-            if (!isCorrect && isApiOnline) {
-                if (userAns.replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60)) === correctReading) {
-                    isCorrect = true;
-                }
+            const inputField = document.getElementById("user-input");
+            const rawVal = inputField.value;
+            const normalizedInput = normalizeText(rawVal);
+            
+            if (!normalizedInput) {
+                document.getElementById("ai-message").innerText = "🎙️「読みが入力されていません！」";
+                playSound('click');
+                return;
             }
 
-            if (isCorrect) {
-                stopTimer();
-                stopBGM();
-                playSound('laser');
-                
-                const elapsed = Math.max(0.5, (Date.now() - questionStartedAt) / 1000);
-                totalTimeSeconds += elapsed;
-                const pts = Math.max(100, Math.floor((10 - Math.min(10, elapsed)) * 100) + 500);
-                score += pts;
+            const q = currentList[currentIndex];
+            const normalizedAnswer = normalizeText(q.reading);
+            
+            if (normalizedInput === normalizedAnswer) {
+                recordQuestionTime();
+                clearInterval(timer);
+                timer = null;
                 clearedCount++;
-
+                score += 100 + (timeRemaining * 10) + (q.isBoss ? 100 : 0);
+                
+                // 攻撃アニメーション＆爆発演出
                 const enemyAnchor = document.getElementById("enemy-anchor");
-                if (enemyAnchor) {
-                    const rect = enemyAnchor.getBoundingClientRect();
-                    const ex = rect.left + rect.width / 2;
-                    const ey = rect.top + rect.height / 2;
-                    triggerLaserAttack(ex, ey, () => {
-                        playSound('correct');
-                        createExplosion(ex, ey, q.isBoss ? 100 : 60);
-                        setTimeout(() => showExplanationModal(q), 400);
-                    });
-                } else {
+                const rect = enemyAnchor.getBoundingClientRect();
+                const targetX = rect.left + rect.width / 2;
+                const targetY = rect.top + rect.height / 2;
+
+                playSound('laser');
+                triggerLaserAttack(targetX, targetY, () => {
                     playSound('correct');
-                    showExplanationModal(q);
-                }
+                    createExplosion(targetX, targetY, q.isBoss ? 110 : 60);
+
+                    setTimeout(() => {
+                        showExplanationModal(q, 'correct');
+                    }, 350);
+                });
+
             } else {
-                playSound('wrong');
-                input.classList.add("shake-hard");
-                setTimeout(() => input.classList.remove("shake-hard"), 400);
-                input.value = "";
-                const aiMessage = document.getElementById("ai-message");
-                if (aiMessage) aiMessage.innerText = "🎙️「違うようです！もう一度！」";
+                loseLife();
             }
         }
 
         function passQuestion() {
-            playSound('wrong');
+            if (isPaused) return;
+
+            const q = currentList[currentIndex];
+            if (q && q.isBoss) {
+                document.getElementById("ai-message").innerText = "🎙️「BOSS戦ではパスできません！」";
+                playSound('wrong');
+                return;
+            }
+
+            clearInterval(timer);
+            timer = null;
+            recordQuestionTime();
             flashDamage();
+            playSound('wrong');
             lives--;
-            updateLivesDisplay();
+            updateLives();
 
             if (lives <= 0) {
-                showGameOver();
+                stopBGM();
+                showExplanationModal(q, 'pass_gameover');
             } else {
-                currentIndex++;
-                loadQuestion();
+                showExplanationModal(q, 'pass');
             }
         }
 
-        // --- 11. モーダル＆結果画面 ---
-        function showExplanationModal(q) {
-            const modal = document.getElementById("modal-explanation");
-            const kanjiEl = document.getElementById("modal-kanji");
-            const readingEl = document.getElementById("modal-reading");
-            const meaningEl = document.getElementById("modal-meaning");
+        function loseLife() {
+            flashDamage();
+            playSound('wrong');
+            lives--;
+            updateLives();
+            clearInterval(timer);
+            timer = null;
+            const container = document.querySelector(".container");
+            container.classList.add("shake-hard");
+            setTimeout(() => container.classList.remove("shake-hard"), 400);
+
+            const q = currentList[currentIndex];
+            if (lives <= 0) {
+                stopBGM();
+                showExplanationModal(q, 'gameover');
+            } else {
+                showExplanationModal(q, 'wrong');
+            }
+        }
+
+        // --- 10-1. 正解・不正解の結果画面 ---
+        // 正解・不正解・時間切れの結果と、漢字の解説を表示する。
+        function showExplanationModal(q, status) {
             const titleEl = document.getElementById("modal-title");
+            const nextBtn = document.getElementById("modal-next-btn");
+            isPaused = true;
+            
+            if (status === 'correct') {
+                titleEl.innerText = q.isBoss ? "💥 BOSS K.O.! 撃破！" : "💥 CLEAR! 撃破！";
+                titleEl.style.color = "#4ade80";
+                nextBtn.innerText = "次のエリアへ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'pass') {
+                titleEl.innerText = "⏭️ パス (LIFE -1)";
+                titleEl.style.color = "#f59e0b";
+                nextBtn.innerText = "次の問題へ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'wrong') {
+                titleEl.innerText = "❌ 不正解 (LIFE -1)";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "次の問題へ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'pass_gameover') {
+                titleEl.innerText = "💥 ライフゼロ！パス（ゲームオーバー）";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "リザルトへ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
+                };
+            } else if (status === 'timeup') {
+                titleEl.innerText = "⏰ TIME UP! (LIFE -1)";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "次の問題へ進む ➔";
+                nextBtn.onclick = nextStage;
+            } else if (status === 'timeup_gameover') {
+                titleEl.innerText = "⏰ TIME UP! ライフゼロ（ゲームオーバー）";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "リザルトへ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
+                };
+            } else if (status === 'gameover') {
+                titleEl.innerText = "💥 GAME OVER (LIFE 0)";
+                titleEl.style.color = "#ef4444";
+                nextBtn.innerText = "リザルトへ ➔";
+                nextBtn.onclick = () => {
+                    document.getElementById("modal-explanation").classList.add("hidden");
+                    document.getElementById("screen-game").classList.add("hidden");
+                    document.getElementById("screen-gameover").classList.remove("hidden");
+                    document.getElementById("gameover-stats").innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (正解撃破数: ${clearedCount})`;
+                };
+            }
 
-            if (titleEl) titleEl.innerText = q.isBoss ? "💥 BOSS CLEAR!" : "💥 STAGE CLEAR!";
-            if (kanjiEl) kanjiEl.innerText = q.kanji;
-            if (readingEl) readingEl.innerText = `【読み】${q.reading}`;
-            if (meaningEl) meaningEl.innerText = q.meaning || "解説データ準備中";
-
-            if (modal) modal.classList.remove("hidden");
+            document.getElementById("modal-kanji").innerText = q.kanji;
+            document.getElementById("modal-reading").innerText = `【読み】${q.reading}`;
+            document.getElementById("modal-meaning").innerText = q.meaning || "解説はありません。";
+            document.getElementById("modal-explanation").classList.remove("hidden");
         }
 
         function nextStage() {
-            const modal = document.getElementById("modal-explanation");
-            if (modal) modal.classList.add("hidden");
+            document.getElementById("modal-explanation").classList.add("hidden");
+            isPaused = false;
             currentIndex++;
             loadQuestion();
         }
 
-        function showGameOver() {
-            stopTimer();
-            stopBGM();
-            playSound('wrong');
-            const stats = document.getElementById("gameover-stats");
-            if (stats) stats.innerText = `到達: STAGE ${currentIndex + 1} / ${currentList.length} (撃破数: ${clearedCount})`;
-            showScreen("screen-gameover");
+        // --- 11. 全クリア時のスコア計算・ランキング ---
+        // ローカルランキング、Supabase登録、ランキング表示をまとめた部分。
+        function getRankingKey() {
+            return `kanji_tours_ranking_${activeMode}`;
         }
 
-        function showClearScreen() {
-            stopTimer();
-            stopBGM();
-            playSound('correct');
-            
-            const stats = document.getElementById("clear-stats");
-            const scoreVal = document.getElementById("clear-score-value");
-            const timeVal = document.getElementById("clear-time-value");
-
-            if (stats) stats.innerText = `【${activeMode}】全15問 完全制覇！`;
-            if (scoreVal) scoreVal.innerText = score.toLocaleString();
-            if (timeVal) timeVal.innerText = `${totalTimeSeconds.toFixed(1)}秒`;
-
-            showScreen("screen-clear");
-            loadRanking();
+        // ランキングに記録する端末情報。IPアドレスや個人情報は取得しない。
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent || "";
+            const browser = userAgent.match(/Edg\/[\d.]+|Chrome\/[\d.]+|Firefox\/[\d.]+|Version\/[\d.]+.*Safari/)?.[0] || "Unknown";
+            return {
+                browser,
+                platform: navigator.platform || "Unknown",
+                language: navigator.language || "Unknown",
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown",
+                screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+                recordedAt: new Date().toISOString()
+            };
         }
 
-        // --- 12. ランキング＆デバッグ・アクセストラッカー ---
-        function saveRankingName(val) {
-            setStorage("ranking_name", val);
+        function getVisitorId() {
+            let visitorId = getStorage("visitor_id", "");
+            if (!/^[a-zA-Z0-9_-]{16,80}$/.test(visitorId)) {
+                visitorId = `${Date.now().toString(36)}-${crypto.randomUUID().replaceAll("-", "")}`;
+                setStorage("visitor_id", visitorId);
+            }
+            return visitorId;
         }
 
-        async function loadRanking() {
-            const listEl = document.getElementById("ranking-list");
-            if (!listEl) return;
-            listEl.innerHTML = "読み込み中...";
-
+        async function sendAccessHeartbeat(page = document.getElementById("screen-title")?.classList.contains("hidden") ? "game" : "title") {
+            if (getStorage("access_log_consent", "") !== "yes") return;
             try {
-                const res = await fetch(`${SUPABASE_REST_URL}/kanji_rankings?category=eq.${encodeURIComponent(activeMode)}&order=score.desc,clear_time.asc&limit=10`, {
-                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+                await fetch(ACCESS_TRACKER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        visitorId: getVisitorId(),
+                        playerName: getStorage("ranking_name", ""),
+                        deviceInfo: getDeviceInfo()
+                        ,page
+                    }),
+                    keepalive: true
                 });
-                if (!res.ok) throw new Error("Fetch failed");
-                const data = await res.json();
-
-                if (!data || data.length === 0) {
-                    listEl.innerHTML = `<div class="ranking-empty">まだ記録がありません。1人目のランクインを目指しましょう！</div>`;
-                    return;
-                }
-
-                let html = `<div class="ranking-table-header"><span>順位</span><span>名前</span><span>スコア</span><span>タイム</span></div>`;
-                data.forEach((item, idx) => {
-                    html += `
-                        <div class="ranking-row">
-                            <span class="ranking-position">${idx + 1}</span>
-                            <span class="ranking-player">${escapeHtml(item.player_name || "名無し")}</span>
-                            <span class="ranking-points">${(item.score || 0).toLocaleString()}</span>
-                            <span class="ranking-time">${(item.clear_time || 0).toFixed(1)}s</span>
-                        </div>
-                    `;
-                });
-                listEl.innerHTML = html;
-            } catch(e) {
-                listEl.innerHTML = `<div class="ranking-empty">ランキングの取得に失敗しました。</div>`;
+            } catch (error) {
+                console.warn("アクセス状況を送信できませんでした。", error);
             }
         }
 
-        async function registerRanking() {
-            const nameInput = document.getElementById("ranking-name");
-            const name = nameInput ? nameInput.value.trim() : "あなた";
-            if (!name) return;
+        function requestAccessLogConsent() {
+            if (getStorage("access_log_consent", "") === "yes") return true;
+            const accepted = window.confirm("BGMなどが流れるので注意してください。");
+            if (accepted) setStorage("access_log_consent", "yes");
+            return accepted;
+        }
 
+        function readRanking() {
             try {
-                const res = await fetch(`${SUPABASE_REST_URL}/kanji_rankings`, {
+                const saved = JSON.parse(getStorage(getRankingKey(), "[]"));
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        // 今回のクリア結果を、このブラウザのランキングへ保存する。
+        function saveRanking(defaultName) {
+            const rankings = readRanking();
+            const entry = {
+                id: currentRankingId || `${Date.now()}-${Math.random()}`,
+                name: defaultName,
+                score,
+                clearedCount,
+                lives,
+                totalTimeSeconds: Math.round(totalTimeSeconds * 10) / 10,
+                createdAt: Date.now(),
+                deviceInfo: getDeviceInfo()
+            };
+            currentRankingId = entry.id;
+            const existingIndex = rankings.findIndex(item => item.id === entry.id);
+            if (existingIndex >= 0) {
+                rankings[existingIndex] = entry;
+            } else {
+                rankings.push(entry);
+            }
+            rankings.sort((a, b) =>
+                b.score - a.score ||
+                b.clearedCount - a.clearedCount ||
+                (Number(a.totalTimeSeconds) || Number.MAX_SAFE_INTEGER) -
+                (Number(b.totalTimeSeconds) || Number.MAX_SAFE_INTEGER) ||
+                b.createdAt - a.createdAt
+            );
+            setStorage(getRankingKey(), JSON.stringify(rankings.slice(0, 20)));
+            submitOnlineRanking(entry);
+        }
+
+        // クリア記録をSupabaseのrankingsテーブルへ送信する。
+        async function submitOnlineRanking(entry) {
+            try {
+                const payload = {
+                    mode: activeMode,
+                    player_name: entry.name,
+                    score: entry.score,
+                    total_time_seconds: entry.totalTimeSeconds,
+                    cleared_count: entry.clearedCount,
+                    device_info: entry.deviceInfo,
+                    visitor_id: getVisitorId()
+                };
+                let response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
                     method: "POST",
                     headers: {
                         "apikey": SUPABASE_ANON_KEY,
@@ -1852,67 +2185,380 @@
                         "Content-Type": "application/json",
                         "Prefer": "return=minimal"
                     },
-                    body: JSON.stringify({
-                        category: activeMode,
-                        player_name: name,
-                        score: score,
-                        clear_time: totalTimeSeconds
-                    })
+                    body: JSON.stringify(payload)
                 });
-                if (res.ok) {
-                    alert("ランキングに登録しました！");
-                    loadRanking();
-                } else {
-                    alert("登録に失敗しました。");
+                // device_info列をまだ追加していない環境でも、既存の登録は継続する。
+                if (!response.ok && response.status === 400) {
+                    delete payload.device_info;
+                    response = await fetch(`${SUPABASE_REST_URL}/rankings`, {
+                        method: "POST",
+                        headers: {
+                            "apikey": SUPABASE_ANON_KEY,
+                            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                            "Content-Type": "application/json",
+                            "Prefer": "return=minimal"
+                        },
+                        body: JSON.stringify(payload)
+                    });
                 }
-            } catch(e) {
-                alert("通信エラーが発生しました。");
+                if (!response.ok) {
+                    throw new Error(`Supabase登録失敗: ${response.status}`);
+                }
+                renderRanking();
+            } catch (error) {
+                console.warn("オンラインランキングを登録できませんでした。ローカルランキングを表示します。", error);
             }
         }
 
-        function escapeHtml(str) {
-            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        // 一度登録した名前を保存し、次回からは登録ボタンなしで使う。
+        function saveRankingName(value) {
+            const name = String(value || "").trim().slice(0, 12);
+            if (name) setStorage("ranking_name", name);
         }
 
-        function requestAccessLogConsent() { return true; }
-        async function sendAccessHeartbeat() {
+        function registerRanking() {
+            const nameInput = document.getElementById("ranking-name");
+            const name = nameInput ? nameInput.value.trim().slice(0, 12) : "";
+            const savedName = name || getStorage("ranking_name", "あなた");
+            setStorage("ranking_name", savedName);
+            saveRanking(savedName);
+            renderRanking();
+        }
+
+        // 保存済みランキングを順位順に画面へ表示する。
+        // 画面のランキング欄へオンラインランキング（失敗時はローカル）を表示する。
+        async function renderRanking() {
+            const localRankings = readRanking();
+            let rankings = localRankings;
+            let isOnline = false;
             try {
-                fetch(ACCESS_TRACKER_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "heartbeat", mode: activeMode })
-                }).catch(() => {});
-            } catch(e) {}
+                const params = new URLSearchParams({
+                    select: "id,player_name,score,total_time_seconds,cleared_count,created_at,device_info",
+                    mode: `eq.${activeMode}`,
+                    order: "score.desc,total_time_seconds.asc,created_at.asc",
+                    limit: "20"
+                });
+                let response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                if (!response.ok && response.status === 400) {
+                    params.set("select", "id,player_name,score,total_time_seconds,cleared_count,created_at");
+                    response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                        headers: {
+                            "apikey": SUPABASE_ANON_KEY,
+                            "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                        }
+                    });
+                }
+                if (!response.ok) throw new Error(`Supabase取得失敗: ${response.status}`);
+                rankings = (await response.json()).map(item => ({
+                    id: item.id,
+                    name: item.player_name,
+                    score: Number(item.score),
+                    totalTimeSeconds: Number(item.total_time_seconds),
+                    clearedCount: Number(item.cleared_count),
+                    createdAt: Date.parse(item.created_at) || 0,
+                    deviceInfo: item.device_info || null
+                }));
+                isOnline = true;
+            } catch (error) {
+                console.warn("オンラインランキングを取得できませんでした。ローカルランキングを表示します。", error);
+            }
+
+            const currentIndexInRanking = rankings.findIndex(item =>
+                item.score === score &&
+                item.name === getStorage("ranking_name", "あなた") &&
+                Math.round(Number(item.totalTimeSeconds) * 10) === Math.round(totalTimeSeconds * 10)
+            );
+            const rankEl = document.getElementById("clear-rank");
+            const listEl = document.getElementById("ranking-list");
+            if (rankEl) {
+                rankEl.innerText = currentIndexInRanking >= 0
+                    ? `あなたの順位: ${currentIndexInRanking + 1}位`
+                    : "今回の順位を集計中";
+            }
+            const scoreEl = document.getElementById("clear-score-value");
+            const timeEl = document.getElementById("clear-time-value");
+            if (scoreEl) scoreEl.innerText = `${score.toLocaleString()}点`;
+            if (timeEl) timeEl.innerText = formatTotalTime(totalTimeSeconds);
+            if (listEl) {
+                const rows = rankings.slice(0, 5).map((item, index) => {
+                    const isCurrent = item.score === score &&
+                        item.name === getStorage("ranking_name", "あなた") &&
+                        Math.round(Number(item.totalTimeSeconds) * 10) === Math.round(totalTimeSeconds * 10);
+                    const time = formatTotalTime(item.totalTimeSeconds);
+                    return `<div class="ranking-row${isCurrent ? " is-current" : ""}">
+                        <span class="ranking-position">${index + 1}</span>
+                        <span class="ranking-player">${isCurrent ? "▶ " : ""}${escapeHtml(item.name || "あなた")}</span>
+                        <span class="ranking-points">${Number(item.score || 0).toLocaleString()}点</span>
+                        <span class="ranking-time">${time}</span>
+                    </div>`;
+                }).join("");
+                listEl.innerHTML = rankings.length
+                    ? `<div class="ranking-table-header"><span>順位</span><span>名前</span><span style="text-align:right;">スコア</span><span style="text-align:right;">時間</span></div>${rows}<div class="ranking-source">${isOnline ? "🌐 オンラインランキング" : "📱 この端末のランキング"}</div>`
+                    : `<div class="ranking-empty">まだランキングがありません。</div>`;
+            }
+        }
+
+        function formatTotalTime(seconds) {
+            if (!Number.isFinite(Number(seconds))) return "--:--";
+            const totalSeconds = Math.max(0, Math.round(Number(seconds)));
+            const minutes = Math.floor(totalSeconds / 60);
+            const remainingSeconds = String(totalSeconds % 60).padStart(2, "0");
+            return `${minutes}:${remainingSeconds}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
+        // DEBUG機能: テスト用ボタン。通常プレイではURLにdebがないため使えない。
+        function formatDeviceInfo(deviceInfo) {
+            if (!deviceInfo) return "端末情報なし（古い記録、またはdevice_info列未設定）";
+            return Object.entries(deviceInfo)
+                .map(([key, value]) => `${escapeHtml(key)}: ${escapeHtml(typeof value === "object" ? JSON.stringify(value) : value)}`)
+                .join(" / ");
+        }
+
+        // DEBUG機能: 設定画面からランキングの全項目と端末情報を確認する。
+        async function debugLoadRanking() {
+            if (!DEBUG_MODE) return;
+            const listEl = document.getElementById("debug-ranking-list");
+            if (!listEl) return;
+            listEl.innerText = "ランキングを読み込み中...";
+            try {
+                const params = new URLSearchParams({
+                    select: "id,mode,player_name,score,total_time_seconds,cleared_count,created_at,device_info,visitor_id",
+                    mode: `eq.${activeMode}`,
+                    order: "score.desc,total_time_seconds.asc,created_at.asc",
+                    limit: "50"
+                });
+                let response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                    }
+                });
+                if (!response.ok && response.status === 400) {
+                    params.set("select", "id,mode,player_name,score,total_time_seconds,cleared_count,created_at,visitor_id");
+                    response = await fetch(`${SUPABASE_REST_URL}/rankings?${params}`, {
+                        headers: {
+                            "apikey": SUPABASE_ANON_KEY,
+                            "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                        }
+                    });
+                }
+                if (!response.ok) throw new Error(`取得失敗: ${response.status}`);
+                const rankings = await response.json();
+                const password = document.getElementById("admin-password")?.value || "";
+                if (!password) throw new Error("IPと端末情報を表示するには管理者パスワードを入力してください。");
+                const accessResponse = await fetch(ACCESS_TRACKER_URL, {
+                    headers: { "x-admin-password": password }
+                });
+                if (!accessResponse.ok) {
+                    throw new Error(accessResponse.status === 401
+                        ? "管理者パスワードが違います。"
+                        : `アクセスログ取得失敗: ${accessResponse.status}`);
+                }
+                const accessByVisitorId = new Map(
+                    (await accessResponse.json()).map(item => [item.visitor_id, item])
+                );
+                listEl.innerHTML = rankings.map((item, index) => {
+                    const date = item.created_at ? new Date(item.created_at).toLocaleString("ja-JP") : "日時不明";
+                    const access = accessByVisitorId.get(item.visitor_id);
+                    return `<div style="border-bottom:1px solid #475569; padding:6px 0;">
+                        <b>${index + 1}位 ${escapeHtml(item.player_name || "名前なし")}</b><br>
+                        ID: ${escapeHtml(item.id || "不明")}<br>
+                        コース: ${escapeHtml(item.mode || activeMode)}<br>
+                        スコア: ${Number(item.score || 0).toLocaleString()}点<br>
+                        総合時間: ${formatTotalTime(item.total_time_seconds)}<br>
+                        クリア数: ${Number(item.cleared_count || 0)}問<br>
+                        登録日時: ${escapeHtml(date)}<br>
+                        訪問者ID: ${escapeHtml(item.visitor_id || "未記録")}<br>
+                        IPアドレス: ${escapeHtml(access?.ip_address || "未記録")}<br>
+                        最初のアクセス: ${escapeHtml(access?.first_seen ? new Date(access.first_seen).toLocaleString("ja-JP") : "未記録")}<br>
+                        最終アクセス: ${escapeHtml(access?.last_seen ? new Date(access.last_seen).toLocaleString("ja-JP") : "未記録")}<br>
+                        <span style="color:#cbd5e1;">端末情報: ${formatDeviceInfo(access?.device_info || item.device_info)}</span>
+                    </div>`;
+                }).join("") || "このコースのランキングはありません。";
+            } catch (error) {
+                listEl.innerText = `ランキングを取得できませんでした: ${error.message}`;
+            }
+        }
+
+        // DEBUG機能: ローカルとSupabaseの現在コースの記録を削除する。
+        async function debugDeleteRanking() {
+            if (!DEBUG_MODE) return;
+            const password = document.getElementById("admin-password")?.value || "";
+            if (!password) {
+                const listEl = document.getElementById("debug-ranking-list");
+                if (listEl) listEl.innerText = "オンライン削除には管理者パスワードが必要です。";
+                return;
+            }
+            if (!window.confirm(`「${activeMode}」のランキングをローカルとオンラインから全削除します。実行しますか？`)) return;
+            setStorage(getRankingKey(), "[]");
+            let message = "ローカルランキングを削除しました。";
+            try {
+                const response = await fetch(`${ACCESS_TRACKER_URL}?mode=${encodeURIComponent(activeMode)}`, {
+                    method: "DELETE",
+                    headers: { "x-admin-password": password }
+                });
+                if (!response.ok) {
+                    throw new Error(response.status === 401 || response.status === 403
+                        ? "管理者パスワードが違います。"
+                        : `オンライン削除失敗: ${response.status}`);
+                }
+                message += " オンラインランキングも削除しました。";
+            } catch (error) {
+                message += ` オンラインは削除できませんでした: ${error.message}`;
+            }
+            const listEl = document.getElementById("debug-ranking-list");
+            if (listEl) listEl.innerText = message;
+            renderRanking();
+        }
+
+        // DEBUG機能: 管理者パスワードで認証し、アクセス元IPと端末情報を確認する。
+        async function debugLoadAccessLogs() {
+            if (!DEBUG_MODE) return;
+            const password = document.getElementById("admin-password")?.value || "";
+            const listEl = document.getElementById("debug-access-list");
+            if (!password) {
+                if (listEl) listEl.innerText = "管理者パスワードを入力してください。";
+                return;
+            }
+            if (listEl) listEl.innerText = "アクセス状況を読み込み中...";
+            try {
+                const response = await fetch(ACCESS_TRACKER_URL, {
+                    headers: { "x-admin-password": password }
+                });
+                if (!response.ok) throw new Error(response.status === 401 ? "管理者パスワードが違います。" : `取得失敗: ${response.status}`);
+                const logs = await response.json();
+                if (listEl) {
+                    listEl.innerHTML = logs.map((item) => {
+                        const lastSeen = new Date(item.last_seen).toLocaleString("ja-JP");
+                        return `<div style="border-bottom:1px solid #475569; padding:4px 0;">
+                            <b>${escapeHtml(item.player_name || "名前未登録")}</b>
+                            / IP: ${escapeHtml(item.ip_address || "不明")}
+                            / 画面: ${escapeHtml(item.current_page === "game" ? "ゲーム中" : "タイトル")}
+                            / 最終アクセス: ${escapeHtml(lastSeen)}<br>
+                            <span style="color:#cbd5e1;">${formatDeviceInfo(item.device_info)}</span>
+                        </div>`;
+                    }).join("") || "現在アクセス中の端末はありません。";
+                }
+            } catch (error) {
+                if (listEl) listEl.innerText = `アクセス状況を取得できませんでした: ${error.message}`;
+            }
+        }
+
+        // DEBUG機能: 現在タイトル画面にいる端末だけを表示する。
+        async function debugLoadTitleDevices() {
+            if (!DEBUG_MODE) return;
+            const listEl = document.getElementById("debug-access-list");
+            const password = document.getElementById("admin-password")?.value || "";
+            if (!password) {
+                if (listEl) listEl.innerText = "管理者パスワードを入力してください。";
+                return;
+            }
+            if (listEl) listEl.innerText = "タイトル画面の端末を読み込み中...";
+            try {
+                const response = await fetch(ACCESS_TRACKER_URL, {
+                    headers: { "x-admin-password": password }
+                });
+                if (!response.ok) throw new Error(response.status === 401 ? "管理者パスワードが違います。" : `取得失敗: ${response.status}`);
+                const logs = (await response.json()).filter(item => item.current_page === "title");
+                if (listEl) {
+                    listEl.innerHTML = logs.map(item => `<div style="border-bottom:1px solid #475569; padding:4px 0;">
+                        <b>${escapeHtml(item.player_name || "名前未登録")}</b>
+                        / IP: ${escapeHtml(item.ip_address || "不明")}<br>
+                        最終アクセス: ${escapeHtml(new Date(item.last_seen).toLocaleString("ja-JP"))}<br>
+                        端末: ${formatDeviceInfo(item.device_info)}
+                    </div>`).join("") || "現在タイトル画面を開いている端末はありません。";
+                }
+            } catch (error) {
+                if (listEl) listEl.innerText = `タイトル画面の端末を取得できませんでした: ${error.message}`;
+            }
         }
 
         function updateDebugState() {
-            const el = document.getElementById("debug-state");
-            if (el) el.innerText = `Index: ${currentIndex}, Score: ${score}, Lives: ${lives}, Time: ${timeRemaining}`;
-        }
-
-        function debugSolveCurrent() {
-            if (currentIndex < currentList.length) {
-                const input = document.getElementById("user-input");
-                if (input) input.value = currentList[currentIndex].reading;
-                submitAnswer();
+            if (!DEBUG_MODE) return;
+            const stateEl = document.getElementById("debug-state");
+            if (stateEl) {
+                stateEl.innerText = `ステージ: ${currentIndex + 1}/${currentList.length || 0}　ライフ: ${lives}　スコア: ${score}`;
             }
         }
 
+        function debugSolveCurrent() {
+            if (!DEBUG_MODE || !currentList[currentIndex]) return;
+            isPaused = false;
+            const inputField = document.getElementById("user-input");
+            inputField.value = currentList[currentIndex].reading;
+            submitAnswer();
+            updateDebugState();
+        }
+
         function debugAddLife() {
-            lives = Math.min(5, lives + 1);
-            updateLivesDisplay();
+            if (!DEBUG_MODE) return;
+            lives = Math.min(3, lives + 1);
+            updateLives();
             updateDebugState();
         }
 
         function debugClearStage() {
-            currentIndex = currentList.length - 1;
-            debugSolveCurrent();
+            if (!DEBUG_MODE || !currentList.length) return;
+            clearInterval(timer);
+            timer = null;
+            isPaused = false;
+            document.getElementById("modal-explanation").classList.add("hidden");
+            currentIndex = currentList.length;
+            loadQuestion();
         }
 
-        function debugLoadRanking() { loadRanking(); }
-        function debugDeleteRanking() { alert("デバッグ: ランキング削除機能"); }
-        function debugLoadAccessLogs() { alert("デバッグ: アクセスログ機能"); }
-        function debugLoadTitleDevices() { alert("デバッグ: 端末情報機能"); }
+        // --- 12. 設定・一時停止・タイトル画面へ戻る ---
+        function openSettings() {
+            isPaused = true;
+            document.getElementById("modal-settings").classList.remove("hidden");
+        }
+
+        function closeSettings() {
+            isPaused = false;
+            document.getElementById("modal-settings").classList.add("hidden");
+        }
+
+        function goToTitle() {
+            stopBGM();
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            isPaused = false;
+            currentList = [];
+            currentIndex = 0;
+            clearedCount = 0;
+            score = 0;
+            totalTimeSeconds = 0;
+            questionStartedAt = 0;
+            currentRankingId = null;
+            lives = 3;
+            timeRemaining = 10;
+            const inputField = document.getElementById("user-input");
+            if (inputField) {
+                inputField.value = "";
+                inputField.blur();
+            }
+            hideFlickPopover();
+            document.getElementById("modal-settings").classList.add("hidden");
+            document.getElementById("modal-explanation").classList.add("hidden");
+            document.getElementById("screen-game").classList.add("hidden");
+            document.getElementById("screen-gameover").classList.add("hidden");
+            document.getElementById("screen-clear").classList.add("hidden");
+            document.getElementById("screen-title").classList.remove("hidden");
+            sendAccessHeartbeat("title");
+        }
     </script>
 </body>
 </html>
